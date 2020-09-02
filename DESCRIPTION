@@ -1,5 +1,5 @@
 Package: aracari
-Title: What the Package Does (One Line, Title Case)
+Title: Uses animal tracking data to simulate seed dispersal distances
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "Javiera",
@@ -7,7 +7,10 @@ Authors@R:
            role = c("aut", "cre"),
            email = "javirudolph@outlook.com",
            comment = c(ORCID = "0000-0002-7124-4649"))
-Description: What the package does (one paragraph).
+Description: This is the first chapter of my dissertation on the consequences of variation in dispersal across local and regional scales.
+This first package and chapter focuses on one species of disperser and one seed source, in a highly simplified scenario. We use animal 
+tracking data to estimate movement per minute, and use a probabilistic framework to extract individual differences in movement. The parameters
+obtained from the tracking data are then used in a simulation scenario, where we study how this variation in animal movements can translate to differences in seed dispersal distances.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
