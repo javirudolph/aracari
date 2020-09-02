@@ -7,10 +7,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "javirudolph@outlook.com",
            comment = c(ORCID = "0000-0002-7124-4649"))
-Description: This is the first chapter of my dissertation on the consequences of variation in dispersal across local and regional scales.
-This first package and chapter focuses on one species of disperser and one seed source, in a highly simplified scenario. We use animal 
-tracking data to estimate movement per minute, and use a probabilistic framework to extract individual differences in movement. The parameters
-obtained from the tracking data are then used in a simulation scenario, where we study how this variation in animal movements can translate to differences in seed dispersal distances.
+Description: This is the first chapter of my dissertation on the consequences of variation in dispersal across local and regional scales.This first package and chapter focuses on one species of disperser and one seed source, in a highly simplified scenario. We use animal tracking data to estimate movement per minute, and use a probabilistic framework to extract individual differences in movement. The parameters obtained from the tracking data are then used in a simulation scenario, where we study how this variation in animal movements can translate to differences in seed dispersal distances.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
