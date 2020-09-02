@@ -3,11 +3,8 @@
 # Libraries needed
 library(adehabitatLT)
 library(lubridate)
-#library(sp)
-#library(ggplot2)
 library(dplyr)
 library(tidyr)
-#library(cowplot)
 
 
 # First, read in the raw tracking data
