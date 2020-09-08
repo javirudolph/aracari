@@ -1,8 +1,8 @@
 ---
 title: "Appendix A: Model fitting and selection for tracking data"
 output:
-  pdf_document:
-    toc: true
+  html_document:
+      toc: true
 bibliography: "../paper/mybibfile.bib"
 ---
 
@@ -12,7 +12,7 @@ Our approach involves fitting these probability distributions at three different
 
 ```{r setup, include=FALSE}
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
-knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
 ```
 
 ```{r}
@@ -26,7 +26,7 @@ library(ggpubr)
 theme_set(theme_bw())
 ```
 
-The way we are fitting the data can be visualized as follows: 
+The way we are fitting the data can be visualized as follows, where each curve represents the population, an individual, or a family group: 
 
 ```{r data}
 # Get the data loaded. We are removing the one value with zero since it won't allow fitting.
@@ -52,7 +52,7 @@ dist <- c("exp", "gamma", "gamma", "weibull", "weibull", "lnorm", "lnorm")
 ```
 
 
-```{r}
+```{r fig.width=10}
 pop_dens_plot <- df %>%
   ggplot(., aes(x = mpm)) +
   geom_line(stat = "density", color = "grey", lwd = 1) +
@@ -119,7 +119,7 @@ build.fits.df <- function(x){
 We fit the probability distributions to all the data, so it is population level. We compare fits visually with a qqplot. It is evident with this plot that the lognormal distribution is problematic at the tails and shows a significant overestimation. All the other distributions underestimate the real values, but it seems like the Weibull is closer to the diagonal.
 
 
-```{r poplevel}
+```{r poplevel, eval = FALSE}
 
 pop <- lapply(dist.used, function(x){fitdist(df$mpm, distr = x)})
 qqcomp(pop, plotstyle = "ggplot") +
@@ -132,3 +132,6 @@ prms.df <- build.fits.df(pop) %>%
          data = "pop")
 
 ```
+
+
+# References 
