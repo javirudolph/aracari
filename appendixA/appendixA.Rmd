@@ -1,10 +1,13 @@
 ---
-title: "Appendix A: Model fitting and selection for tracking data"
+title: "Appendix A"
+subtitle: "Model fitting and selection for tracking data"
 output:
   html_document:
       toc: true
 bibliography: "../paper/mybibfile.bib"
 ---
+
+# Overall description 
 
 We have used the data collected by Kimberly Holbrook for her studies on toucan home ranges and movement patterns [@holbrook_home_2011]. We cleaned original data similarly, as is shown in the `raw-data/newpointlocs.R` file of this directory, by restricting the individuals to those with a minimum of 40 observations and locations collected in intervals from 15 to 90 minutes in multiples of 15 minutes. As shown in previous studies [@holbrook_using_2007], the distances traveled by toucans in 15-30 minutes represent the most probable distances for seed dispersal. Due to data collection constraints, locations could not be obtained every 15 minutes, and birds were sometimes located at greater time intervals. Our goal in this section is to use a probabilistic approach that will characterize the pattern of distances moved, and use these probability distributions to later randomly sample distances from. In order to do this, we scaled the original data in distances moved per time interval, to distances moved per minute. 
 
@@ -12,7 +15,7 @@ Our approach involves fitting these probability distributions at three different
 
 ```{r setup, include=FALSE}
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
-knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE, results = 'hide')
 ```
 
 ```{r}
@@ -24,6 +27,23 @@ library(fitdistrplus)
 library(ggpubr)
 
 theme_set(theme_bw())
+```
+
+```{r functions}
+
+
+# Extract parameters from fitted distributions to the data
+build.fits.df <- function(x){
+  
+  nm <- deparse(substitute(x))
+  
+  x %>% 
+  map(., `[`, c("estimate", "sd", "loglik", "n")) %>% 
+  map(as_tibble) %>% 
+  bind_rows()
+}
+
+
 ```
 
 The way we are fitting the data can be visualized as follows, where each curve represents the population, an individual, or a family group: 
@@ -74,6 +94,7 @@ ind_dens_plot <- df %>%
   theme_classic()
 
 fam_dens_plot <- df %>%
+  filter(., fam_g != "unknown") %>% 
   ggplot(., aes(x = mpm)) +
   #geom_line(stat = "density", color = "red", lwd = 1) +
   geom_line(aes(x = mpm, group = fam_g), stat = "density", alpha = 0.4) +
@@ -86,45 +107,23 @@ fam_dens_plot <- df %>%
 ggarrange(pop_dens_plot, ind_dens_plot, fam_dens_plot, ncol = 3)
 
 ```
+We have chosen five common probability distributions, which are readily used in animal-mediated seed dispersal simulations. These are an exponential distribution [@jones_closing_2017], a gamma distribution, Weibull distribution [@morales_effects_2006], and lognormal distribution [@levey_effects_2005]. The goal of this project is to evaluate variation in movement and how that translates to differences in seed dispersal estimates. Our first comparisson is made between population level and individual level estimates. Not all individual birds had information on family group, therefore, for our second comparisson between population level and family level fits, we used a reduced dataset with only data from individual for which we had family group information. We assessed fits visually through QQ plots.
 
+# Population and Individual level comparissons 
 
+At the population level analysis, we observe that the lognormal distribution has considerable overestimation of distances towards the tail. Although this is also worth noting in the QQ plots for individuals, not all of the individual have an overestimation, and for some other distributions seem to do a better job at characterizing the pattern. 
 
-
-
-
-
-
-
-```{r functions}
-
-
-# Extract parameters from fitted distributions to the data
-build.fits.df <- function(x){
-  
-  nm <- deparse(substitute(x))
-  
-  x %>% 
-  map(., `[`, c("estimate", "sd", "loglik", "n")) %>% 
-  map(as_tibble) %>% 
-  bind_rows()
-}
-
-
-```
-
-
-
-# Population vs Individual levels
-## Population level
-We fit the probability distributions to all the data, so it is population level. We compare fits visually with a qqplot. It is evident with this plot that the lognormal distribution is problematic at the tails and shows a significant overestimation. All the other distributions underestimate the real values, but it seems like the Weibull is closer to the diagonal.
-
-
-```{r poplevel, eval = FALSE}
+```{r poplevel, fig.height = 3}
 
 pop <- lapply(dist.used, function(x){fitdist(df$mpm, distr = x)})
-qqcomp(pop, plotstyle = "ggplot") +
+
+qqpop <- qqcomp(pop, plotstyle = "ggplot")
+  
+qqpop +
   coord_equal() +
-  geom_point(shape = 16, alpha = 0.5)
+  geom_point(shape = 16, alpha = 0.5) +
+  labs(title = "Population level QQ plot")
+  scale_color_viridis_d()
 
 prms.df <- build.fits.df(pop) %>% 
   mutate(param = param,
@@ -132,6 +131,89 @@ prms.df <- build.fits.df(pop) %>%
          data = "pop")
 
 ```
+
+
+```{r}
+inds <- unique(as.character(df$Bird_ID))
+#inds
+
+for(i in 1:length(inds)){
+  fit.df <- df %>% 
+    dplyr::filter(., Bird_ID == inds[i])
+  
+  fit <- lapply(dist.used, function(x){fitdist(fit.df$mpm, distr = x)})
+  
+  assign(paste(inds[i]), fit)
+  
+  fit.prms <- build.fits.df(fit) %>% 
+  mutate(param = param,
+         dist = dist,
+         data = inds[i])
+  
+  prms.df <- bind_rows(prms.df, fit.prms)
+}
+```
+
+```{r fig.height=5}
+
+inds.models.data <- NULL
+ind.models <- list(B1, B13, B19, B22, B28, B29, B3, B30, B49, B5, B7, B84)
+chr.models <- c("B1", "B13", "B19", "B22", "B28", "B29", "B3", "B30", "B49", "B5", "B7", "B84")
+for(i in 1:12){
+  x <- ind.models[[i]]
+  
+  qqdata <- qqcomp(x, plotstyle = "ggplot")$data %>% 
+    mutate(data = chr.models[i])
+  names(qqdata) <- c("theoretical", "fdist", "empirical", "individual")
+  inds.models.data <- bind_rows(inds.models.data, qqdata)
+}
+
+inds.models.data%>% 
+  ggplot(., aes(x = theoretical, y = empirical, color = fdist)) +
+  facet_wrap(~individual)+
+    geom_point(cex = 2, alpha = 0.6) +
+    geom_abline(intercept = 0, slope = 1) +
+    labs(x = "Model Quantiles",
+         y = "Empirical Quantiles") +
+  scale_color_viridis_d() + 
+  theme(legend.position = "top") +
+  guides(color = guide_legend(title = "Distribution")) +
+  coord_equal()
+  
+
+```
+
+
+## Information criteria assessment of individual level distribution fits
+Need to add the description here of how we calculated these information criteria and the reasoning as to why we decided to go with just the BIC, because of Jose's paper. Explain here what the mixed distribution model means, vs the others that use one distribution but allow variation in the parameters.
+
+```{r}
+all_indiv_prms <- prms.df %>% 
+  mutate(kpars = ifelse(dist == "exp", 1, 2),
+         BIC = log(n)*kpars - 2*loglik,
+         AIC = 2*kpars - 2*loglik,
+         AICc = AIC + (2* kpars * (kpars+1)/(n-kpars-1))) %>% 
+  group_by(data) %>% 
+  mutate(deltaBIC = signif(BIC - min(BIC), 3),
+         deltaAIC = signif(AIC - min(AIC), 3),
+         deltaAICc = signif(AICc - min(AICc), 3))
+#saveRDS(all_indiv_prms, file = "outputs/prms_indiv.RDS")
+
+prms.df %>% 
+  dplyr::select(., loglik, n, dist, data) %>% 
+  distinct() %>% 
+  mutate(kpars = ifelse(dist == "exp", 1, 2),
+         BIC = log(n)*kpars - 2*loglik,
+         AIC = 2*kpars - 2*loglik,
+         AICc = AIC + (2* kpars * (kpars+1)/(n-kpars-1))) %>% 
+  group_by(data) %>% 
+  mutate(deltaBIC = signif(BIC - min(BIC), 3),
+         deltaAIC = signif(AIC - min(AIC), 3),
+         deltaAICc = signif(AICc - min(AICc), 3)) -> popind.IC
+```
+
+
+
 
 
 # References 
