@@ -1,0 +1,77 @@
+---
+title: "Appendix A: Model fitting and selection for distances moved per minute"
+output:
+  pdf_document:
+    toc: true
+bibliography: "../paper/mybibfile.bib"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(purrr)
+library(fitdistrplus)
+library(ggpubr)
+
+theme_set(theme_bw())
+```
+
+```{r functions}
+
+
+# Extract parameters from fitted distributions to the data
+build.fits.df <- function(x){
+  
+  nm <- deparse(substitute(x))
+  
+  x %>% 
+  map(., `[`, c("estimate", "sd", "loglik", "n")) %>% 
+  map(as_tibble) %>% 
+  bind_rows()
+}
+
+
+```
+
+```{r data}
+# Get the data loaded. We are removing the one value with zero since it won't allow fitting. Also, zero represents no movement, but we will use perching time for that.
+
+df <- readRDS("outputs/newpointlocs.RDS") %>%
+  filter(mpm != 0) %>%
+  ungroup() %>%
+  mutate(Bird_ID = paste0("B", Bird_ID),
+         sqR2n = sqrt(R2n))
+
+
+dist.used <- c( "exp", "gamma", "weibull", "lnorm")
+
+
+param <- c("rate", "shape", "rate", "shape", "scale", "meanlog", "sdlog")
+dist <- c("exp", "gamma", "gamma", "weibull", "weibull", "lnorm", "lnorm")
+
+```
+
+# Population vs Individual levels
+## Population level
+We fit the probability distributions to all the data, so it is population level. We compare fits visually with a qqplot. It is evident with this plot that the lognormal distribution is problematic at the tails and shows a significant overestimation. All the other distributions underestimate the real values, but it seems like the Weibull is closer to the diagonal.
+
+
+```{r poplevel}
+
+pop <- lapply(dist.used, function(x){fitdist(df$mpm, distr = x)})
+qqcomp(pop, plotstyle = "ggplot") +
+  coord_equal() +
+  geom_point(shape = 16, alpha = 0.5)
+
+prms.df <- build.fits.df(pop) %>% 
+  mutate(param = param,
+         dist = dist,
+         data = "pop")
+
+```

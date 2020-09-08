@@ -1,0 +1,165 @@
+---
+title: "Individual Variation in Animal Movement and Effects on Seed Dispersal Distance"
+author:
+- Javiera Rudolph
+- Jose Miguel Ponciano
+- Flavia Montano-Centellas
+- Kimberly Holbrook
+- Bette Loiselle
+abstract: |
+  Seed dispersal is a fundamental process in plant ecology and due to its high importance in the ecosystem, various modelling approaches have been developed to understand seed movement and dispersal mechanisms. In particular, long-distance seed dispersal (LDD) plays a significant role in determining a population's genetic diversity and range expansion. Animal-mediated seed dispersal is a key component of LDD events, as frugivores can travel long distances and transport seeds beyond the capacity of wind or other abiotic processes. In this study we seek to understand the implications of individual variation in animal movement and how these can impact estimates of long distance dispersal. We apply these methods to empirical data sets that contain locations for an aracari, *Pteroglossus pluricintus*, one of the primary frugivores for the Amazonian canopy tree *Virola flexuosa*. We combine animal movement data and gut retention time to simulate *Virola* seed dispersal. This approach showed that there is significant variation in individual aracari movement patterns which directly influence the estimated number of long-distance dispersa events for *Virola* seeds. We found that models that ignore this underlying variation in individual animal movement, underestimate the percentage of long-distance seed dispersal events and maximum seed dispersal distances.
+output:
+  word_document: default
+  pdf_document:
+    latex_engine: xelatex
+linenumbers: yes
+bibliography: mybibfile.bib
+layout: 3p
+header-includes:
+- \usepackage{setspace}
+- \doublespacing
+- \usepackage{lineno}
+- \linenumbers
+---
+
+```{r setup, echo=FALSE}
+knitr::opts_chunk$set(eval = FALSE, echo = FALSE)
+```
+
+\newpage
+# Introduction
+A main goal of ecologists and evolutionary biologists is to document and predict the structure and dynamics of ecological systems. Although most of our current understanding of ecological systems is based on the average patterns observed in nature, understanding variability and its consequences in ecological processes has recently raised the interests of researchers [@benedetti-cecchi_importance_2003; @inouye_importance_2005]. Variation is now considered a property of ecological systems that might contain as much ecological information as do averages and regularities in nature [@benedetti-cecchi_importance_2003; @violle_return_2012].
+Individual variation, i.e. the possibility for individuals within a population to present different ecological strategies or traits [@violle_return_2012], has been widely discussed in ecology and evolutionary biology. In evolutionary biology the acknowledgement that individuals with different traits might vary in their fitness and survival under natural selection pressures dates back to Darwin’s seminal ideas [@darwin_origin_1859]. Today, it is widely recognized that individual variation plays a key role in the evolution of species and clades, and the relevance of individual variation in the performance of populations and species facing current threats (e.g. climate change, fragmentation and habitat loss) is a growing field of research [@forsman_inter-individual_2016]. In ecology, individual variation is often mentioned as a mechanism for populations to reduce competition pressure [@bolnick_ecological_2010; @araujo_ecological_2011]. Based on the niche complementarity principle, phenotypically different individuals will compete less strongly than more similar individuals [@bolnick_why_2011], thus individual variation would act as a release from intra- and interspecific competition at a local scale. Despite the well recognized importance of individual variation in ecological and evolutionary processes, ecological theory has emphasized interspecific variation [@violle_return_2012].
+Not surprisingly, the role of individual variability on the outcome of species interactions has also been poorly studied; most models of species interactions assume that all conspecific individuals are equivalent and interchangeable [@bolnick_why_2011]. Individuals, however, differ in several aspects that will affect their interactions with other species. This variability makes individuals non-interchangeable from the perspective of interacting patterns [@bolnick_ecology_2003; @gonzalez-varo_labile_2016]. The consequences of individual variability in interspecies interactions can even have cascading effects, going beyond from the species-species level to the community and ecosystem level [@post_intraspecific_2008; @wolf_animal_2012].
+
+Seed dispersal mutualisms may be a particularly attractive system to study the impacts of incorporating individual variation to understanding the importance of such variation to dispersal outcomes. Seed dispersal is one of the most critical stages in plant life history – it results in a spatial pattern of seed deposition which acts as a template that will define the distribution of plants and, consequently, community structure [@howe1982ecology; @nathan_spatial_2000; @russo_incorporating_2006]. In seed dispersal mutualisms, animals provide the dispersal services while rewarding from fruit resources they consume. Plants produce fleshy fruits to attract and reward mutualist animals and rely on the behavior of the disperser to transport their propagules [@nathan_spatial_2000]. The spatial patterns of seed deposited by disperser vectors will determine the probability of seed survival and recruitment, acting upon post-dispersal processes such as density-dependent survival and colonization [@howe2004seed]. Therefore, at a local scale, seed dispersers will determine whether plant species scape from density-dependence processes [@comita2014testing], whereas at a larger scale, they can determine how quickly plants can cope with habitat and climate shifts [@ibanez2006predicting; @russo_incorporating_2006].  
+
+From the plant perspective, not all seed disperser species provide with the same seed dispersal service, and often relatively few disperser species can have disproportionate effects on seed dispersal [@schupp1993quantity; @jordano2007differential; @schupp_seed_2010; @loayza2014seed]. Frugivores might differ on their selection of plants/fruits for consumption, in their treatment of seed while ingesting and manipulating the fruits, in their processing of seeds if ingested and in the distance where they will discard the seeds [@schupp1993quantity; @schupp_seed_2010; @cortes_integrating_2013]. Each one of these stages of the seed dispersal process will have strong consequences on the spatial seed shadow provided by each seed dispersal vector [@jordano2007differential; @carlo2014directness]. Besides inter-specific differences among dispersal vectors, there is a recent recognition of the potential role of differences among individuals in the resulting seed dispersal they provide [@bolnick_ecology_2003; @gonzalez-varo_labile_2016]. Including individual variation in traits (morphological, behavioral and physiological) in seed dispersal studies, can provide new insights into the relative role of different dispersal vectors on seed deposition and ultimately, vegetation structure [@gonzalez-varo_labile_2016]. In a recent review, Zwolak (2017) summarized the types of intraspecific variation in seed-dispersing animals that might affect the resulting seed dispersal service individuals provide, highlighting differences in sex, size or age (ontogenetic shifts), individual specialization and behavioral syndromes as the most important variation types. Incorporating these intrinsic traits into seed dispersal models may lead to more mechanistic understanding of seed dispersal, allow to build more accurate predictive frameworks of dispersal outcomes [@russo_incorporating_2006] and to identify links between characteristics of dispersal agents and the seed dispersal they provide [@zwolak_how_2018].  
+
+
+Differences in behavior among individuals (i.e. behavioral syndromes sensu [@sih2004behavioral]) can have remarkable consequences on ecological and evolutionary processes [@wolf_animal_2012]. For vertebrate dispersed plants, animal behavior will inﬂuence seed shadows and few species, or even individuals, might provide unique, high value dispersal services by moving farther distances from parental plants [@schupp_seed_2010]. Long distance dispersal (LDD) events are crucial to reaching suitable sites to germinate and establish and to colonize new habitats [@nathan2006long]. Furthermore, rare events (often overlooked) are critical for dispersal and might have a large effect on resulting plant demography [@loayza2014seed]. Incorporating animal behavior and the individual distances they carry seeds into seed dispersal models might result in better predictions of seed shadow and better inform about the resulting patters of seed dispersal.  
+
+The effect of frugivore movement on seed dispersal has been studied and we know that there exists an important link between them [@will_mechanistic_2008; @russo_incorporating_2006; @pegman_exploring_2017]. Animal movement patterns determine the extent to which seeds get distributed, and this in turn creates a range distribution for plants [@levey_modelling_2008]. Plants distribution and ranges are largely determined by the seeds that get dispersed the farthest from their parent. Animal movement is known to provide these long-distance seeds more than other dispersal sources such as wind or water[@jordano_what_2017]. Frugivore in particular is associated with longer dispersal, partly influenced by the gut retention time. We wanted to understand how individual variation in animal movement can influence the frequency and extent of long-distance seed dispersal events. We analyzed aracari telemetry data at the population level and at an individual level, to explore how these could influence seed dispersal. In addition to this, we tested several models to understand how the choice of probability distribution associated to the movement kernel can limit or overestimate seed dispersal.
+
+# Methods
+### Data collection/manipulation  
+
+We focused our study on the many-banded aracari (*Pterglossus pluricinctus*) and its role as a frugivore of the *Virola flexuosa* tree. A subset of animal movement data collected in a previous study [@holbrook_home_2011] was selected and used towards our models and simulations. In this previous study, Aracari home ranges, average movement distances, patterns and movement rates were estimated for tracked birds over a period of four years, from 2001 to 2005, in the Ecuadorian Amazon rainforest. Further details on field methods can be found in Holbrook [-@holbrook_home_2011].  We focused on the data from the many-banded aracari, *Pteroglossus pluricinctus*, because a higher number of recorded locations were available. In addition to this, the home range of this species was found to be the largest for all the species studied, and therefore it was better suited to study long-distance seed dispersal events.  
+
+We used subsequent animal locations to estimate distance moved in a given tracking session, then calculated movement rates per minute for each movement bout. We defined a movement bout as the movement occurring between two consecutive GPS locations. *Is this ok? not sure how to describe how I considered this* We generated a distribution of movement rates and selected the animals that had a minimum of 30 observations giving us a dataset with information on twelve individual birds. Unlike previous work by Holbrook [-@holbrook_home_2011] we restricted our analysis to consecutive locations only, to better capture variation in trajectory and movement rates in meters per minute for a given flight session. We were not focused on distance to origin from the animal’s perspective, but on movement bouts in a continuous tracking session, in order to estimate trajectory movement, which would directly influence the distance that seeds get dispersed from a focus tree.
+
+### Animal movement probability distributions  
+
+In this study, we consider population level when we consider all the tracking data together as a whole. For population level analysis we make the assumption that there is no individual variation in movement rates and therefore a single movement rate model can describe all individuals in that population. For the case of individual level analysis, we consider individual variation by analyzing the movement rates separately and fitting a probability distribution model to the tracking data for each individual. Within this framework we consider that animal movement rates (number of meters moved per minute in each individual movement bout) can be described with four different probability distribution models: an exponential distribution [@jones_closing_2017], a gamma distribution, a weibull distribution [@morales_effects_2006], and a lognormal distribution [@levey_modelling_2008]. (Comment: where do you think I should include a description of these different distributions?) The fit of each model to the data was analyzed visually via qqplots (See supplementary information). 
+
+At the population level, we compared the fit between the four distribution models using different information criteria (AIC, AICc, and BIC). At the individual level we considered five different models, four of these models corresponded to each of the four probability distributions. For the first four models, we assumed that one probability distribution could accurately describe the movement rates for each individual by changing the distribution's parameters. A fith alternative model considered instead the best fitting model for each individual and calculated the overall information criteria as a combination of the best fitting model for each individual. For each of these indivual level models, information criteria were calculated based on the number of parameters, sample size and negative log likelihood in the following way
+
+$$AIC{_{indlevel}} = 2\sum \left ( number parameters \right ) + 2\sum \left ( negative log likelihood \right )$$
+
+$$ AICc{_{indlevel}} =  AIC{_{indlevel}} + (2 \cdot \sum{nparams}  \cdot \left(\sum{nparams}+1\right)/\left(\sum{observations} - \left(\sum{nparams} - 1\right)\right)$$  
+
+
+$$BIC_{indlevel} = \ln{\sum observations} \cdot \sum{number parameters} + 2\cdot \sum {negative log likelihood}$$ 
+
+
+
+### Seed dispersal simulation  
+
+To understand the impact of individual animal movement rates over seed dispersal distances, we built a simulation model which took into account animal movement and seed gut retention time (GRT). Each simulation run consisted of an individual bird who was given five seeds at the start of the simulation. Each seed's gut retention time was randomly sampled from a Gamma distribution based on previously collected data [@holbrook_home_2011] and out of the five seeds the largest GRT determined the simulation time for each run. The simulated bird would start at point (0,0) and move across the landscape in a random walk, with angle of movement and speed determined by one minute time steps. At each minute time step, an angle of movement would be sampled from a uniform distribution and a movement rate sampled from one of movement rate models (exponential, gamma, lognormal or weibull). Seeds would get dropped at the bird's position at the time the simulation reached each seed's GRT and the simulation run would end once the bird dropped all five seeds. At the population level, we had four different simulations, each corresponding to one of the probability distributions being tested for animal movement rates. We performed 12,000 individual simulation runs with each distribution and estimated seed dispersal distances for each of the seeds. In the case of individual level simulations, we had 1000 simulation runs for each individual (twelve individuals, with a total of 12,000 simulation runs) and we did this with each of the four distribution models. Finally, we considered a (heterogeneous/mixed? need to check with JMP on terminology) model where we selected the best fitting movement rate model for each individual and used it to parameterize the simulation. For these mixed models, the probability distribution used to sample movement rates would be the best fitting distribution for each individual's movement rates (the target distribution as determined by AIC or BIC), and not a common distribution with different parameters for each individual (as in the previous individual level simulation runs).  Whether at population level or individual level, the output of the simulation runs for each model is the dispersal distance for 60,000 seeds. We performed summary statistics on seed dispersal distances for each of the models
+
+## Results
+### Animal movement rate models  
+
+We compared the fit of the different probability distributions to animal movement rate data with Akaike's Information Criteria(AIC) and it's corrected version for small sample sizes (AICc), we also used the Bayesian Information Criteria (BIC) to compare these model fittings. At the population level, all information criteria concur and show that the lognormal model fits the data for movement rates the best, with the weibull model next, see table 1. However, as we visually assessed fit of these models with QQ plots and goodness-of-fit statistics (see the supplemet), the lognormal distribution model greatly overestimates the data towards the tail, whereas all the other models are significantly more conservative and tend to underestimate the data.
+
+```{r}
+popIC_table <- readRDS(file = "output/popIC_table.RDS")
+
+popIC_table %>% 
+  knitr::kable()
+```
+
+At the individual level, we observed similar outcomes, where the lognormal distribution consistently overestimated the data, whereas the other distributions considered did not. When comparing across distribution models at the individual level, AIC and AICc showed the lognormal fit as the best one followed by the exponential model, whereas the BIC had the exponential as the best model followed by the lognormal. 
+
+```{r}
+indIC_table <- readRDS(file = "output/indIC_table.RDS")
+
+indIC_table %>% 
+  knitr::kable()
+```
+
+When comparing the population level models with the ones at the individual level, we found that information criteria differed. In the case of AIC and AICc, these consistently categorized the individual level models as best fitting when compared to their equivalent distribution model at the population level. However, BIC values show that only when we consider the exponential distribution model does the individual level do a better fitting than the population, with all other models having higher BIC values for the models that include individual heterogeneity.  
+
+```{r}
+AIC_table <- readRDS("manuscript/AIC_table.RDS")
+
+AIC_table %>%
+  transmute(distribution,
+          aic.pop.ind = AIC.pop - AIC.ind,
+         aicc.pop.ind = AICc.pop - AICc.ind,
+         bic.pop.ind = BIC.pop-BIC.ind) %>% 
+  knitr::kable()
+```
+
+The mixed/heterogeneous model considered the best fitting distribution for each individual, and then selected given distribution to be included in the general model that includes movement for all the individuals and calculates the information criteria value. Using different information criteria yielded different best fitting models (see supplement) for each individual, which changed the distributions included on the overall model, therefore producing two different mixed/heterogeneous modelsd with individual variation, one associated to the AIC/AICc target distributions and a different one for BIC. However, all information criteria agreed on nine out of twelve individual models. In the case of AIC and AICc four individuals were better described by an exponential distribution, three by a Weibull distribution and five by a lognormal distribution. When using BIC as the model selection tool, seven individuals were described by an exponential distribution, four by a lognormal and one by the Weibull distribution. The overall AIC, AICc and BIC values were calculated for each of the mixed/heterogenous model and compared to the previous fits, where the first five results are shown in the following table (the rest can be seen in the supplement). This shows that only the lognormal model at the population level is better than the mixed/heterogeneous model by <2 BIC units.
+
+```{r}
+allIC_table <- readRDS(file = "output/allIC_table.RDS")
+
+head(allIC_table) %>% 
+  knitr::kable()
+```
+
+### Seed Dispersal Distances  
+
+We analyzed the seed dispersal distances produced by the simulation runs and there were clear differences between the simulation models. These differences clear between models that used different distributions for movement rates, whether or not they consider individual variation, the seed dispersal distances under the lognormal distribution were extremely high with several outliers for dispersal distance. The exponential, Gamma and Weibull models for movement rates produced similar seed dispersal distance distributions at the population level. All the simulations showed that models that included individual variation in animal movement rates had a higher number of long distance dispersal events.
+
+```{r}
+
+get_all <- readRDS("output/get_all.RDS")
+
+get_all %>% 
+  ggplot(., aes(x = model, y = dispersal, color = type)) +
+  geom_boxplot() +
+  theme_bw()
+```
+
+
+Summarize some values for these distances. Is this table necessary? or how to reduce it? Do I need to make it smaller?
+
+
+```{r}
+get_all %>% 
+  mutate(ldd = ifelse(dispersal >= 500, 1, 0),
+         movement_model = paste(str_replace(model, "_move", ""), 
+                                 str_sub(type, start=1, end=3), sep = "_")) -> move_model
+move_model %>% 
+  group_by(movement_model) %>% 
+  summarise(LDD = sum(ldd),
+            prcnt_ldd = 100*mean(ldd),
+            avg = mean(dispersal),
+            median = median(dispersal),
+            max = max(dispersal)) %>% 
+  arrange(prcnt_ldd) %>% 
+  knitr::kable()
+```
+
+## Discussion
+
+Considering animal movement in this simple framework of movement rates allows us to easily compare between individuals and how including intraspecific variation can change our estimates and fits of different models. It is known that because of this individual variation, no one distribution will fit all individuals, and therefore approaches with mixed distributions or that select different distributions for each individual are important if we want to understand the relationship between frugivore movement and seed dispersal [@russo_incorporating_2006]. Previous research has focused on exploring the effects of lanscape fragmentation, heterogeneity [@jones_closing_2017, @levey_modelling_2008] or plant aggregation [@pegman_exploring_2017]. However, focus on intraspecific variation in frugivores and their effect on seed dispersal has only recently been studied more closely[@snell_consequences_2019]. The models we have used in this study show that individual variation between individual movement rates exist. There is clear evidence for heterogeneity across individuals with respect to which distribution explains the data best with both, the AIC and the BIC, regardless of whether these information criteria match. We need to move towards developing better animal movement models that incorporate this type of heterogeneity, where we don't just pool tracking data for all individuals, but where we consider the tail end distributions of their movement. 
+
+We have also shown that including individual variation in type of distribution for movement rates produces one of the best fitting models to the data. Although in our direct comparisson between mixed models and single distribution models, the lognormal distribution at the population level was the best fitting one, the difference of 1.900455 BIC points is too small for us to reject our mixed model that states heterogeneity across individuals. This small difference points at perhaps how small sample sizes per individual can have an effect on the fits.Using BIC, a difference of approximately 4 BIC points is equivalent to stating significant difference at an 0.05 alpha level, therefore the difference of <2 BIC points is not sufficient for us to reject our mixed models with individual variation. All other models that follow are over 10 BIC units from out mixed/heterogeneous model.
+
+
+
+Even though LDD events are rare or infrequent, they have a disproportionately large effect on gene flow and the genetic pool of populations (Jordano 2017). In the case of well mixed populations, long-distance dispersal can cause random genetic loss through drift or have the opposite effect and maintain high genetic variance in populations that initially drifted (Bohrer, Nathan, and Volis 2005). This is important as in the long-term, these genetic consequences of dispersal can have significant effects for the survival of populations. From a metapopulation perspective, LDD events can have significant consequences for species persistence by enhancing genetic variability and as mechanism for survival in spatially and temporally heterogenous environments. In particular, long-distance dispersal events have a higher probability of reaching isolated populations and therefore establishing a connection and maintaining unrelated populations. It is of special interest to focus in highly heterogenous habitats with rapid change in spatial structure where local extinctions are high, since long-distance dispersal can allow persistence of a metapopulation with immigration and emigration based on long distance dispersal. From a more evolutionary perspective, long-distance dispersal can allow for a species to colonize distant habitats and expand its range, which can also lead to differentiation and speciation (Ronce 2007). We have shown that individual differences in frugivore movement can have significant consequences on the number of long-distance seed dispersal events and it remains to be explored how these individual differences can influence population dynamics in the long term and at larger spatial scales.
+
+
+# Conclusion
+
+# Acknowledgements
+
+
+
+# References
+
