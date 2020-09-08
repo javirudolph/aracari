@@ -1,10 +1,14 @@
 ---
-title: "Appendix A: Model fitting and selection for distances moved per minute"
+title: "Appendix A: Model fitting and selection for tracking data"
 output:
   pdf_document:
     toc: true
 bibliography: "../paper/mybibfile.bib"
 ---
+
+We have used the data collected by Kimberly Holbrook for her studies on toucan home ranges and movement patterns [@holbrook_home_2011]. We cleaned original data similarly, as is shown in the `raw-data/newpointlocs.R` file of this directory, by restricting the individuals to those with a minimum of 40 observations and locations collected in intervals from 15 to 90 minutes in multiples of 15 minutes. As shown in previous studies [@holbrook_using_2007], the distances traveled by toucans in 15-30 minutes represent the most probable distances for seed dispersal. Due to data collection constraints, locations could not be obtained every 15 minutes, and birds were sometimes located at greater time intervals. Our goal in this section is to use a probabilistic approach that will characterize the pattern of distances moved, and use these probability distributions to later randomly sample distances from. In order to do this, we scaled the original data in distances moved per time interval, to distances moved per minute. 
+
+Our approach involves fitting these probability distributions at three different levels: population, individual, and family. In the case of population level fittings, a probability distribution is used to fit all the data available, and a single distribution is used to describe the population's distanced moved. At the individual level, each bird is analyzed separately and a single distribution is assigned to the data of each individual bird to characterize it's distances moved. The family level analysis is restricted to the data points for which we have available information on family group. In this case, a single probability distribution is used for each individual family group to describe the distances moved. 
 
 ```{r setup, include=FALSE}
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
@@ -21,6 +25,75 @@ library(ggpubr)
 
 theme_set(theme_bw())
 ```
+
+The way we are fitting the data can be visualized as follows: 
+
+```{r data}
+# Get the data loaded. We are removing the one value with zero since it won't allow fitting.
+
+load("data/newpointlocs.rda")
+
+df <- newpointlocs %>%
+  dplyr::filter(mpm != 0) %>%
+  ungroup() %>%
+  mutate(Bird_ID = paste0("B", Bird_ID),
+         sqR2n = sqrt(R2n)) %>% 
+  group_by_("id", "burst") %>% 
+  mutate(cumdt = cumsum(dt)/60) %>% 
+  ungroup()
+
+
+dist.used <- c( "exp", "gamma", "weibull", "lnorm")
+
+
+param <- c("rate", "shape", "rate", "shape", "scale", "meanlog", "sdlog")
+dist <- c("exp", "gamma", "gamma", "weibull", "weibull", "lnorm", "lnorm")
+
+```
+
+
+```{r}
+pop_dens_plot <- df %>%
+  ggplot(., aes(x = mpm)) +
+  geom_line(stat = "density", color = "grey", lwd = 1) +
+  #geom_line(aes(x = dist, group = id), stat = "density", alpha = 0.4) +
+  geom_vline(xintercept = 0, color = "grey") +
+  geom_hline(yintercept = 0, color = "grey") +
+  ylim(0, 0.05) +
+  labs(title = "Population") +
+  theme_classic()
+
+ind_dens_plot <- df %>%
+  ggplot(., aes(x = mpm)) +
+  #geom_line(stat = "density", color = "red", lwd = 1) +
+  geom_line(aes(x = mpm, group = id), stat = "density", alpha = 0.4) +
+  geom_vline(xintercept = 0, color = "grey") +
+  geom_hline(yintercept = 0, color = "grey") +
+  ylim(0, 0.05) +
+  labs(title = "Individual") +
+  theme_classic()
+
+fam_dens_plot <- df %>%
+  ggplot(., aes(x = mpm)) +
+  #geom_line(stat = "density", color = "red", lwd = 1) +
+  geom_line(aes(x = mpm, group = fam_g), stat = "density", alpha = 0.4) +
+  geom_vline(xintercept = 0, color = "grey") +
+  geom_hline(yintercept = 0, color = "grey") +
+  ylim(0, 0.05) +
+  labs(title = "Family") +
+  theme_classic()
+
+ggarrange(pop_dens_plot, ind_dens_plot, fam_dens_plot, ncol = 3)
+
+```
+
+
+
+
+
+
+
+
 
 ```{r functions}
 
@@ -39,23 +112,7 @@ build.fits.df <- function(x){
 
 ```
 
-```{r data}
-# Get the data loaded. We are removing the one value with zero since it won't allow fitting. Also, zero represents no movement, but we will use perching time for that.
 
-df <- readRDS("outputs/newpointlocs.RDS") %>%
-  filter(mpm != 0) %>%
-  ungroup() %>%
-  mutate(Bird_ID = paste0("B", Bird_ID),
-         sqR2n = sqrt(R2n))
-
-
-dist.used <- c( "exp", "gamma", "weibull", "lnorm")
-
-
-param <- c("rate", "shape", "rate", "shape", "scale", "meanlog", "sdlog")
-dist <- c("exp", "gamma", "gamma", "weibull", "weibull", "lnorm", "lnorm")
-
-```
 
 # Population vs Individual levels
 ## Population level
