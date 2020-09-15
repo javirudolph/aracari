@@ -8,10 +8,7 @@ author:
 - Bette Loiselle
 abstract: |
   Seed dispersal is a fundamental process in plant ecology and due to its high importance in the ecosystem, various modelling approaches have been developed to understand seed movement and dispersal mechanisms. In particular, long-distance seed dispersal (LDD) plays a significant role in determining a population's genetic diversity and range expansion. Animal-mediated seed dispersal is a key component of LDD events, as frugivores can travel long distances and transport seeds beyond the capacity of wind or other abiotic processes. In this study we seek to understand the implications of individual variation in animal movement and how these can impact estimates of long distance dispersal. We apply these methods to empirical data sets that contain locations for an aracari, *Pteroglossus pluricintus*, one of the primary frugivores for the Amazonian canopy tree *Virola flexuosa*. We combine animal movement data and gut retention time to simulate *Virola* seed dispersal. This approach showed that there is significant variation in individual aracari movement patterns which directly influence the estimated number of long-distance dispersa events for *Virola* seeds. We found that models that ignore this underlying variation in individual animal movement, underestimate the percentage of long-distance seed dispersal events and maximum seed dispersal distances.
-output:
-  word_document: default
-  pdf_document:
-    latex_engine: xelatex
+output: html_document
 linenumbers: yes
 bibliography: mybibfile.bib
 layout: 3p
