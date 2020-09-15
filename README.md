@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# aracari
+# aracari <img src="images/aracari.png" align="right" height="139" />
 
 <!-- badges: start -->
 
