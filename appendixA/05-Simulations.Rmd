@@ -1,0 +1,168 @@
+---
+title: "Simulation of seed dispersal distance"
+author: "Javiera Rudolph"
+output: 
+  html_document:
+    toc: true
+    fig_width: 12
+    fig_height: 6
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, fig.cap = " ")
+
+```
+
+```{r loadPackages}
+library(tidyverse)
+library(lubridate)
+library(ggpubr)
+```
+
+```{r importData}
+seed_data_popind <- readRDS("appendixA/seed_dispersal_popind.RDS") %>% 
+  mutate(type = ifelse(data == "pop", "population", "individual"))
+
+mixed_ind <- readRDS("appendixA/mixed_ind_seed.RDS")
+
+
+seed_data_popfam <- readRDS("appendixA/seed_dispersal_popfam.RDS") %>% 
+  mutate(type = ifelse(data == "pop", "population", "family"))
+
+mixed_fam <- readRDS("appendixA/mixed_fam_seed.RDS")
+
+```
+
+
+
+```{r eval = FALSE}
+# Get all the seed distance data into a single data frame
+
+mixed_mod %>%  
+  ungroup() %>% 
+  dplyr::select(dispersal, IC) %>%
+  mutate(model = "mixed",
+         type = str_to_lower(IC)) %>% 
+  dplyr::select(model, dispersal, type) -> mixed_data
+
+
+get_all <- rbind.data.frame(all_seed_data, mixed_data)
+saveRDS(get_all, "output/get_all.RDS")
+
+```
+
+
+```{r}
+
+all_ind <- rbind.data.frame(seed_data_popind, mixed_ind)
+#seed_data_popind %>% 
+all_ind %>% ggplot(., aes(x = model, y = dispersal, color = type)) +
+  geom_boxplot() +
+  theme_bw()
+```
+
+Get the ldd for the initial models:
+```{r}
+# how many LDD events for each model for pop or individual
+
+#seed_data_popind %>% 
+  all_ind %>% 
+  dplyr::filter(dispersal >= 500) %>% 
+  mutate(dispersal = 1) %>% 
+  group_by(., , model) %>% 
+  summarise(nLDD_events = sum(dispersal)) %>% 
+  knitr::kable()
+```
+
+Summarize some values for these distances:
+
+
+```{r}
+#seed_data_popind %>% 
+  all_ind %>% 
+  mutate(ldd = ifelse(dispersal >= 500, 1, 0),
+         movement_model = paste(str_replace(model, "_move", ""), 
+                                 str_sub(type, start=1, end=3), sep = "_")) -> move_model
+move_model %>% 
+  group_by(movement_model) %>% 
+  summarise(LDD = sum(ldd),
+            prcnt_ldd = 100*mean(ldd),
+            avg = mean(dispersal),
+            median = median(dispersal),
+            max = max(dispersal)) %>% 
+  arrange(prcnt_ldd) %>% 
+  knitr::kable()
+```
+
+Keep in mind that the figure only goes to 2000, when the max for lognormal movement models is close to 9000, it really sends the estimates far far. 
+```{r fig.width=12, fig.height=6}
+move_model %>% 
+  #filter(model != "lnorm_move") %>% 
+  ggplot(., aes(x = dispersal, color = movement_model)) + 
+  geom_line(stat = "density") +
+  theme_bw()
+```
+
+
+# Family level
+
+```{r}
+all_fam <- rbind.data.frame(seed_data_popfam, mixed_fam)
+
+```
+
+
+```{r}
+all_fam %>% 
+  ggplot(., aes(x = model, y = dispersal, color = type)) +
+  geom_boxplot() +
+  #geom_boxplot(data = mixed_fam, aes(x = type, y = dispersal)) +
+  theme_bw()
+
+
+```
+
+Get the ldd for the initial models:
+```{r}
+# how many LDD events for each model for pop or individual
+
+
+all_fam %>% 
+  dplyr::filter(dispersal >= 500) %>% 
+  mutate(dispersal = 1) %>% 
+  group_by(., , model) %>% 
+  summarise(nLDD_events = sum(dispersal)) %>% 
+  knitr::kable()
+```
+
+Summarize some values for these distances:
+
+
+```{r}
+all_fam %>% 
+  mutate(ldd = ifelse(dispersal >= 500, 1, 0),
+         movement_model = paste(str_replace(model, "_move", ""), 
+                                 str_sub(type, start=1, end=3), sep = "_")) -> move_model
+move_model %>% 
+  group_by(movement_model) %>% 
+  summarise(LDD = sum(ldd),
+            prcnt_ldd = 100*mean(ldd),
+            avg = mean(dispersal),
+            median = median(dispersal),
+            max = max(dispersal)) %>% 
+  arrange(prcnt_ldd) %>% 
+  knitr::kable()
+```
+
+Keep in mind that the figure only goes to 2000, when the max for lognormal movement models is close to 9000, it really sends the estimates far far. 
+```{r fig.width=12, fig.height=6}
+move_model %>% 
+  #filter(model != "lnorm_move") %>% 
+  ggplot(., aes(x = dispersal, color = movement_model)) + 
+  geom_line(stat = "density") +
+  theme_bw()
+```
+
+
+

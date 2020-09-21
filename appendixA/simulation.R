@@ -120,6 +120,8 @@ for(i in 1:length(popSims)){
 
 saveRDS(popSims, "appendixA/populationSims.RDS")
 
+#popSims <- readRDS("appendixA/populationSims.RDS")
+
 # These is the data for each seed that got dispersed
 # Since there are 5 seeds in each run, with 4 models, each run gets 20 distances
 popSeed_data <- get_seed_disp_info(popSims) %>%
@@ -172,10 +174,41 @@ indSims <- setNames(indSims, IDs)
 
 saveRDS(indSims, "appendixA/individualSims.RDS")
 
+#indSims <- readRDS("appendixA/individualSims.RDS")
+
 
 seed_dispersal_popind <- rbind.data.frame(popSeed_data, indSeed_data)
 
 saveRDS(seed_dispersal_popind, file = "appendixA/seed_dispersal_popind.RDS")
+
+
+
+# Mixed distribution for individuals
+popind %>%
+  filter(., data != "pop") %>%
+  filter(., deltaBIC == 0)
+
+i_exp <- NULL
+for(i in c(1:1000, 3001:5000, 6001:7000, 8001:12000)){
+  a <- popSims[[i]]$exp_move$seedInfo$seed_disp
+
+  out <- data.frame(model = "mixed", dispersal = a)
+  i_exp <- rbind(i_exp, out)
+}
+
+i_lnorm <- NULL
+for(i in c(1001:3000, 5001:6000, 7001:8000 )){
+  a <- popSims[[i]]$lnorm_move$seedInfo$seed_disp
+
+  out <- data.frame(model = "mixed", dispersal = a)
+  i_lnorm <- rbind(i_lnorm, out)
+}
+
+mixed_ind_seed_disp <- rbind.data.frame(i_exp, i_lnorm) %>%
+  mutate(data = "mixed",
+         type = "mixed")
+
+saveRDS(mixed_ind_seed_disp, "appendixA/mixed_ind_seed.RDS")
 
 
 #### Family level
@@ -186,11 +219,11 @@ popfam <- readRDS("appendixA/popfamprms.RDS")
 # Population level
 popSims.fam <- vector("list", 6000)
 for(i in 1:length(popSims.fam)){
-  popSims.famm[[i]] <- main_simulation(nseeds = 5, params = popfam %>%
+  popSims.fam[[i]] <- main_simulation(nseeds = 5, params = popfam %>%
                                     dplyr::filter(data == "pop"))
 }
 
-saveRDS(popSims, "appendixA/populationSims_family.RDS")
+saveRDS(popSims.fam, "appendixA/populationSims_family.RDS")
 
 # These is the data for each seed that got dispersed
 # Since there are 5 seeds in each run, with 4 models, each run gets 20 distances
@@ -247,4 +280,39 @@ saveRDS(famSims, "appendixA/familySims.RDS")
 seed_dispersal_popfam <- rbind.data.frame(popSeed_data_fam, famSeed_data)
 
 saveRDS(seed_dispersal_popfam, file = "appendixA/seed_dispersal_popfam.RDS")
+
+# Mixed distribution for families
+
+popfam %>%
+  filter(., data != "pop") %>%
+  filter(., deltaBIC == 0)
+
+f_exp <- NULL
+for(i in c(1:2000, 4001:6000)){
+  a <- popSims.fam[[i]]$exp_move$seedInfo$seed_disp
+
+  out <- data.frame(model = "mixed", dispersal = a)
+  f_exp <- rbind(f_exp, out)
+}
+
+f_lnorm <- NULL
+for(i in c(2001:4000)){
+  a <- popSims.fam[[i]]$lnorm_move$seedInfo$seed_disp
+
+  out <- data.frame(model = "mixed", dispersal = a)
+  f_lnorm <- rbind(f_lnorm, out)
+}
+
+mixed_fam_seed_disp <- rbind.data.frame(f_exp, f_lnorm) %>%
+  mutate(data = "mixed",
+         type = "mixed")
+
+saveRDS(mixed_fam_seed_disp, "appendixA/mixed_fam_seed.RDS")
+
+
+
+#mixed model, which ones?
+
+
+# USe the new function or select data from those
 

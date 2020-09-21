@@ -1,0 +1,100 @@
+---
+title: "simulation results"
+subtitle: "Visual comparisons"
+output:
+  html_document:
+      toc: true
+bibliography: "../paper/mybibfile.bib"
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, fig.cap = " ")
+
+```
+
+```{r importData}
+all_seed_data <- readRDS("appendixA/seed.RDS")
+mixed_mod <- readRDS("appendixA/seed_data_mixed_model.RDS")
+```
+
+```{r loadPackages}
+library(tidyverse)
+library(lubridate)
+library(ggpubr)
+```
+
+```{r}
+# Get all the seed distance data into a single data frame
+
+mixed_mod %>%  
+  ungroup() %>% 
+  dplyr::select(dispersal, IC) %>%
+  mutate(model = "mixed",
+         type = str_to_lower(IC)) %>% 
+  dplyr::select(model, dispersal, type) -> mixed_data
+
+
+get_all <- rbind.data.frame(all_seed_data, mixed_data)
+saveRDS(get_all, "output/get_all.RDS")
+
+```
+
+
+```{r}
+all_seed_data %>% 
+  ggplot(., aes(x = model, y = dispersal, color = type)) +
+  geom_boxplot() +
+  theme_bw()
+```
+
+Get the ldd for the initial models:
+```{r}
+# how many LDD events for each model for pop or individual
+
+all_seed_data %>% 
+  dplyr::filter(dispersal >= 500) %>% 
+  mutate(dispersal = 1) %>% 
+  group_by(., type, model) %>% 
+  summarise(nLDD_events = sum(dispersal)) %>% 
+  knitr::kable()
+```
+
+## Try with the mixed distribution model?
+
+```{r}
+get_all %>% 
+  ggplot(., aes(x = model, y = dispersal, color = type)) +
+  geom_boxplot() +
+  theme_bw()
+```
+
+
+Summarize some values for these distances:
+
+
+```{r}
+get_all %>% 
+  mutate(ldd = ifelse(dispersal >= 500, 1, 0),
+         movement_model = paste(str_replace(model, "_move", ""), 
+                                 str_sub(type, start=1, end=3), sep = "_")) -> move_model
+move_model %>% 
+  group_by(movement_model) %>% 
+  summarise(LDD = sum(ldd),
+            prcnt_ldd = 100*mean(ldd),
+            avg = mean(dispersal),
+            median = median(dispersal),
+            max = max(dispersal)) %>% 
+  arrange(prcnt_ldd) %>% 
+  knitr::kable()
+```
+
+Keep in mind that the figure only goes to 2000, when the max for lognormal movement models is close to 9000, it really sends the estimates far far. 
+```{r fig.width=12, fig.height=6}
+move_model %>% 
+  filter(model != "lnorm_move") %>% 
+  ggplot(., aes(x = dispersal, color = movement_model)) + 
+  geom_line(stat = "density") +
+  theme_bw()
+```
