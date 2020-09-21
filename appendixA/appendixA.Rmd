@@ -487,8 +487,8 @@ Summary. As with individuals, the information criteria actually changes things a
 ```{r}
 # Save parameters
 
-saveRDS(popfam.IC, file = "appendixA/popfamICprms.RDS")
-saveRDS(popind.IC, file = "appendixA/popindICprms.RDS")
+saveRDS(all_indiv_prms, file = "appendixA/popindprms.RDS")
+saveRDS(all_fam_prms, file = "appendixA/popfamprms.RDS")
 
 ```
 
