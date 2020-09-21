@@ -407,9 +407,9 @@ prms.fams.df %>%
   group_by(data) %>% 
   mutate(deltaBIC = signif(BIC - min(BIC), 3),
          deltaAIC = signif(AIC - min(AIC), 3),
-         deltaAICc = signif(AICc - min(AICc), 3)) -> popfam.BIC
+         deltaAICc = signif(AICc - min(AICc), 3)) -> popfam.IC
 
-popfam.BIC %>% 
+popfam.IC %>% 
   pivot_longer(., cols = starts_with("delta"), names_to = "ic", values_to = "value") %>% 
   ggplot(., aes(x = ic, y = value, color = dist)) +
   geom_point() +
@@ -433,7 +433,7 @@ prms.fams.df %>%
          deltaAICc = signif(AICc - min(AICc), 3),
          deltaBIC = signif(BIC - min(BIC), 3),
          data = "fam") %>% 
-  full_join(., popfam.BIC %>% 
+  full_join(., popfam.IC %>% 
   filter(., data == "pop")) -> comp.fams
 
 comp.fams %>% 
@@ -453,19 +453,19 @@ comp.fams %>%
 ```{r}
 
 # Get the multi-distribution model fit
-popfam.BIC %>% 
+popfam.IC %>% 
   dplyr::filter(., data != "pop" & deltaBIC == 0) %>% 
   ungroup() %>% 
   summarise(BIC = log(sum(n))*sum(kpars) - 2 * sum(loglik)) %>% 
   as.numeric() -> multi.BIC
 
-popfam.BIC %>% 
+popfam.IC %>% 
   dplyr::filter(., data != "pop" & deltaAIC == 0) %>% 
   ungroup() %>% 
   summarise(AIC = 2*(sum(kpars)) - 2*(sum(loglik))) %>% 
   as.numeric() -> multi.AIC
 
-popfam.BIC %>% 
+popfam.IC %>% 
   dplyr::filter(., data != "pop" & deltaAICc == 0) %>% 
   ungroup() %>% 
   summarise(AICc = 2*(sum(kpars)) - 2*(sum(loglik)) + (2* sum(kpars) * (sum(kpars)+1)/(sum(n)-sum(kpars)-1))) %>% 
@@ -483,6 +483,15 @@ comp.fams %>%
 ```
 
 Summary. As with individuals, the information criteria actually changes things a lot. With AIC and AICc, family level aggregation is a better descriptor of the data, no matter the distribution used, whereas in BIC it is the opposite and population level data is best for all distributions. However, the multidistribution approach, where each family is characterized by its own independent distribution and parameters, no matter the information criteria, this one comes with the lowest value, making the multidistribution approach the best for characterizing the data. 
+
+```{r}
+# Save parameters
+
+saveRDS(popfam.IC, file = "data/popfamICprms.RDS")
+saveRDS(popind.IC, file = "data/popindICprms.RDS")
+
+```
+
 
 
 # References 
