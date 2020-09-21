@@ -2,7 +2,6 @@
 # First step is to generate Gut retention times from gamma distribution to get maximum GRT and that is our simulation time
 
 # Our simulations are with 100 seeds
-nseeds <- 100
 
 gen_gut_ret_time <- function(nseeds){
   gut_retention_time <- rgamma(nseeds, shape = 4, scale = 5) + 8
@@ -23,7 +22,7 @@ gen_gut_ret_time <- function(nseeds){
 gen_movement_data <- function(params, sim_time){
   exp_move <- rexp(sim_time, rate = params$estimate[which(params$dist == "exp")])
 
-  gam_move <- rgamma(sim_time, shape = params$estimate[which(param$dist == "gamma") & params$param == "shape"], rate = params$estimate[which(params$dist == "gamma" & params$param == "rate")])
+  gam_move <- rgamma(sim_time, shape = params$estimate[which(params$dist == "gamma") & params$param == "shape"], rate = params$estimate[which(params$dist == "gamma" & params$param == "rate")])
 
   weib_move <- rweibull(sim_time, shape = params$estimate[which(params$dist == "weibull" & params$param == "shape")], scale = params$estimate[which(params$dist == "weibull" & params$param == "scale")])
 
@@ -68,8 +67,6 @@ gen_seed_dispersal <- function(distance = NULL,
 main_simulation <- function(nseeds = NULL,
                             params = NULL){
 
-  # Generate GRT and get the simulation time
-  #nseeds <- 10
   grt <- gen_gut_ret_time(nseeds)
   sim_time <- max(grt$time)
 
@@ -111,87 +108,135 @@ library(fitdistrplus)
 # I need to set a seed
 set.seed(192)
 
-popParams <- readRDS("appendixA/popindprms.RDS")
+popind <- readRDS("appendixA/popindprms.RDS")
 
-# we will do 12,000 runs to start
+
+# Population level
 popSims <- vector("list", 12000)
 for(i in 1:length(popSims)){
-  popSims[[i]] <- main_simulation(nseeds = 5, params = popParams)
+  popSims[[i]] <- main_simulation(nseeds = 5, params = popind %>%
+                                    dplyr::filter(data == "pop"))
 }
 
-saveRDS(popSims, "output/populationSims.RDS")
+saveRDS(popSims, "appendixA/populationSims.RDS")
 
 # These is the data for each seed that got dispersed
 # Since there are 5 seeds in each run, with 4 models, each run gets 20 distances
-popSeed_data <- get_seed_disp_info(popSims)
+popSeed_data <- get_seed_disp_info(popSims) %>%
+  mutate(data = "pop")
 
 ggplot(popSeed_data, aes(x = model, y = dispersal)) +
   geom_boxplot()
 
+popSeed_data %>%
+  #dplyr::filter(., dispersal > 500) %>%
+  ggplot(., aes(x = dispersal, color = model)) +
+  facet_grid(~model) +
+  geom_line(stat = "density", lwd = 1) +
+  #geom_line(aes(x = dist, group = id), stat = "density", alpha = 0.4) +
+  geom_vline(xintercept = 0, color = "grey") +
+  #geom_hline(yintercept = 0, color = "grey") +
+  #ylim(0, 0.05) +
+  labs(title = "Population") +
+  #scale_x_log10() +
+  theme_classic()
+
 
 # Individual level simulation ---------------------------------------------
 
-indParams <- readRDS("output/ind_lev_fit_params.RDS")
-
-
-indSim_fx <- function(paramList){
+indSim_fx <- function(paramList, individual){
   sims <- vector("list", 1000)
   for(i in 1:length(sims)){
-    sims[[i]] <- main_simulation(nseeds = 5, params = paramList)
+    sims[[i]] <- main_simulation(nseeds = 5, params = paramList %>%
+                                   dplyr::filter(., data == individual))
   }
   return(sims)
 }
 
+IDs <- unique(popind$data)[2:13]
 
-indSims <- indParams %>%
-  mutate(simulation = map(pars, indSim_fx),
-         dispersal = map(simulation, get_seed_disp_info))
+indSeed_data <- NULL
+indSims <- vector("list", 12)
+for(i in 1:12){
+  a <- indSim_fx(paramList = popind, individual = IDs[i])
 
-saveRDS(indSims, "output/individualSims.RDS")
+  b <- get_seed_disp_info(a) %>%
+    mutate(data = IDs[i])
 
+  indSeed_data <- rbind(indSeed_data, b)
 
-indSeed_data <- indSims %>%
-  dplyr::select(., Bird_ID, dispersal) %>%
-  unnest(cols = c(dispersal))
+  indSims[[i]] <- a
+}
 
-all_seed_data <- rbind.data.frame(data.frame(popSeed_data, type = "population"),
-                                  data.frame(indSeed_data[,2:3], type = "individual"))
+indSims <- setNames(indSims, IDs)
 
-saveRDS(all_seed_data, file = "output/all_seed_data.RDS")
-
-# To visualize this, check the Rmd 05.
-
-# Quick workaround with the mixed model output
-# Trying this and hopefully it's not wrong.
-# Can I use the same information from the simulations before, but instead of taking the data from each individual based on a common distribution fit, I take the data from the best distribution?
-
-# Load the AIC and BIC for each fitting for each individual
-# These information criteria things come from the Rmd03
-info_criteria_indiv <- readRDS("output/mixed_model_info_crit.RDS")
-
-info_criteria_indiv %>%
-  filter(deltaAIC == 0) %>%
-  transmute(model = paste0(Bird_ID, str_replace(distribution, "_fit", "_move"))) -> aic_keep
-
-indSeed_data %>%
-  mutate(keep = paste0(Bird_ID, model)) %>%
-  filter(., keep %in% aic_keep$model) %>%
-  mutate(IC = "AIC") -> aic_mixed_distances
-
-info_criteria_indiv %>%
-  filter(deltaBIC == 0) %>%
-  transmute(model = paste0(Bird_ID, str_replace(distribution, "_fit", "_move"))) -> bic_keep
-
-indSeed_data %>%
-  mutate(keep = paste0(Bird_ID, model)) %>%
-  filter(., keep %in% bic_keep$model) %>%
-  mutate(IC = "BIC") -> bic_mixed_distances
-
-mixed_model_seed_data <- rbind.data.frame(aic_mixed_distances, bic_mixed_distances)
-
-saveRDS(mixed_model_seed_data, file = "output/seed_data_mixed_model.RDS")
+saveRDS(indSims, "appendixA/individualSims.RDS")
 
 
+seed_dispersal_popind <- rbind.data.frame(popSeed_data, indSeed_data)
+
+saveRDS(seed_dispersal_popind, file = "appendixA/seed_dispersal_popind.RDS")
 
 
+#### Family level
+
+popfam <- readRDS("appendixA/popfamprms.RDS")
+
+
+# Population level
+popSims.fam <- vector("list", 100)
+for(i in 1:length(popSims.fam)){
+  popSims.famm[[i]] <- main_simulation(nseeds = 5, params = popfam %>%
+                                    dplyr::filter(data == "pop"))
+}
+
+saveRDS(popSims, "appendixA/populationSims_family.RDS")
+
+# These is the data for each seed that got dispersed
+# Since there are 5 seeds in each run, with 4 models, each run gets 20 distances
+popSeed_data_fam <- get_seed_disp_info(popSims.fam) %>%
+  mutate(data = "pop")
+
+ggplot(popSeed_data_fam, aes(x = model, y = dispersal)) +
+  geom_boxplot()
+
+popSeed_data_fam %>%
+  #dplyr::filter(., dispersal > 500) %>%
+  ggplot(., aes(x = dispersal, color = model)) +
+  facet_grid(~model) +
+  geom_line(stat = "density", lwd = 1) +
+  #geom_line(aes(x = dist, group = id), stat = "density", alpha = 0.4) +
+  geom_vline(xintercept = 0, color = "grey") +
+  #geom_hline(yintercept = 0, color = "grey") +
+  #ylim(0, 0.05) +
+  labs(title = "Population") +
+  #scale_x_log10() +
+  theme_classic()
+
+
+# Individual level simulation ---------------------------------------------
+
+IDs_fam <- unique(popfam$data)[2:7]
+
+famSeed_data <- NULL
+famSims <- vector("list", 6)
+for(i in 1:6){
+  a <- indSim_fx(paramList = popind, individual = IDs_fam[i])
+
+  b <- get_seed_disp_info(a) %>%
+    mutate(data = IDs_fam[i])
+
+  famSeed_data <- rbind(famSeed_data, b)
+
+  famSims[[i]] <- a
+}
+
+famSims <- setNames(famSims, IDs)
+
+saveRDS(famSims, "appendixA/familySims.RDS")
+
+
+seed_dispersal_popfam <- rbind.data.frame(popSeed_data_fam, famSeed_data)
+
+saveRDS(seed_dispersal_popfam, file = "appendixA/seed_dispersal_popfam.RDS")
 
