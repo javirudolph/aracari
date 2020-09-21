@@ -185,7 +185,7 @@ inds.models.data%>%
 
 
 ## Information criteria assessment of individual level distribution fits
-Need to add the description here of how we calculated these information criteria and the reasoning as to why we decided to go with just the BIC, because of Jose's paper. Explain here what the mixed distribution model means, vs the others that use one distribution but allow variation in the parameters.
+Need to add the description here of how we calculated these information criteria and the reasoning as to why we decided to go with just the BIC, because of Jose's paper. Explain here what the mixed distribution model means, vs the others that use one distribution but allow variation in the parameters. 
 
 ```{r}
 all_indiv_prms <- prms.df %>% 
@@ -210,10 +210,279 @@ prms.df %>%
   mutate(deltaBIC = signif(BIC - min(BIC), 3),
          deltaAIC = signif(AIC - min(AIC), 3),
          deltaAICc = signif(AICc - min(AICc), 3)) -> popind.IC
+
+```
+
+```{r}
+popind.IC %>% 
+  pivot_longer(., cols = starts_with("delta"), names_to = "ic", values_to = "value") %>% 
+  ggplot(., aes(x = ic, y = value, color = dist)) +
+  geom_point() +
+  facet_wrap(~data, scales = "free")
 ```
 
 
+```{r}
+prms.df %>% 
+  filter(., data != "pop") %>%
+  dplyr::select(., loglik, n, dist) %>% 
+  distinct() %>%
+  mutate(kpars = ifelse(dist == "exp", 1, 2)) %>% 
+  group_by(dist) %>% 
+  summarise(BIC = log(sum(n))*sum(kpars) - 2 * sum(loglik), 
+            AIC = 2*(sum(kpars)) - 2*(sum(loglik)),
+            AICc = 2*(sum(kpars)) - 2*(sum(loglik)) + (2* sum(kpars) * (sum(kpars)+1)/(sum(n)-sum(kpars)-1))) %>%
+    mutate(deltaAIC = signif(AIC - min(AIC), 3),
+         deltaAICc = signif(AICc - min(AICc), 3),
+         deltaBIC = signif(BIC - min(BIC), 3),
+         data = "ind") %>% 
+  full_join(., popind.IC %>% 
+  filter(., data == "pop")) -> popind.IC.comp
 
+```
+
+
+```{r}
+prms.df %>% 
+  mutate(fit.param = paste(dist, param)) %>% 
+  ggplot(., aes(x = data, y = estimate, color = dist)) +
+  facet_wrap(~fit.param, scales = "free") +
+  geom_point() +
+  geom_errorbar(aes(ymin = estimate - sd, ymax = estimate + sd)) +
+  theme(legend.position = "none")
+```
+
+
+```{r}
+popind.IC.comp %>% 
+  pivot_longer(., cols = starts_with("delta"), names_to = "ic", values_to = "value") %>% 
+  ggplot(., aes(x = ic, y = value, color = dist)) +
+  geom_point() +
+  facet_wrap(~data, scales = "free")
+```
+
+```{r}
+
+# Get the multi-distribution model fit
+popind.IC %>% 
+  dplyr::filter(., data != "pop" & deltaBIC == 0) %>% 
+  ungroup() %>% 
+  summarise(BIC = log(sum(n))*sum(kpars) - 2 * sum(loglik)) %>% 
+  as.numeric() -> multi.BIC
+
+popind.IC %>% 
+  dplyr::filter(., data != "pop" & deltaAIC == 0) %>% 
+  ungroup() %>% 
+  summarise(AIC = 2*(sum(kpars)) - 2*(sum(loglik))) %>% 
+  as.numeric() -> multi.AIC
+
+popind.IC %>% 
+  dplyr::filter(., data != "pop" & deltaAICc == 0) %>% 
+  ungroup() %>% 
+  summarise(AICc = 2*(sum(kpars)) - 2*(sum(loglik)) + (2* sum(kpars) * (sum(kpars)+1)/(sum(n)-sum(kpars)-1))) %>% 
+  as.numeric()-> multi.AICc
+
+popind.IC.comp %>% 
+  dplyr::select(., dist, BIC, AIC, AICc, data) %>% 
+  bind_rows(., data.frame(dist = "multi", BIC = multi.BIC, AIC = multi.AIC, AICc = multi.AICc, data = "multi")) %>%
+  pivot_longer(., cols = starts_with(c("BIC", "AIC")), names_to = "ic", values_to = "value") %>% 
+  ggplot(., aes(x = dist, y = value, color = data)) +
+  geom_point() +
+  facet_wrap(~ic, scales = "free") +
+  theme(axis.text.x = element_text(angle = 90))
+
+```
+
+Summary: When comparing population vs individual level fits, at the population level, the lognormal distribution fits the data better, and at the individual level it is the exponential distribution. When we focus only on the individual level fits, which distribution fits best depends on the information criteria considered, although most of the individuals are properly characterized by an exponential or lognormal distribution. What we consider as the multi distribution, it is a multi-distribution probability fit to the data in which we have allowed not only the parameters but also the shape of the distribution to vary between individuals. This means that each individual can be characterized by a different distribution and different parameters. In the case of AIC and AICc, this probability approach works best for the data, however when considering BIC, the lognormal fit is best, and the mixed distribution approach ties with a weibull distribution at population level. Using BIC, a population level modeling approach is the best.
+
+# Population vs Family
+
+## Population level - restricted
+Keep in mind that the family level data is reduced because some individuals had unknown family groups and therefore are not included in this analysis.This means that we cannot directly compare distribution fits from family level aggregation with that of individuals. To make a comparisson with the population, we need to keep only data points for which we have family information
+
+```{r}
+fams.df <- df %>% 
+  dplyr::filter(., fam_g != "unknown")
+
+fams <- paste0("f", 1:6)
+
+pop.fams <- lapply(dist.used, function(x){fitdist(fams.df$mpm, distr = x)})
+qqcomp(pop.fams, plotstyle = "ggplot") +
+  coord_equal() +
+  geom_point(shape = 16, alpha = 0.5)
+
+prms.fams.df <- build.fits.df(pop.fams) %>% 
+  mutate(param = param,
+         dist = dist,
+         data = "pop")
+
+```
+## Family level
+
+ 
+
+```{r}
+
+for(i in 1:length(fams)){
+  fit.df <- fams.df %>% 
+    dplyr::filter(., fam_g == fams[i])
+  
+  fit <- lapply(dist.used, function(x){fitdist(fit.df$mpm, distr = x)})
+  
+  assign(paste(fams[i]), fit)
+  
+  fit.prms <- build.fits.df(fit) %>% 
+  mutate(param = param,
+         dist = dist,
+         data = fams[i])
+  
+  prms.fams.df <- bind_rows(prms.fams.df, fit.prms)
+  
+}
+
+```
+
+
+Evaluate via qqplots
+```{r}
+
+fams.models.data <- NULL
+fams.models <- list(f1, f2, f3, f4, f5, f6)
+
+for(i in 1:6){
+  x <- fams.models[[i]]
+  
+  qqdata <- qqcomp(x, plotstyle = "ggplot")$data %>% 
+    mutate(data = fams[i])
+  names(qqdata) <- c("theoretical", "fdist", "empirical", "fam.group")
+  fams.models.data <- bind_rows(fams.models.data, qqdata)
+}
+
+fams.models.data%>% 
+  ggplot(., aes(x = theoretical, y = empirical, color = fdist)) +
+  facet_wrap(~fam.group)+
+    geom_point(cex = 2, alpha = 0.6) +
+    geom_abline(intercept = 0, slope = 1) +
+    labs(x = "Model Quantiles",
+         y = "Empirical Quantiles") +
+  #scale_color_viridis_d() + 
+  theme(legend.position = "top") +
+  guides(color = guide_legend(title = "Distribution")) +
+  coord_equal()
+
+```
+```{r}
+all_fam_prms <- prms.fams.df %>% 
+  mutate(kpars = ifelse(dist == "exp", 1, 2),
+         BIC = log(n)*kpars - 2*loglik,
+         AIC = 2*kpars - 2*loglik,
+         AICc = AIC + (2* kpars * (kpars+1)/(n-kpars-1))) %>% 
+  group_by(data) %>% 
+  mutate(deltaBIC = signif(BIC - min(BIC), 3),
+         deltaAIC = signif(AIC - min(AIC), 3),
+         deltaAICc = signif(AICc - min(AICc), 3))
+```
+
+```{r}
+prms.fams.df %>% 
+  mutate(fit.param = paste(dist, param)) %>% 
+  ggplot(., aes(x = data, y = estimate, color = dist)) +
+  facet_wrap(~fit.param, scales = "free") +
+  geom_point() +
+  geom_errorbar(aes(ymin = estimate - sd, ymax = estimate + sd)) +
+  theme(legend.position = "none")
+```
+
+
+## Calculate BIC for comparisons
+
+```{r fig.height=6}
+prms.fams.df %>% 
+  dplyr::select(., loglik, n, dist, data) %>% 
+  distinct() %>% 
+  mutate(kpars = ifelse(dist == "exp", 1, 2),
+         BIC = log(n)*kpars - 2*loglik,
+         AIC = 2*kpars - 2*loglik,
+         AICc = AIC + (2* kpars * (kpars+1)/(n-kpars-1))) %>% 
+  group_by(data) %>% 
+  mutate(deltaBIC = signif(BIC - min(BIC), 3),
+         deltaAIC = signif(AIC - min(AIC), 3),
+         deltaAICc = signif(AICc - min(AICc), 3)) -> popfam.BIC
+
+popfam.BIC %>% 
+  pivot_longer(., cols = starts_with("delta"), names_to = "ic", values_to = "value") %>% 
+  ggplot(., aes(x = ic, y = value, color = dist)) +
+  geom_point() +
+  facet_wrap(~data, scales = "free")
+
+
+```
+
+Calculate BIC for the model at the family level
+```{r}
+prms.fams.df %>% 
+  filter(., data != "pop") %>%
+  dplyr::select(., loglik, n, dist) %>% 
+  distinct() %>%
+  mutate(kpars = ifelse(dist == "exp", 1, 2)) %>% 
+  group_by(dist) %>% 
+  summarise(BIC = log(sum(n))*sum(kpars) - 2 * sum(loglik), 
+            AIC = 2*(sum(kpars)) - 2*(sum(loglik)),
+            AICc = 2*(sum(kpars)) - 2*(sum(loglik)) + (2* sum(kpars) * (sum(kpars)+1)/(sum(n)-sum(kpars)-1))) %>%
+    mutate(deltaAIC = signif(AIC - min(AIC), 3),
+         deltaAICc = signif(AICc - min(AICc), 3),
+         deltaBIC = signif(BIC - min(BIC), 3),
+         data = "fam") %>% 
+  full_join(., popfam.BIC %>% 
+  filter(., data == "pop")) -> comp.fams
+
+comp.fams %>% 
+  pivot_longer(., cols = starts_with("delta"), names_to = "ic", values_to = "value") %>% 
+  ggplot(., aes(x = ic, y = value, color = dist)) +
+  geom_point() +
+  facet_wrap(~data, scales = "free")
+
+comp.fams %>% 
+  pivot_longer(., cols = starts_with(c("BIC", "AIC")), names_to = "ic", values_to = "value") %>% 
+  ggplot(., aes(x = dist, y = value, color = data)) +
+  geom_point() +
+  facet_wrap(~ic, scales = "free")
+
+  
+```
+```{r}
+
+# Get the multi-distribution model fit
+popfam.BIC %>% 
+  dplyr::filter(., data != "pop" & deltaBIC == 0) %>% 
+  ungroup() %>% 
+  summarise(BIC = log(sum(n))*sum(kpars) - 2 * sum(loglik)) %>% 
+  as.numeric() -> multi.BIC
+
+popfam.BIC %>% 
+  dplyr::filter(., data != "pop" & deltaAIC == 0) %>% 
+  ungroup() %>% 
+  summarise(AIC = 2*(sum(kpars)) - 2*(sum(loglik))) %>% 
+  as.numeric() -> multi.AIC
+
+popfam.BIC %>% 
+  dplyr::filter(., data != "pop" & deltaAICc == 0) %>% 
+  ungroup() %>% 
+  summarise(AICc = 2*(sum(kpars)) - 2*(sum(loglik)) + (2* sum(kpars) * (sum(kpars)+1)/(sum(n)-sum(kpars)-1))) %>% 
+  as.numeric()-> multi.AICc
+
+comp.fams %>% 
+  dplyr::select(., dist, BIC, AIC, AICc, data) %>% 
+  bind_rows(., data.frame(dist = "multi", BIC = multi.BIC, AIC = multi.AIC, AICc = multi.AICc, data = "multi")) %>% 
+  pivot_longer(., cols = starts_with(c("BIC", "AIC")), names_to = "ic", values_to = "value") %>% 
+  ggplot(., aes(x = dist, y = value, color = data)) +
+  geom_point() +
+  facet_wrap(~ic, scales = "free") +
+  theme(axis.text.x = element_text(angle = 90))
+
+```
+
+Summary. As with individuals, the information criteria actually changes things a lot. With AIC and AICc, family level aggregation is a better descriptor of the data, no matter the distribution used, whereas in BIC it is the opposite and population level data is best for all distributions. However, the multidistribution approach, where each family is characterized by its own independent distribution and parameters, no matter the information criteria, this one comes with the lowest value, making the multidistribution approach the best for characterizing the data. 
 
 
 # References 
