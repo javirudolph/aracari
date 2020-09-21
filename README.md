@@ -9,6 +9,12 @@
 
 The goal of aracari is to …
 
+Access the
+[paper](https://javirudolph.github.io/aracari/paper/paper.html), and
+[appendixA](https://javirudolph.github.io/aracari/appendixA/appendixA.html)
+
+-----
+
 ## Installation
 
 You can install the released version of aracari from
