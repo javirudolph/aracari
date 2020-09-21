@@ -184,7 +184,7 @@ popfam <- readRDS("appendixA/popfamprms.RDS")
 
 
 # Population level
-popSims.fam <- vector("list", 100)
+popSims.fam <- vector("list", 6000)
 for(i in 1:length(popSims.fam)){
   popSims.famm[[i]] <- main_simulation(nseeds = 5, params = popfam %>%
                                     dplyr::filter(data == "pop"))
@@ -215,13 +215,21 @@ popSeed_data_fam %>%
 
 
 # Individual level simulation ---------------------------------------------
+famSim_fx <- function(paramList, family_group){
+  sims <- vector("list", 6000)
+  for(i in 1:length(sims)){
+    sims[[i]] <- main_simulation(nseeds = 5, params = paramList %>%
+                                   dplyr::filter(., data == family_group))
+  }
+  return(sims)
+}
 
 IDs_fam <- unique(popfam$data)[2:7]
 
 famSeed_data <- NULL
 famSims <- vector("list", 6)
 for(i in 1:6){
-  a <- indSim_fx(paramList = popind, individual = IDs_fam[i])
+  a <- famSim_fx(paramList = popfam, family_group = IDs_fam[i])
 
   b <- get_seed_disp_info(a) %>%
     mutate(data = IDs_fam[i])
