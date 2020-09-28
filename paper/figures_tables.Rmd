@@ -1,0 +1,130 @@
+---
+title: "Figures and Tables"
+subtitle: " "
+output:
+  html_document:
+      toc: true
+bibliography: "../paper/mybibfile.bib"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE, results = 'hide')
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(purrr)
+library(fitdistrplus)
+library(ggpubr)
+
+theme_set(theme_bw())
+```
+
+```{r functions}
+
+
+# Extract parameters from fitted distributions to the data
+build.fits.df <- function(x){
+
+  nm <- deparse(substitute(x))
+
+  x %>%
+  map(., `[`, c("estimate", "sd", "loglik", "n")) %>%
+  map(as_tibble) %>%
+  bind_rows()
+}
+
+
+```
+
+The way we are fitting the data can be visualized as follows, where each curve represents the population, an individual, or a family group:
+
+```{r data}
+# Get the data loaded. We are removing the one value with zero since it won't allow fitting.
+
+load("data/newpointlocs.rda")
+
+df <- newpointlocs %>%
+  dplyr::filter(mpm != 0) %>%
+  ungroup() %>%
+  mutate(Bird_ID = paste0("B", Bird_ID),
+         sqR2n = sqrt(R2n)) %>%
+  group_by_("id", "burst") %>%
+  mutate(cumdt = cumsum(dt)/60) %>%
+  ungroup()
+```
+
+
+```{r fig.width=10}
+pop_dens_plot <- df %>%
+  ggplot(., aes(x = mpm)) +
+  geom_line(stat = "density", color = "grey", lwd = 1) +
+  #geom_line(aes(x = dist, group = id), stat = "density", alpha = 0.4) +
+  geom_vline(xintercept = 0, color = "grey") +
+  geom_hline(yintercept = 0, color = "grey") +
+  ylim(0, 0.05) +
+  labs(title = "Population") +
+  theme_classic()
+
+ind_dens_plot <- df %>%
+  ggplot(., aes(x = mpm)) +
+  geom_line(stat = "density", color = "red", lwd = 1) +
+  geom_line(aes(x = mpm, group = id), stat = "density", alpha = 0.4) +
+  geom_vline(xintercept = 0, color = "grey") +
+  geom_hline(yintercept = 0, color = "grey") +
+  ylim(0, 0.055) +
+  labs(title = "Individual") +
+  theme_classic()
+
+
+fam_dens_plot <- df %>%
+  filter(., fam_g != "unknown") %>%
+  ggplot(., aes(x = mpm)) +
+  geom_line(stat = "density", color = "red", lwd = 1) +
+  geom_line(aes(x = mpm, group = fam_g), stat = "density", alpha = 0.4) +
+  geom_vline(xintercept = 0, color = "grey") +
+  geom_hline(yintercept = 0, color = "grey") +
+  ylim(0, 0.055) +
+  labs(title = "Family") +
+  theme_classic()
+
+fam_zoom <- fam_dens_plot +
+  coord_cartesian(ylim = c(0, 0.01), xlim = c(50, 210))
+
+```
+
+```{r}
+
+ind_zoom <- ind_dens_plot +
+  coord_cartesian(
+    ylim = c(0, 0.01),
+    xlim = c(60, 180))
+
+ind_grob <- ggplotGrob(ind_zoom)
+
+ind_dens_plot +
+  annotation_custom(grob = ind_grob, xmin = 50 , xmax = 200 , ymin = 0.02 , ymax = 0.05)
+```
+
+
+
+```{r}
+
+fam_zoom <- fam_dens_plot +
+  coord_cartesian(
+    ylim = c(0, 0.01),
+    xlim = c(50, 210))
+
+
+fam_dens_plot +
+  annotation_custom(grob = ggplotGrob(fam_zoom), xmin = 50 , xmax = 200 , ymin = 0.02 , ymax = 0.05)
+```
+
+
+
+```{r}
+ggarrange(ind_dens_plot, fam_dens_plot, nrow = 2)
+```
