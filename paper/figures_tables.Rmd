@@ -128,3 +128,69 @@ fam_dens_plot +
 ```{r}
 ggarrange(ind_dens_plot, fam_dens_plot, nrow = 2)
 ```
+
+
+Movement rates, from Kimberly's paper, is the average number of meters moved per minute over the entire tracking period
+
+```{r}
+newpointlocs %>% 
+  group_by(id, burst) %>% 
+  summarise(rate = mean(mpm)) %>% 
+  ggplot(., aes(x = rate)) +
+  facet_wrap(~id, nrow = 3)+
+  #geom_line(stat = "density", color = "red", lwd = 1) +
+  geom_line(aes(x = rate, group = id), stat = "density", alpha = 0.4) +
+  geom_vline(xintercept = 0, color = "grey") +
+  geom_hline(yintercept = 0, color = "grey") +
+  ylim(0, 0.055) +
+  labs(title = "Movement rates") +
+  theme_classic()
+  
+```
+
+Important to keep in mind I could do movement rates or net squared displacement.
+
+```{r}
+
+# I just added this. If I wanted to work with movement rates instead: which are the average number of meters moved over the tracking period. I consider period here as the burst. But I am also unclear about what the entire tracking period is here. 
+
+newpointlocs %>% 
+# mydata %>%
+#   add_count(Bird_ID) %>%
+  group_by(id, burst) %>% 
+  summarise(mov_rate = mean(mpm)) %>% 
+  add_count(id) -> mov_rate_test
+
+mov_rate_test %>% 
+  ggplot(., aes(x = id, y = mov_rate)) +
+  geom_boxplot()
+
+mov_rate_test %>% 
+  ggplot(., aes(x = mov_rate, group = id)) +
+  facet_wrap(~id) +
+  geom_density()
+
+mov_rate_test %>%
+  ggplot(., aes(x = mov_rate)) +
+  geom_line(stat = "density", color = "red", lwd = 1) +
+  geom_line(aes(x = mov_rate, group = id), stat = "density", alpha = 0.4) +
+  geom_vline(xintercept = 0, color = "grey") +
+  geom_hline(yintercept = 0, color = "grey") +
+  #ylim(0, 0.055) +
+  labs(title = "Movement rate") +
+  theme_classic()
+  
+
+newpointlocs %>%
+# mydata %>%
+#   add_count(Bird_ID) %>%
+  group_by(id) %>% 
+  summarise(mov_rate_all = mean(mpm)) -> all_mov_rate
+
+
+summary(all_mov_rate$mov_rate_all)
+mean(all_mov_rate$mov_rate_all)
+sd(all_mov_rate$mov_rate_all)
+
+```
+
