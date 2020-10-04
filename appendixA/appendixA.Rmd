@@ -213,10 +213,10 @@ plot_grid(a,b, rel_widths = c(1,2), labels = "AUTO")
 ```
 
 
-## Assessment of probability distribution parameters
+## Probability distribution parameters
 We can compare the different parameter values estimated for each distribution and their standard deviations. These parameters can give us some insight into some of the characteristics of each set of distances moved per minute, such as which individuals have higher means or longer tails in the distribution of their distances moved per minute.
 
-```{r}
+```{r fig.height=10, fig.width=8}
 
 prms.df %>% 
   mutate(param = str_to_upper(param), 
@@ -233,45 +233,65 @@ plot_params <- function(prm_data){
   filter(., data == "POP") %>% 
   dplyr::select(., estimate, sd) -> pop_est
   
-  title <- paste(dist, param)
+  title <- paste(prm_data$dist, prm_data$param)
   
   prm_data %>% 
     filter(data != "POP") %>% 
     ggplot(., aes(x = data, y = estimate)) +
-    facet_grid(dist~param, switch = "y", scales = "free") +
+    #facet_grid(dist~param, switch = "y", scales = "free") +
     # geom_point() +
     # geom_errorbar(aes(ymin = estimate - sd, ymax = estimate + sd))+
     geom_pointrange(aes(ymin = estimate - sd, ymax = estimate + sd)) +
     geom_hline(aes(yintercept = pop_est$estimate), color = "blue") +
     geom_hline(aes(yintercept = pop_est$estimate + pop_est$sd), color = "blue", linetype = "dashed") +
     geom_hline(aes(yintercept = pop_est$estimate - pop_est$sd), color = "blue", linetype = "dashed") +
-    labs(x = "", y = "Estimate") +
-    theme(legend.position = "none")
+    labs(x = "", y = "", subtitle = title) +
+    theme(legend.position = "none",
+          axis.text.x = element_text(angle = 45))
 }
 
 
+nice_prms %>% 
+  filter(., dist == "Exponential") %>% 
+  plot_params() +
+  #theme(axis.text.x = element_blank()) +
+  NULL-> p1
 
-prm_data %>% 
-    filter(data != "POP") %>% 
-    ggplot(., aes(x = data, y = estimate)) +
-    facet_grid(dist~param, switch = "y", scales = "free_y") +
-    # geom_point() +
-    # geom_errorbar(aes(ymin = estimate - sd, ymax = estimate + sd))+
-    geom_pointrange(aes(ymin = estimate - sd, ymax = estimate + sd)) +
-    geom_hline(aes(yintercept = pop_est$estimate), color = "blue") +
-    geom_hline(aes(yintercept = pop_est$estimate + pop_est$sd), color = "blue", linetype = "dashed") +
-    geom_hline(aes(yintercept = pop_est$estimate - pop_est$sd), color = "blue", linetype = "dashed") +
-    labs(x = "", y = "Estimate") +
-    theme(legend.position = "none")
+nice_prms %>% 
+  filter(., dist == "Gamma" & param == "SHAPE") %>% 
+  plot_params() +
+  #theme(axis.text.x = element_blank()) +
+  NULL -> p2
+
+nice_prms %>% 
+  filter(., dist == "Gamma" & param == "RATE") %>% 
+  plot_params() +
+  #theme(axis.text.x = element_blank()) +
+  NULL -> p3
+
+nice_prms %>% 
+  filter(., dist == "Weibull" & param == "SHAPE") %>% 
+  plot_params() +
+  #theme(axis.text.x = element_blank()) +
+  NULL-> p4
+
+nice_prms %>% 
+  filter(., dist == "Weibull" & param == "SCALE") %>% 
+  plot_params() +
+  #theme(axis.text.x = element_blank()) +
+  NULL-> p5
+
+nice_prms %>% 
+  filter(., dist == "Lognormal" & param == "MEANLOG") %>% 
+  plot_params() -> p6
+
+nice_prms %>% 
+  filter(., dist == "Lognormal" & param == "SDLOG") %>% 
+  plot_params() ->p7
 
 
-prms.df %>% 
-  mutate(fit.param = paste(dist, param)) %>% 
-  ggplot(., aes(x = data, y = estimate, color = dist)) +
-  facet_wrap(~fit.param, scales = "free_y") +
-  geom_point() +
-  geom_errorbar(aes(ymin = estimate - sd, ymax = estimate + sd)) +
-  theme(legend.position = "none")
+plot_grid(p1, NULL, p2, p3, p4, p5, p6, p7, ncol = 2, align = "v")
+
 
 ```
 
