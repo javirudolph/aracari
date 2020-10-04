@@ -24,8 +24,10 @@ library(dplyr)
 library(ggplot2)
 library(tidyr)
 library(purrr)
+library(stringr)
 library(fitdistrplus)
-library(ggpubr)
+library(cowplot)
+library(RColorBrewer)
 
 theme_set(theme_bw())
 ```
@@ -59,10 +61,10 @@ dist <- c("exp", "gamma", "gamma", "weibull", "weibull", "lnorm", "lnorm")
 
 Density plots showing variation in biological classification levels, where the red line shows the density plot for what we consider the population (all the data together), and grey lines show individuals (left) or family groups (right).
 
-```{r fig.width=12, fig.height=5}
+```{r fig.width=12, fig.height=4}
 
 zoom_dims <- c(110, 210, 0, 0.01)
-annot_xy <- c(50, 250, 0.02, 0.04)
+annot_xy <- c(50, 250, 0.025, 0.045)
   
 ind_dens_plot <- df %>%
   ggplot(., aes(x = mpm)) +
@@ -86,7 +88,7 @@ ind_dens_plot +
   theme(title = element_blank()) -> ind_zoom
 
 ind_dens_plot +
-  annotation_custom(grob = ggplotGrob(ind_zoom), xmin = 50 , xmax = 250 , ymin = 0.02 , ymax = 0.04) -> a
+  annotation_custom(grob = ggplotGrob(ind_zoom), xmin = annot_xy[1] , xmax = annot_xy[2] , ymin = annot_xy[3] , ymax = annot_xy[4]) -> a
 
 
 fam_dens_plot <- df %>%
@@ -113,41 +115,37 @@ fam_dens_plot +
 
 
 fam_dens_plot +
-  annotation_custom(grob = ggplotGrob(fam_zoom), xmin = 100 , xmax = 200 , ymin = 0.02 , ymax = 0.05) -> b
+  annotation_custom(grob = ggplotGrob(fam_zoom), xmin = annot_xy[1] , xmax = annot_xy[2] , ymin = annot_xy[3] , ymax = annot_xy[4]) -> b
 
-ggarrange(a, b)
+plot_grid(a, b)
 
 ```
-We have chosen five common probability distributions, which are readily used in animal-mediated seed dispersal simulations. These are an exponential distribution [@jones_closing_2017], a gamma distribution, Weibull distribution [@morales_effects_2006], and lognormal distribution [@levey_effects_2005]. The goal of this project is to evaluate variation in movement and how that translates to differences in seed dispersal estimates. Our first comparisson is made between population level and individual level estimates. Not all individual birds had information on family group, therefore, for our second comparisson between population level and family level fits, we used a reduced dataset with only data from individual for which we had family group information. We assessed fits visually through QQ plots.
+We have chosen five common probability distributions, which are readily used in animal-mediated seed dispersal simulations. These are an exponential distribution [@jones_closing_2017], a gamma distribution, Weibull distribution [@morales_effects_2006], and Log-normal distribution [@levey_effects_2005].  The goal of this project is to evaluate variation in movement and how that translates to differences in seed dispersal estimates. Our first comparison is made between population level and individual level estimates. Not all individual birds had information on family group, therefore, for our second comparison between population level and family level fits, we used a reduced dataset with only data from individuals for which we had family group information. We assessed fits visually through QQ plots.
 
-# Population and Individual level comparissons 
+# Population and Individual level comparisons 
 
-At the population level analysis, we observe that the lognormal distribution has considerable overestimation of distances towards the tail. Although this is also worth noting in the QQ plots for individuals, not all of the individual have an overestimation, and for some other distributions seem to do a better job at characterizing the pattern. 
+At the population level analysis, we observe that the lognormal distribution has considerable overestimation of distances towards the tail. Although this is also worth noting in the QQ plots for individuals, not all of the individuals have an overestimation, and for some individuals, other distributions seem to do a better job at characterizing the pattern. 
 
-```{r poplevel, fig.height = 3}
+```{r}
+
+# Fit the four models for the population level data
 
 pop <- lapply(dist.used, function(x){fitdist(df$mpm, distr = x)})
 
-qqpop <- qqcomp(pop, plotstyle = "ggplot")
-  
-qqpop +
-  coord_equal() +
-  geom_point(shape = 16, alpha = 0.5) +
-  labs(title = "Population level QQ plot")
-  scale_color_viridis_d()
+# Get data for qqplot at population level
+qqpop <- qqcomp(pop, plotstyle = "ggplot")$data
+names(qqpop) <- c("theoretical", "fdist", "empirical")
 
+# Save the population level parameters
 prms.df <- aracari::build_fits_df(pop) %>% 
   mutate(param = param,
          dist = dist,
          data = "pop")
 
-```
-
-
-```{r}
+# Repeating the process for data at the individual level
 inds <- unique(as.character(df$Bird_ID))
-#inds
 
+# Fitting the four distributions for each individual and saving the parameters in a dataframe
 for(i in 1:length(inds)){
   fit.df <- df %>% 
     dplyr::filter(., Bird_ID == inds[i])
@@ -163,10 +161,9 @@ for(i in 1:length(inds)){
   
   prms.df <- bind_rows(prms.df, fit.prms)
 }
-```
 
-```{r fig.height=5}
 
+# Getting qqplot data for each individual
 inds.models.data <- NULL
 ind.models <- list(B1, B13, B19, B22, B28, B29, B3, B30, B49, B5, B7, B84)
 chr.models <- c("B1", "B13", "B19", "B22", "B28", "B29", "B3", "B30", "B49", "B5", "B7", "B84")
@@ -178,24 +175,89 @@ for(i in 1:12){
   names(qqdata) <- c("theoretical", "fdist", "empirical", "individual")
   inds.models.data <- bind_rows(inds.models.data, qqdata)
 }
+```
+
+```{r ind_QQplots, fig.width=12, fig.height=5}
+
+qqpop %>% 
+  mutate(individual = "POPULATION") %>% 
+  ggplot(., aes(x = theoretical, y = empirical, color = fdist)) +
+  facet_wrap(~individual) +
+  #coord_equal() +
+  geom_point(shape = 16, alpha = 0.8, size = 4) +
+  geom_abline(intercept = 0, slope = 1) +
+  labs(x = "Model Quantiles",
+         y = "Empirical Quantiles") +
+  #scale_color_viridis_d() +
+  scale_color_brewer(palette = "Spectral", name = "Distribution", labels = c("Exponential", "Gamma", "Weibull", "Lognormal")) +
+  theme(legend.position = c(0.8, 0.2)) +
+  NULL -> a
 
 inds.models.data%>% 
   ggplot(., aes(x = theoretical, y = empirical, color = fdist)) +
+  #facet_grid(individual~fdist) +
   facet_wrap(~individual)+
-    geom_point(cex = 2, alpha = 0.6) +
+    geom_point(shape = 16, alpha = 0.8, size = 3) +
     geom_abline(intercept = 0, slope = 1) +
     labs(x = "Model Quantiles",
          y = "Empirical Quantiles") +
-  scale_color_viridis_d() + 
-  theme(legend.position = "top") +
+  #scale_color_viridis_d() +
+  scale_color_brewer(palette = "Spectral") +
+  theme(legend.position = "none") +
   guides(color = guide_legend(title = "Distribution")) +
-  coord_equal()
-  
+  #coord_equal() +
+  NULL -> b
+
+plot_grid(a,b, rel_widths = c(1,2), labels = "AUTO")
 
 ```
 
 
-## Information criteria assessment of individual level distribution fits
+## Assessment of probability distribution parameters
+We can compare the different parameter values estimated for each distribution and their standard deviations. These parameters can give us some insight into some of the characteristics of each set of distances moved per minute, such as which individuals have higher means or longer tails in the distribution of their distances moved per minute.
+
+```{r}
+
+prms.df %>% 
+  mutate(param = str_to_upper(param), 
+         dist = str_replace(dist, "exp", "Exponential"),
+         dist = str_replace(dist, "gamma", "Gamma"),
+         dist = str_replace(dist, "weibull", "Weibull"),
+         dist = str_replace(dist, "lnorm", "Lognormal"),
+         data = str_replace(data, "pop", "POP")) -> nice_prms
+
+
+plot_params <- function(prm_data){
+  
+  prm_data%>% 
+  filter(., data == "POP") %>% 
+  dplyr::select(., estimate, sd) -> pop_est
+  
+  prm_data %>% 
+    filter(data != "POP") %>% 
+    ggplot(., aes(x = data, y = estimate)) +
+    facet_grid(dist~param, switch = "y") +
+    # geom_point() +
+    # geom_errorbar(aes(ymin = estimate - sd, ymax = estimate + sd))+
+    geom_pointrange(aes(ymin = estimate - sd, ymax = estimate + sd)) +
+    geom_hline(aes(yintercept = pop_est$estimate), color = "blue") +
+    geom_hline(aes(yintercept = pop_est$estimate + pop_est$sd), color = "blue", linetype = "dashed") +
+    geom_hline(aes(yintercept = pop_est$estimate - pop_est$sd), color = "blue", linetype = "dashed") +
+    labs(x = "", y = "Estimate") +
+    theme(legend.position = "none")
+}
+
+nice_prms %>% 
+  filter(., dist == "Exponential") %>% 
+  plot_params()
+
+nice_prms %>% 
+  filter(., dist == "Gamma" & data == "POP") %>% 
+  plot_params()
+
+
+```
+
 Need to add the description here of how we calculated these information criteria and the reasoning as to why we decided to go with just the BIC, because of Jose's paper. Explain here what the mixed distribution model means, vs the others that use one distribution but allow variation in the parameters. 
 
 ```{r}
@@ -253,15 +315,7 @@ prms.df %>%
 ```
 
 
-```{r}
-prms.df %>% 
-  mutate(fit.param = paste(dist, param)) %>% 
-  ggplot(., aes(x = data, y = estimate, color = dist)) +
-  facet_wrap(~fit.param, scales = "free") +
-  geom_point() +
-  geom_errorbar(aes(ymin = estimate - sd, ymax = estimate + sd)) +
-  theme(legend.position = "none")
-```
+
 
 
 ```{r}
