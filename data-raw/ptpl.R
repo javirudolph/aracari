@@ -1,4 +1,4 @@
-## code to prepare `newpointlocs` dataset goes here
+## code to prepare `ptpl` dataset goes here
 
 # Libraries needed
 library(adehabitatLT)
@@ -85,8 +85,8 @@ mydata <- ptpl %>%
 
 mydata %>%
   add_count(Bird_ID) %>%
-  filter(n >= 30) -> newpointlocs
+  filter(n >= 30) -> ptpl
 
 
 # Last Step -----------------------------
-usethis::use_data(newpointlocs, overwrite = TRUE)
+usethis::use_data(ptpl, overwrite = TRUE)

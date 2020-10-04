@@ -39,6 +39,24 @@ Differences in behavior among individuals (i.e. behavioral syndromes sensu [@sih
 The effect of frugivore movement on seed dispersal has been studied and we know that there exists an important link between them [@will_mechanistic_2008; @russo_incorporating_2006; @pegman_exploring_2017]. Animal movement patterns determine the extent to which seeds get distributed, and this in turn creates a range distribution for plants [@levey_modelling_2008]. Plants distribution and ranges are largely determined by the seeds that get dispersed the farthest from their parent. Animal movement is known to provide these long-distance seeds more than other dispersal sources such as wind or water[@jordano_what_2017]. Frugivore in particular is associated with longer dispersal, partly influenced by the gut retention time. We wanted to understand how individual variation in animal movement can influence the frequency and extent of long-distance seed dispersal events. We analyzed aracari telemetry data at the population level and at an individual level, to explore how these could influence seed dispersal. In addition to this, we tested several models to understand how the choice of probability distribution associated to the movement kernel can limit or overestimate seed dispersal.
 
 # Methods
+## Seed dispersal simulation
+the goal of this manuscript is to evaluate the effects of variation in animal movement and how these translate to seed dispersal distances. We developed an individual-based simulation in order to track single individuals or family groups in various tracking sessions and see how they disperse seeds. 
+
+  - What is the overall goal of this simulation?
+  - What entails one simulation run
+  - Overall description of how the simulation works
+  - Variables that go into the simulation
+  - Sources I used to reference: jones
+2. Parameterization and source data
+  - Data description
+  - Gut retention time comes from previous literature and averages
+  - Calculations at the different organizational levels
+3. Evaluating fits?
+4. Statistics associated to the simulations
+
+
+
+
 ### Data collection/manipulation  
 
 We focused our study on the many-banded aracari (*Pterglossus pluricinctus*) and its role as a frugivore of the *Virola flexuosa* tree. A subset of animal movement data collected in a previous study [@holbrook_home_2011] was selected and used towards our models and simulations. In this previous study, Aracari home ranges, average movement distances, patterns and movement rates were estimated for tracked birds over a period of four years, from 2001 to 2005, in the Ecuadorian Amazon rainforest. Further details on field methods can be found in Holbrook [-@holbrook_home_2011].  We focused on the data from the many-banded aracari, *Pteroglossus pluricinctus*, because a higher number of recorded locations were available. In addition to this, the home range of this species was found to be the largest for all the species studied, and therefore it was better suited to study long-distance seed dispersal events.  
