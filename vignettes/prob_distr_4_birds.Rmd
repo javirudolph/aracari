@@ -1,0 +1,34 @@
+---
+title: "prob_distr_4_birds"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{prob_distr_4_birds}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+bibliography: "../paper/mybibfile.bib"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r setup}
+library(aracari)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(purrr)
+library(fitdistrplus)
+library(ggpubr)
+```
+
+# Overall description 
+
+We have used the data collected by Kimberly Holbrook for her studies on toucan home ranges and movement patterns [@holbrook_home_2011]. We cleaned original data similarly, as is shown in the `raw-data/newpointlocs.R` file of this directory, by restricting the individuals to those with a minimum of 40 observations and locations collected in intervals from 15 to 90 minutes in multiples of 15 minutes. As shown in previous studies [@holbrook_using_2007], the distances traveled by toucans in 15-30 minutes represent the most probable distances for seed dispersal. Due to data collection constraints, locations could not be obtained every 15 minutes, and birds were sometimes located at greater time intervals. Our goal in this section is to use a probabilistic approach that will characterize the pattern of distances moved, and use these probability distributions to later randomly sample distances from. In order to do this, we scaled the original data in distances moved per time interval, to distances moved per minute. 
+
+Our approach involves fitting these probability distributions at three different levels: population, individual, and family. In the case of population level fittings, a probability distribution is used to fit all the data available, and a single distribution is used to describe the population's distanced moved. At the individual level, each bird is analyzed separately and a single distribution is assigned to the data of each individual bird to characterize it's distances moved. The family level analysis is restricted to the data points for which we have available information on family group. In this case, a single probability distribution is used for each individual family group to describe the distances moved.
