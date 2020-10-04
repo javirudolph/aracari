@@ -69,7 +69,7 @@ In this study, we consider population level when we consider all the tracking da
 
 At the population level, we compared the fit between the four distribution models using different information criteria (AIC, AICc, and BIC). At the individual level we considered five different models, four of these models corresponded to each of the four probability distributions. For the first four models, we assumed that one probability distribution could accurately describe the movement rates for each individual by changing the distribution's parameters. A fith alternative model considered instead the best fitting model for each individual and calculated the overall information criteria as a combination of the best fitting model for each individual. For each of these indivual level models, information criteria were calculated based on the number of parameters, sample size and negative log likelihood in the following way
 
-$$AIC{_{indlevel}} = 2\sum \left ( number parameters \right ) + 2\sum \left ( negative log likelihood \right )$$
+$$AIC{_{indlevel}} = 2 \cdot \sum \left ( number parameters \right ) + 2 \cdot \sum \left ( negative log likelihood \right )$$
 
 $$ AICc{_{indlevel}} =  AIC{_{indlevel}} + (2 \cdot \sum{nparams}  \cdot \left(\sum{nparams}+1\right)/\left(\sum{observations} - \left(\sum{nparams} - 1\right)\right)$$  
 
