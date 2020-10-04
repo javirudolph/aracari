@@ -214,7 +214,7 @@ plot_grid(a,b, rel_widths = c(1,2), labels = "AUTO")
 
 
 ## Probability distribution parameters
-We can compare the different parameter values estimated for each distribution and their standard deviations. These parameters can give us some insight into some of the characteristics of each set of distances moved per minute, such as which individuals have higher means or longer tails in the distribution of their distances moved per minute.
+We can compare the different parameter values estimated for each distribution and their standard deviations. These parameters can give us some insight into some of the characteristics of each set of distances moved per minute, such as which individuals have higher means or longer tails in the distribution of their distances moved per minute. The x axis in the following plots highlights which individuals have the lowest BIC with that model. The blue lines show the value of that parameter for the population level model, and dashed blue lines show the upper and lower limits of that parameter estimate. Overall, at the population level, the lognormal model had the lowest BIC value.
 
 ```{r fig.height=10, fig.width=8}
 
@@ -224,7 +224,16 @@ prms.df %>%
          dist = str_replace(dist, "gamma", "Gamma"),
          dist = str_replace(dist, "weibull", "Weibull"),
          dist = str_replace(dist, "lnorm", "Lognormal"),
-         data = str_replace(data, "pop", "POP")) -> nice_prms
+         data = str_replace(data, "pop", "POP")) %>% 
+  mutate(kpars = ifelse(dist == "exp", 1, 2),
+         BIC = log(n)*kpars - 2*loglik,
+         AIC = 2*kpars - 2*loglik,
+         AICc = AIC + (2* kpars * (kpars+1)/(n-kpars-1))) %>% 
+  group_by(data) %>% 
+  mutate(deltaBIC = signif(BIC - min(BIC), 3),
+         deltaAIC = signif(AIC - min(AIC), 3),
+         deltaAICc = signif(AICc - min(AICc), 3)) %>% 
+  mutate(best_col = ifelse(deltaBIC == 0, "#ffaa00", "black"))-> nice_prms
 
 
 plot_params <- function(prm_data){
@@ -247,7 +256,7 @@ plot_params <- function(prm_data){
     geom_hline(aes(yintercept = pop_est$estimate - pop_est$sd), color = "blue", linetype = "dashed") +
     labs(x = "", y = "", subtitle = title) +
     theme(legend.position = "none",
-          axis.text.x = element_text(angle = 45))
+          axis.text.x = element_text(angle = 45, color = prm_data$best_col))
 }
 
 
@@ -295,7 +304,18 @@ plot_grid(p1, NULL, p2, p3, p4, p5, p6, p7, ncol = 2, align = "v")
 
 ```
 
-Need to add the description here of how we calculated these information criteria and the reasoning as to why we decided to go with just the BIC, because of Jose's paper. Explain here what the mixed distribution model means, vs the others that use one distribution but allow variation in the parameters. 
+
+## Information criteria comparisons
+
+At the population level, we compared the fit between the four distribution models using different information criteria (AIC, AICc, and BIC). At the individual level we considered five different models, four of these models corresponded to each of the four probability distributions, were we essentially allowed for individuals to change parameters, but the overall shape of the distribution was the same. For the first four models, we assumed that one probability distribution could accurately describe the movement rates for each individual by changing the distribution's parameters. A fifth alternative model considered instead the best fitting model for each individual and calculated the overall information criteria as a combination of the best fitting model for each individual. For each of these individual level models, information criteria were calculated based on the number of parameters, sample size and negative log likelihood in the following way
+
+$$AIC{_{indlevel}} = 2\cdot \sum \left ( number parameters \right ) + 2\cdot \sum \left ( negative log likelihood \right )$$
+
+$$ AICc{_{indlevel}} =  AIC{_{indlevel}} + (2 \cdot \sum{nparams}  \cdot \left(\sum{nparams}+1\right)/\left(\sum{observations} - \left(\sum{nparams} - 1\right)\right)$$  
+
+
+$$BIC_{indlevel} = \ln{\sum observations} \cdot \sum{number parameters} + 2\cdot \sum {negative log likelihood}$$ 
+
 
 ```{r}
 all_indiv_prms <- prms.df %>% 
