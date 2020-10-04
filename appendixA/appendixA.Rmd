@@ -233,10 +233,12 @@ plot_params <- function(prm_data){
   filter(., data == "POP") %>% 
   dplyr::select(., estimate, sd) -> pop_est
   
+  title <- paste(dist, param)
+  
   prm_data %>% 
     filter(data != "POP") %>% 
     ggplot(., aes(x = data, y = estimate)) +
-    facet_grid(dist~param, switch = "y") +
+    facet_grid(dist~param, switch = "y", scales = "free") +
     # geom_point() +
     # geom_errorbar(aes(ymin = estimate - sd, ymax = estimate + sd))+
     geom_pointrange(aes(ymin = estimate - sd, ymax = estimate + sd)) +
@@ -247,14 +249,29 @@ plot_params <- function(prm_data){
     theme(legend.position = "none")
 }
 
-nice_prms %>% 
-  filter(., dist == "Exponential") %>% 
-  plot_params()
 
-nice_prms %>% 
-  filter(., dist == "Gamma" & data == "POP") %>% 
-  plot_params()
 
+prm_data %>% 
+    filter(data != "POP") %>% 
+    ggplot(., aes(x = data, y = estimate)) +
+    facet_grid(dist~param, switch = "y", scales = "free_y") +
+    # geom_point() +
+    # geom_errorbar(aes(ymin = estimate - sd, ymax = estimate + sd))+
+    geom_pointrange(aes(ymin = estimate - sd, ymax = estimate + sd)) +
+    geom_hline(aes(yintercept = pop_est$estimate), color = "blue") +
+    geom_hline(aes(yintercept = pop_est$estimate + pop_est$sd), color = "blue", linetype = "dashed") +
+    geom_hline(aes(yintercept = pop_est$estimate - pop_est$sd), color = "blue", linetype = "dashed") +
+    labs(x = "", y = "Estimate") +
+    theme(legend.position = "none")
+
+
+prms.df %>% 
+  mutate(fit.param = paste(dist, param)) %>% 
+  ggplot(., aes(x = data, y = estimate, color = dist)) +
+  facet_wrap(~fit.param, scales = "free_y") +
+  geom_point() +
+  geom_errorbar(aes(ymin = estimate - sd, ymax = estimate + sd)) +
+  theme(legend.position = "none")
 
 ```
 
