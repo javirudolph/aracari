@@ -1,12 +1,13 @@
-#' Title
+#' Organize estimates and likelihood from probability model fits
 #'
-#' @param x
+#' @param x list of probability distribution fits. Probably a list of outputs from fitdistrplus::fit_dist()
 #'
 #' @return
 #' @export
 #'
 #' @examples
-build.fits.df <- function(x){
+#'
+get_fits_params_df <- function(x){
 
   nm <- deparse(substitute(x))
 
