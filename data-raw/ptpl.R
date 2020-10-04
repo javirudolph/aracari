@@ -53,9 +53,7 @@ ptpl <- ld(ptpl_locs)
 
 # I want to include family groups in that data set, just in case we want to use that later
 # The social groups are as follows: (1, 3, 5), (7), (13, 19), (22), (28), and (49, 84).
-
 ptpl$id <- factor(ptpl$id, levels = c(1, 3, 5, 7, 13, 19, 22, 28, 49, 84, 10, 17, 20, 21, 24, 29, 30, 9))
-
 ptpl %>%
   mutate(fam_g = ifelse(id %in% c(1,3,5), "f1",
                         ifelse(id == 7, "f2",
@@ -65,26 +63,17 @@ ptpl %>%
                                                     ifelse(id %in% c(49,84),
                                                            "f6", "unknown")
                                              )))))) -> ptpl
-
 # Add new variables used for the selection later
+# Some of the data was collected on a preliminary field season and it includes other time intervals. Here, we want to focus on the intervals that are multiples of 15, as that is how the majority of data is collected. From a biological stand point, a seed has a high probability of being regurgitated in 15-30 minutes.
+# Filter by minimum number of observations. Removing the individuals with an insufficient number of observations. Since we will be fitting probability distributions, we should have at least 30 intervals per individual, so we would remove birds with ID = 17, 20, 24.
 ptpl %>%
   mutate(T_minutes = dt/60,
          Bird_ID = id,
-         mpm = dist/T_minutes) %>%
+         mpm = dist/T_minutes,
+         R2n = lead(R2n)) %>%
+  filter(T_minutes != 0 & T_minutes %in% c(15, 30, 45, 60, 75, 90)) %>%
   group_by(Bird_ID) %>%
-  add_tally()-> ptpl
-
-# Some of the data was collected on a preliminary field season and it includes other time intervals. Here, we want to focus on the intervals that are multiples of 15, as that is how the majority of data is collected. From a biological stand point, a seed has a high probability of being regurgitated in 15-30 minutes.
-
-
-mydata <- ptpl %>%
-  mutate(R2n = lead(R2n)) %>%
-  filter(T_minutes != 0 & T_minutes %in% c(15, 30, 45, 60, 75, 90))
-
-# Filter by minimum number of observations. Removing the individuals with an insufficient number of observations. Since we will be fitting probability distributions, we should have at least 30 intervals per individual, so we would remove birds with ID = 17, 20, 24.
-
-mydata %>%
-  add_count(Bird_ID) %>%
+  add_tally() %>%
   filter(n >= 30) -> ptpl
 
 
