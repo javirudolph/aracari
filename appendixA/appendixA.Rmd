@@ -39,59 +39,49 @@ Due to the fact that data was collected at different tracking intervals, we scal
 #load("data/ptpl.rda")
 data(ptpl)
 
-# Here, we are taking our tracking data and removing mpm (meters moved per minute) that are equal to zero, since these won't allow for distributio fittings. We also create a new variable for Bird ID, and modify net squared displacement. 
+# Here, we are taking our tracking data and removing mpm (meters moved per minute) that are equal to zero, since these won't allow for distribution fittings. We also create a new variable for Bird ID, and modify net squared displacement. 
 df <- ptpl %>%
   dplyr::filter(mpm != 0) %>%
   ungroup() %>%
-  mutate(Bird_ID = paste0("B", Bird_ID),
-         sqR2n = sqrt(R2n)) %>% 
+  mutate(Bird_ID = paste0("B", Bird_ID)) %>% 
   group_by_("id", "burst") %>% 
   mutate(cumdt = cumsum(dt)/60) %>% 
   ungroup()
 
-
+# These are the distributions I am considering for characterizing the meters moved per minute in the data
 dist.used <- c( "exp", "gamma", "weibull", "lnorm")
 
-
+# These are the parameters and associated distributions that will be needed later to build a dataframe of parameters
 param <- c("rate", "shape", "rate", "shape", "scale", "meanlog", "sdlog")
 dist <- c("exp", "gamma", "gamma", "weibull", "weibull", "lnorm", "lnorm")
 
 ```
 
+Density plots showing variation in biological classification levels, where the red line shows the density plot for what we consider the population (all the data together), and grey lines show individuals (left) or family groups (right).
 
-```{r fig.width=10}
-pop_dens_plot <- df %>%
-  ggplot(., aes(x = mpm)) +
-  geom_line(stat = "density", color = "grey", lwd = 1) +
-  #geom_line(aes(x = dist, group = id), stat = "density", alpha = 0.4) +
-  geom_vline(xintercept = 0, color = "grey") +
-  geom_hline(yintercept = 0, color = "grey") +
-  ylim(0, 0.05) +
-  labs(title = "Population") +
-  theme_classic()
-
+```{r fig.width=12, fig.height=5}
 ind_dens_plot <- df %>%
   ggplot(., aes(x = mpm)) +
-  #geom_line(stat = "density", color = "red", lwd = 1) +
+  geom_line(stat = "density", color = "red", lwd = 1) +
   geom_line(aes(x = mpm, group = id), stat = "density", alpha = 0.4) +
   geom_vline(xintercept = 0, color = "grey") +
   geom_hline(yintercept = 0, color = "grey") +
-  ylim(0, 0.05) +
+  ylim(0, 0.055) +
   labs(title = "Individual") +
   theme_classic()
 
 fam_dens_plot <- df %>%
   filter(., fam_g != "unknown") %>% 
   ggplot(., aes(x = mpm)) +
-  #geom_line(stat = "density", color = "red", lwd = 1) +
+  geom_line(stat = "density", color = "red", lwd = 1) +
   geom_line(aes(x = mpm, group = fam_g), stat = "density", alpha = 0.4) +
   geom_vline(xintercept = 0, color = "grey") +
   geom_hline(yintercept = 0, color = "grey") +
-  ylim(0, 0.05) +
+  ylim(0, 0.055) +
   labs(title = "Family") +
   theme_classic()
 
-ggarrange(pop_dens_plot, ind_dens_plot, fam_dens_plot, ncol = 3)
+ggarrange(ind_dens_plot, fam_dens_plot)
 
 ```
 We have chosen five common probability distributions, which are readily used in animal-mediated seed dispersal simulations. These are an exponential distribution [@jones_closing_2017], a gamma distribution, Weibull distribution [@morales_effects_2006], and lognormal distribution [@levey_effects_2005]. The goal of this project is to evaluate variation in movement and how that translates to differences in seed dispersal estimates. Our first comparisson is made between population level and individual level estimates. Not all individual birds had information on family group, therefore, for our second comparisson between population level and family level fits, we used a reduced dataset with only data from individual for which we had family group information. We assessed fits visually through QQ plots.
