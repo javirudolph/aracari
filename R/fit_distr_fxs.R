@@ -7,7 +7,7 @@
 #'
 #' @examples
 #'
-get_fits_params_df <- function(x){
+build_fits_df <- function(x){
 
   nm <- deparse(substitute(x))
 
