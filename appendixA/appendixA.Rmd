@@ -19,6 +19,7 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE, results = 
 ```
 
 ```{r}
+library(aracari)
 library(dplyr)
 library(ggplot2)
 library(tidyr)
@@ -29,31 +30,17 @@ library(ggpubr)
 theme_set(theme_bw())
 ```
 
-```{r functions}
 
-
-# Extract parameters from fitted distributions to the data
-build.fits.df <- function(x){
-  
-  nm <- deparse(substitute(x))
-  
-  x %>% 
-  map(., `[`, c("estimate", "sd", "loglik", "n")) %>% 
-  map(as_tibble) %>% 
-  bind_rows()
-}
-
-
-```
-
-The way we are fitting the data can be visualized as follows, where each curve represents the population, an individual, or a family group: 
+Due to the fact that data was collected at different tracking intervals, we scaled it to represent number of meters moved per minute. The goal of these fittings is to obtain parameters of probability distributions that can describe how fast these animals are moving, so that in simulations, we can use these distributions for random sampling of speeds when the animals are moving. 
 
 ```{r data}
 # Get the data loaded. We are removing the one value with zero since it won't allow fitting.
 
-load("data/newpointlocs.rda")
+#load("data/ptpl.rda")
+data(ptpl)
 
-df <- newpointlocs %>%
+# Here, we are taking our tracking data and removing mpm (meters moved per minute) that are equal to zero, since these won't allow for distributio fittings. We also create a new variable for Bird ID, and modify net squared displacement. 
+df <- ptpl %>%
   dplyr::filter(mpm != 0) %>%
   ungroup() %>%
   mutate(Bird_ID = paste0("B", Bird_ID),
@@ -125,7 +112,7 @@ qqpop +
   labs(title = "Population level QQ plot")
   scale_color_viridis_d()
 
-prms.df <- build.fits.df(pop) %>% 
+prms.df <- aracari::build_fits_df(pop) %>% 
   mutate(param = param,
          dist = dist,
          data = "pop")
@@ -145,7 +132,7 @@ for(i in 1:length(inds)){
   
   assign(paste(inds[i]), fit)
   
-  fit.prms <- build.fits.df(fit) %>% 
+  fit.prms <- build_fits_df(fit) %>% 
   mutate(param = param,
          dist = dist,
          data = inds[i])
@@ -311,7 +298,7 @@ qqcomp(pop.fams, plotstyle = "ggplot") +
   coord_equal() +
   geom_point(shape = 16, alpha = 0.5)
 
-prms.fams.df <- build.fits.df(pop.fams) %>% 
+prms.fams.df <- build_fits_df(pop.fams) %>% 
   mutate(param = param,
          dist = dist,
          data = "pop")
@@ -331,7 +318,7 @@ for(i in 1:length(fams)){
   
   assign(paste(fams[i]), fit)
   
-  fit.prms <- build.fits.df(fit) %>% 
+  fit.prms <- build_fits_df(fit) %>% 
   mutate(param = param,
          dist = dist,
          data = fams[i])
