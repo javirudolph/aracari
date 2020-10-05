@@ -7,6 +7,12 @@ library(fitdistrplus)
 
 directory <- "appendixB/"
 
+
+## Parameter setup
+
+nseeds <- 5
+nruns <- 1000
+
 source(paste0(directory, "functions.R"))
 
 # Start with the population level parameters
@@ -23,9 +29,9 @@ popind %>%
          param = str_to_lower(param)) -> popind
 
 # Population level
-popSims <- vector("list", 12000)
+popSims <- vector("list", nruns*12)
 for(i in 1:length(popSims)){
-  popSims[[i]] <- main_simulation(nseeds = 5, params = popind %>%
+  popSims[[i]] <- main_simulation(nseeds = nseeds, params = popind %>%
                                     dplyr::filter(data == "POP"))
 }
 
@@ -58,9 +64,9 @@ popSeed_data %>%
 # Individual level simulation ---------------------------------------------
 
 indSim_fx <- function(paramList, individual){
-  sims <- vector("list", 1000)
+  sims <- vector("list", nruns)
   for(i in 1:length(sims)){
-    sims[[i]] <- main_simulation(nseeds = 5, params = paramList %>%
+    sims[[i]] <- main_simulation(nseeds = nseeds, params = paramList %>%
                                    dplyr::filter(., data == individual))
   }
   return(sims)
@@ -138,9 +144,9 @@ popfam %>%
          param = str_to_lower(param)) -> popfam
 
 # Population level
-popSims.fam <- vector("list", 6000)
+popSims.fam <- vector("list", nruns*6)
 for(i in 1:length(popSims.fam)){
-  popSims.fam[[i]] <- main_simulation(nseeds = 5, params = popfam %>%
+  popSims.fam[[i]] <- main_simulation(nseeds = nseeds, params = popfam %>%
                                     dplyr::filter(data == "POP"))
 }
 
@@ -170,9 +176,9 @@ popSeed_data_fam %>%
 
 # Family level simulation ---------------------------------------------
 famSim_fx <- function(paramList, family_group){
-  sims <- vector("list", 6000)
+  sims <- vector("list", nruns)
   for(i in 1:length(sims)){
-    sims[[i]] <- main_simulation(nseeds = 5, params = paramList %>%
+    sims[[i]] <- main_simulation(nseeds = nseeds, params = paramList %>%
                                    dplyr::filter(., data == family_group))
   }
   return(sims)
