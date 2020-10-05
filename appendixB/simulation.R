@@ -5,7 +5,9 @@
 library(tidyverse)
 library(fitdistrplus)
 
-source("appendixB/functions.R")
+directory <- "appendixB/"
+
+source(paste0(directory, "functions.R"))
 
 # Start with the population level parameters
 # I need to set a seed
@@ -27,7 +29,7 @@ for(i in 1:length(popSims)){
                                     dplyr::filter(data == "POP"))
 }
 
-saveRDS(popSims, "appendixB/populationSims.RDS")
+saveRDS(popSims, paste0(directory, "populationSims.RDS"))
 
 #popSims <- readRDS("appendixA/populationSims.RDS")
 
@@ -81,7 +83,7 @@ for(i in 1:12){
 
 indSims <- setNames(indSims, IDs)
 
-saveRDS(indSims, "appendixB/individualSims.RDS")
+saveRDS(indSims, paste0(directory, "individualSims.RDS"))
 
 #indSims <- readRDS("appendixA/individualSims.RDS")
 
@@ -121,7 +123,7 @@ seed_dispersal_popind %>%
          aic_b = ifelse(combo %in% best_aic, "1", "0"),
          bic_b = ifelse(combo %in% best_bic, "1", "0")) -> with_mixed
 
-saveRDS(with_mixed, file = "appendixB/seed_dispersal_popind.RDS")
+saveRDS(with_mixed, file = paste0(directory, "seed_dispersal_popind.RDS"))
 
 #### Family level ---------------------------------------------
 
@@ -142,7 +144,7 @@ for(i in 1:length(popSims.fam)){
                                     dplyr::filter(data == "POP"))
 }
 
-saveRDS(popSims.fam, "appendixB/populationSims_family.RDS")
+saveRDS(popSims.fam, paste0(directory, "populationSims_family.RDS"))
 
 # These is the data for each seed that got dispersed
 # Since there are 5 seeds in each run, with 4 models, each run gets 20 distances
@@ -193,7 +195,7 @@ for(i in 1:6){
 
 famSims <- setNames(famSims, IDs)
 
-saveRDS(famSims, "appendixB/familySims.RDS")
+saveRDS(famSims, paste0(directory, "familySims.RDS"))
 
 
 seed_dispersal_popfam <- rbind.data.frame(popSeed_data_fam, famSeed_data)
@@ -230,5 +232,5 @@ seed_dispersal_popfam %>%
          aic_b = ifelse(combo %in% best_aic, "1", "0"),
          bic_b = ifelse(combo %in% best_bic, "1", "0")) -> with_mixed_family
 
-saveRDS(with_mixed_family, file = "appendixB/seed_dispersal_popfam.RDS")
+saveRDS(with_mixed_family, file = paste0(directory, "seed_dispersal_popfam.RDS"))
 
