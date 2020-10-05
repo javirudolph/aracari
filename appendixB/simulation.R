@@ -13,7 +13,7 @@ directory <- "appendixB/"
 nseeds <- 5
 nruns <- 1000
 
-source(paste0(directory, "functions.R"))
+source("appendixB/functions.R")
 
 # Start with the population level parameters
 # I need to set a seed
