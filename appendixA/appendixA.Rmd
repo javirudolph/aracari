@@ -15,7 +15,7 @@ Our approach involves fitting these probability distributions at three different
 
 ```{r setup, include=FALSE}
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
-knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE, results = 'hide')
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
 ```
 
 ```{r}
@@ -28,6 +28,7 @@ library(stringr)
 library(fitdistrplus)
 library(cowplot)
 library(RColorBrewer)
+library(gt)
 
 theme_set(theme_bw())
 ```
@@ -212,12 +213,18 @@ plot_grid(a,b, rel_widths = c(1,2), labels = "AUTO")
 
 ```
 
+## Information criteria comparisons
 
-## Probability distribution parameters
-We can compare the different parameter values estimated for each distribution and their standard deviations. These parameters can give us some insight into some of the characteristics of each set of distances moved per minute, such as which individuals have higher means or longer tails in the distribution of their distances moved per minute. The x axis in the following plots highlights which individuals have the lowest BIC with that model. The blue lines show the value of that parameter for the population level model, and dashed blue lines show the upper and lower limits of that parameter estimate. Overall, at the population level, the lognormal model had the lowest BIC value.
+At the population level, we compared the fit between the four distribution models using different information criteria (AIC, AICc, and BIC). At the individual level we considered five different models, four of these models corresponded to each of the four probability distributions, were we essentially allowed for individuals to change parameters, but the overall shape of the distribution was the same. For the first four models, we assumed that one probability distribution could accurately describe the movement rates for each individual by changing the distribution's parameters. A fifth alternative model considered instead the best fitting model for each individual and calculated the overall information criteria as a combination of the best fitting model for each individual. For each of these individual level models, information criteria were calculated based on the number of parameters, sample size and negative log likelihood in the following way
 
-```{r fig.height=10, fig.width=8}
+$$AIC{_{indlevel}} = 2\cdot \sum \left ( number parameters \right ) + 2\cdot \sum \left ( -\ln\mathcal{L}() \right )$$
 
+$$ AICc{_{indlevel}} =  AIC{_{indlevel}} + (2 \cdot \sum{nparams}  \cdot \left(\sum{nparams}+1\right)/\left(\sum{observations} - \left(\sum{nparams} - 1\right)\right)$$  
+
+
+$$BIC_{indlevel} = \ln{\sum observations(samplesize)} \cdot \sum{number parameters} + 2\cdot \sum {negative log likelihood}$$ 
+
+```{r}
 prms.df %>% 
   mutate(param = str_to_upper(param), 
          dist = str_replace(dist, "exp", "Exponential"),
@@ -234,7 +241,130 @@ prms.df %>%
          deltaAIC = signif(AIC - min(AIC), 3),
          deltaAICc = signif(AICc - min(AICc), 3)) %>% 
   mutate(best_col = ifelse(deltaBIC == 0, "#ffaa00", "black"))-> nice_prms
+```
 
+The three information criteria differ in their model choices, with AIC and corrected AIC (AICc) selecting the same models, and BIC selecting different ones. 
+
+```{r fig.width=12, fig.height=4}
+# To visualize the differences in the information criteria at the individual level
+
+nice_prms %>% 
+  dplyr::select(dist, data, deltaAIC, deltaAICc, deltaBIC) %>% 
+  distinct() %>% 
+  pivot_longer(., cols = starts_with("delta"), names_to = "ic", values_to = "value") %>% 
+  mutate(plot_alpha = ifelse(value == "0", 1, 0.8)) %>% 
+  ggplot(., aes(x = data, y = value, color = dist 
+                #alpha = plot_alpha
+                )) +
+  facet_wrap(~ic) +
+  geom_point(size = 3) +
+  scale_color_brewer(palette = "Spectral") + 
+  #scale_alpha_continuous(range = c(0.5, 1)) +
+  labs(x = "") +
+  theme(legend.position = "bottom",
+        axis.text.x = element_text(color = c(rep("black", 12), "red"))) +
+  guides(color = guide_legend(title = "Distribution"))
+  
+```
+
+
+```{r}
+
+# Create the dataframe that compares the models by information criteria
+nice_prms %>% 
+  filter(., data != "POP") %>%
+  dplyr::select(., loglik, n, dist) %>% 
+  distinct() %>%
+  mutate(kpars = ifelse(dist == "Exponential", 1, 2)) %>% 
+  group_by(dist) %>% 
+  summarise(BIC = log(sum(n))*sum(kpars) - 2 * sum(loglik), 
+            AIC = 2*(sum(kpars)) - 2*(sum(loglik)),
+            AICc = 2*(sum(kpars)) - 2*(sum(loglik)) + (2* sum(kpars) * (sum(kpars)+1)/(sum(n)-sum(kpars)-1))) %>%
+    mutate(deltaAIC = signif(AIC - min(AIC), 3),
+         deltaAICc = signif(AICc - min(AICc), 3),
+         deltaBIC = signif(BIC - min(BIC), 3),
+         data = "Individual") %>% 
+  full_join(., nice_prms %>%
+              filter(., data == "POP") %>% 
+              dplyr::select(dist, BIC, AIC, AICc, deltaAIC, deltaAICc, deltaBIC) %>% 
+              distinct() %>% 
+              mutate(data = "Population")) -> popind.IC.comp
+
+
+# Get the multi-distribution model fit
+nice_prms %>% 
+  dplyr::select(., dist, data, loglik, n, kpars, deltaBIC) %>% 
+  dplyr::filter(., data != "POP" & deltaBIC == 0) %>% 
+  distinct() %>% 
+  ungroup() %>% 
+  summarise(BIC = log(sum(n))*sum(kpars) - 2 * sum(loglik)) %>% 
+  as.numeric() -> multi.BIC
+
+nice_prms %>% 
+  dplyr::select(., dist, data, loglik, n, kpars, deltaAIC) %>% 
+  dplyr::filter(., data != "POP" & deltaAIC == 0) %>% 
+  distinct() %>%
+  ungroup() %>% 
+  summarise(AIC = 2*(sum(kpars)) - 2*(sum(loglik))) %>% 
+  as.numeric() -> multi.AIC
+
+nice_prms %>% 
+  dplyr::select(., dist, data, loglik, n, kpars, deltaAICc) %>% 
+  dplyr::filter(., data != "POP" & deltaAICc == 0) %>% 
+  distinct() %>%
+  ungroup() %>% 
+  summarise(AICc = 2*(sum(kpars)) - 2*(sum(loglik)) + (2* sum(kpars) * (sum(kpars)+1)/(sum(n)-sum(kpars)-1))) %>% 
+  as.numeric()-> multi.AICc
+
+popind.IC.comp %>% 
+  dplyr::select(., dist, BIC, AIC, AICc, data) %>% 
+  bind_rows(., data.frame(dist = "Multidist", BIC = multi.BIC, AIC = multi.AIC, AICc = multi.AICc, data = "Multidist")) -> model_comp_IC
+
+```
+
+```{r}
+# Table for BIC only
+
+model_comp_IC %>% 
+  dplyr::select(data, dist, BIC) %>% 
+  group_by(data) %>% 
+  mutate(delta_within = signif(BIC - min(BIC), digits = 2)) %>% 
+  ungroup() %>% 
+  mutate(delta_across = signif(BIC - min(BIC), digits = 2)) %>% 
+  dplyr::select(., -data)-> data_gt
+
+gt_tbl <- gt(data_gt, rowname_col = "dist")
+
+gt_tbl %>% 
+  tab_header(
+    title = md("**BIC comparisons across levels**")
+  ) %>% 
+  tab_stubhead(label = "Model") %>% 
+  tab_row_group(
+    group = "Multidist",
+    rows = 9
+  ) %>% 
+  tab_row_group(
+    group = "Individual",
+    rows = 1:4
+  ) %>% 
+  tab_row_group(
+    group = "Population", 
+    rows = 5:8
+  ) %>% 
+  cols_label(
+    delta_within = html("&Delta; BIC<sub>within</sub>"),
+    delta_across = html("&Delta; BIC<sub>across</sub>")
+  )
+  
+  
+```
+
+
+## Probability distribution parameters
+We can compare the different parameter values estimated for each distribution and their standard deviations. These parameters can give us some insight into some of the characteristics of each set of distances moved per minute, such as which individuals have higher means or longer tails in the distribution of their distances moved per minute. The x axis in the following plots highlights which individuals have the lowest BIC with that model. The blue lines show the value of that parameter for the population level model, and dashed blue lines show the upper and lower limits of that parameter estimate. Overall, at the population level, the lognormal model had the lowest BIC value.
+
+```{r fig.height=10, fig.width=8}
 
 plot_params <- function(prm_data){
   
@@ -304,91 +434,6 @@ plot_grid(p1, NULL, p2, p3, p4, p5, p6, p7, ncol = 2, align = "v")
 
 ```
 
-
-## Information criteria comparisons
-
-At the population level, we compared the fit between the four distribution models using different information criteria (AIC, AICc, and BIC). At the individual level we considered five different models, four of these models corresponded to each of the four probability distributions, were we essentially allowed for individuals to change parameters, but the overall shape of the distribution was the same. For the first four models, we assumed that one probability distribution could accurately describe the movement rates for each individual by changing the distribution's parameters. A fifth alternative model considered instead the best fitting model for each individual and calculated the overall information criteria as a combination of the best fitting model for each individual. For each of these individual level models, information criteria were calculated based on the number of parameters, sample size and negative log likelihood in the following way
-
-$$AIC{_{indlevel}} = 2\cdot \sum \left ( number parameters \right ) + 2\cdot \sum \left ( -\ln\mathcal{L}() \right )$$
-
-$$ AICc{_{indlevel}} =  AIC{_{indlevel}} + (2 \cdot \sum{nparams}  \cdot \left(\sum{nparams}+1\right)/\left(\sum{observations} - \left(\sum{nparams} - 1\right)\right)$$  
-
-
-$$BIC_{indlevel} = \ln{\sum observations(samplesize)} \cdot \sum{number parameters} + 2\cdot \sum {negative log likelihood}$$ 
-
-```{r}
-nice_prms %>%
-  dplyr::select(., dist, data, deltaBIC, deltaAIC, deltaAICc) %>% 
-  distinct() %>% 
-  pivot_longer(., cols = starts_with("delta"), names_to = "ic", values_to = "value") %>% 
-  ggplot(., aes(x = ic, y = value, color = dist)) +
-  geom_point() +
-  facet_wrap(~data, scales = "free")
-```
-
-
-```{r}
-prms.df %>% 
-  filter(., data != "pop") %>%
-  dplyr::select(., loglik, n, dist) %>% 
-  distinct() %>%
-  mutate(kpars = ifelse(dist == "exp", 1, 2)) %>% 
-  group_by(dist) %>% 
-  summarise(BIC = log(sum(n))*sum(kpars) - 2 * sum(loglik), 
-            AIC = 2*(sum(kpars)) - 2*(sum(loglik)),
-            AICc = 2*(sum(kpars)) - 2*(sum(loglik)) + (2* sum(kpars) * (sum(kpars)+1)/(sum(n)-sum(kpars)-1))) %>%
-    mutate(deltaAIC = signif(AIC - min(AIC), 3),
-         deltaAICc = signif(AICc - min(AICc), 3),
-         deltaBIC = signif(BIC - min(BIC), 3),
-         data = "ind") %>% 
-  full_join(., popind.IC %>% 
-  filter(., data == "pop")) -> popind.IC.comp
-
-```
-
-
-
-
-
-```{r}
-popind.IC.comp %>% 
-  pivot_longer(., cols = starts_with("delta"), names_to = "ic", values_to = "value") %>% 
-  ggplot(., aes(x = ic, y = value, color = dist)) +
-  geom_point() +
-  facet_wrap(~data, scales = "free")
-```
-
-```{r}
-
-# Get the multi-distribution model fit
-popind.IC %>% 
-  dplyr::filter(., data != "pop" & deltaBIC == 0) %>% 
-  ungroup() %>% 
-  summarise(BIC = log(sum(n))*sum(kpars) - 2 * sum(loglik)) %>% 
-  as.numeric() -> multi.BIC
-
-popind.IC %>% 
-  dplyr::filter(., data != "pop" & deltaAIC == 0) %>% 
-  ungroup() %>% 
-  summarise(AIC = 2*(sum(kpars)) - 2*(sum(loglik))) %>% 
-  as.numeric() -> multi.AIC
-
-popind.IC %>% 
-  dplyr::filter(., data != "pop" & deltaAICc == 0) %>% 
-  ungroup() %>% 
-  summarise(AICc = 2*(sum(kpars)) - 2*(sum(loglik)) + (2* sum(kpars) * (sum(kpars)+1)/(sum(n)-sum(kpars)-1))) %>% 
-  as.numeric()-> multi.AICc
-
-popind.IC.comp %>% 
-  dplyr::select(., dist, BIC, AIC, AICc, data) %>% 
-  bind_rows(., data.frame(dist = "multi", BIC = multi.BIC, AIC = multi.AIC, AICc = multi.AICc, data = "multi")) %>%
-  pivot_longer(., cols = starts_with(c("BIC", "AIC")), names_to = "ic", values_to = "value") %>% 
-  ggplot(., aes(x = dist, y = value, color = data)) +
-  geom_point() +
-  facet_wrap(~ic, scales = "free") +
-  theme(axis.text.x = element_text(angle = 90))
-
-```
 
 Summary: When comparing population vs individual level fits, at the population level, the lognormal distribution fits the data better, and at the individual level it is the exponential distribution. When we focus only on the individual level fits, which distribution fits best depends on the information criteria considered, although most of the individuals are properly characterized by an exponential or lognormal distribution. What we consider as the multi distribution, it is a multi-distribution probability fit to the data in which we have allowed not only the parameters but also the shape of the distribution to vary between individuals. This means that each individual can be characterized by a different distribution and different parameters. In the case of AIC and AICc, this probability approach works best for the data, however when considering BIC, the lognormal fit is best, and the mixed distribution approach ties with a weibull distribution at population level. Using BIC, a population level modeling approach is the best.
 
@@ -581,7 +626,7 @@ comp.fams %>%
 
 Summary. As with individuals, the information criteria actually changes things a lot. With AIC and AICc, family level aggregation is a better descriptor of the data, no matter the distribution used, whereas in BIC it is the opposite and population level data is best for all distributions. However, the multidistribution approach, where each family is characterized by its own independent distribution and parameters, no matter the information criteria, this one comes with the lowest value, making the multidistribution approach the best for characterizing the data. 
 
-```{r}
+```{r eval = FALSE}
 # Save parameters
 
 saveRDS(all_indiv_prms, file = "appendixA/popindprms.RDS")
