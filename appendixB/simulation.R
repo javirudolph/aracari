@@ -121,7 +121,7 @@ seed_dispersal_popind %>%
          aic_b = ifelse(combo %in% best_aic, "1", "0"),
          bic_b = ifelse(combo %in% best_bic, "1", "0")) -> with_mixed
 
-saveRDS(seed_dispersal_popind, file = "appendixB/seed_dispersal_popind.RDS")
+saveRDS(with_mixed, file = "appendixB/seed_dispersal_popind.RDS")
 
 #### Family level ---------------------------------------------
 
