@@ -624,10 +624,6 @@ plot_grid(a,b, rel_widths = c(1,2), labels = "AUTO")
 
 
 
-
-################# COPY PASTE OF INDIVIDUAL 
-
-
 ```{r}
 prms.fams.df %>% 
   mutate(param = str_to_upper(param), 
@@ -688,7 +684,7 @@ nice_fams_prms %>%
          deltaAICc = signif(AICc - min(AICc), 3),
          deltaBIC = signif(BIC - min(BIC), 3),
          data = "Family") %>% 
-  full_join(., nice_prms %>%
+  full_join(., nice_fams_prms %>%
               filter(., data == "POP") %>% 
               dplyr::select(dist, BIC, AIC, AICc, deltaAIC, deltaAICc, deltaBIC) %>% 
               distinct() %>% 
@@ -891,126 +887,14 @@ plot_grid(bic_grid, aic_grid, ncol = 2)
 ```
 
 
-####################################################################################
-
-```{r}
-all_fam_prms <- prms.fams.df %>% 
-  mutate(kpars = ifelse(dist == "exp", 1, 2),
-         BIC = log(n)*kpars - 2*loglik,
-         AIC = 2*kpars - 2*loglik,
-         AICc = AIC + (2* kpars * (kpars+1)/(n-kpars-1))) %>% 
-  group_by(data) %>% 
-  mutate(deltaBIC = signif(BIC - min(BIC), 3),
-         deltaAIC = signif(AIC - min(AIC), 3),
-         deltaAICc = signif(AICc - min(AICc), 3))
-```
-
-```{r}
-prms.fams.df %>% 
-  mutate(fit.param = paste(dist, param)) %>% 
-  ggplot(., aes(x = data, y = estimate, color = dist)) +
-  facet_wrap(~fit.param, scales = "free") +
-  geom_point() +
-  geom_errorbar(aes(ymin = estimate - sd, ymax = estimate + sd)) +
-  theme(legend.position = "none")
-```
-
-
-## Calculate BIC for comparisons
-
-```{r fig.height=6}
-prms.fams.df %>% 
-  dplyr::select(., loglik, n, dist, data) %>% 
-  distinct() %>% 
-  mutate(kpars = ifelse(dist == "exp", 1, 2),
-         BIC = log(n)*kpars - 2*loglik,
-         AIC = 2*kpars - 2*loglik,
-         AICc = AIC + (2* kpars * (kpars+1)/(n-kpars-1))) %>% 
-  group_by(data) %>% 
-  mutate(deltaBIC = signif(BIC - min(BIC), 3),
-         deltaAIC = signif(AIC - min(AIC), 3),
-         deltaAICc = signif(AICc - min(AICc), 3)) -> popfam.IC
-
-popfam.IC %>% 
-  pivot_longer(., cols = starts_with("delta"), names_to = "ic", values_to = "value") %>% 
-  ggplot(., aes(x = ic, y = value, color = dist)) +
-  geom_point() +
-  facet_wrap(~data, scales = "free")
-
-
-```
-
-Calculate BIC for the model at the family level
-```{r}
-prms.fams.df %>% 
-  filter(., data != "pop") %>%
-  dplyr::select(., loglik, n, dist) %>% 
-  distinct() %>%
-  mutate(kpars = ifelse(dist == "exp", 1, 2)) %>% 
-  group_by(dist) %>% 
-  summarise(BIC = log(sum(n))*sum(kpars) - 2 * sum(loglik), 
-            AIC = 2*(sum(kpars)) - 2*(sum(loglik)),
-            AICc = 2*(sum(kpars)) - 2*(sum(loglik)) + (2* sum(kpars) * (sum(kpars)+1)/(sum(n)-sum(kpars)-1))) %>%
-    mutate(deltaAIC = signif(AIC - min(AIC), 3),
-         deltaAICc = signif(AICc - min(AICc), 3),
-         deltaBIC = signif(BIC - min(BIC), 3),
-         data = "fam") %>% 
-  full_join(., popfam.IC %>% 
-  filter(., data == "pop")) -> comp.fams
-
-comp.fams %>% 
-  pivot_longer(., cols = starts_with("delta"), names_to = "ic", values_to = "value") %>% 
-  ggplot(., aes(x = ic, y = value, color = dist)) +
-  geom_point() +
-  facet_wrap(~data, scales = "free")
-
-comp.fams %>% 
-  pivot_longer(., cols = starts_with(c("BIC", "AIC")), names_to = "ic", values_to = "value") %>% 
-  ggplot(., aes(x = dist, y = value, color = data)) +
-  geom_point() +
-  facet_wrap(~ic, scales = "free")
-
-  
-```
-```{r}
-
-# Get the multi-distribution model fit
-popfam.IC %>% 
-  dplyr::filter(., data != "pop" & deltaBIC == 0) %>% 
-  ungroup() %>% 
-  summarise(BIC = log(sum(n))*sum(kpars) - 2 * sum(loglik)) %>% 
-  as.numeric() -> multi.BIC
-
-popfam.IC %>% 
-  dplyr::filter(., data != "pop" & deltaAIC == 0) %>% 
-  ungroup() %>% 
-  summarise(AIC = 2*(sum(kpars)) - 2*(sum(loglik))) %>% 
-  as.numeric() -> multi.AIC
-
-popfam.IC %>% 
-  dplyr::filter(., data != "pop" & deltaAICc == 0) %>% 
-  ungroup() %>% 
-  summarise(AICc = 2*(sum(kpars)) - 2*(sum(loglik)) + (2* sum(kpars) * (sum(kpars)+1)/(sum(n)-sum(kpars)-1))) %>% 
-  as.numeric()-> multi.AICc
-
-comp.fams %>% 
-  dplyr::select(., dist, BIC, AIC, AICc, data) %>% 
-  bind_rows(., data.frame(dist = "multi", BIC = multi.BIC, AIC = multi.AIC, AICc = multi.AICc, data = "multi")) %>% 
-  pivot_longer(., cols = starts_with(c("BIC", "AIC")), names_to = "ic", values_to = "value") %>% 
-  ggplot(., aes(x = dist, y = value, color = data)) +
-  geom_point() +
-  facet_wrap(~ic, scales = "free") +
-  theme(axis.text.x = element_text(angle = 90))
-
-```
 
 Summary. As with individuals, the information criteria actually changes things a lot. With AIC and AICc, family level aggregation is a better descriptor of the data, no matter the distribution used, whereas in BIC it is the opposite and population level data is best for all distributions. However, the multidistribution approach, where each family is characterized by its own independent distribution and parameters, no matter the information criteria, this one comes with the lowest value, making the multidistribution approach the best for characterizing the data. 
 
-```{r eval = FALSE}
+```{r}
 # Save parameters
 
-saveRDS(all_indiv_prms, file = "appendixA/popindprms.RDS")
-saveRDS(all_fam_prms, file = "appendixA/popfamprms.RDS")
+saveRDS(nice_prms, file = "appendixA/popindprms.RDS")
+saveRDS(nice_fams_prms, file = "appendixA/popfamprms.RDS")
 
 ```
 
