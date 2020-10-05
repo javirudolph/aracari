@@ -191,12 +191,21 @@ saveRDS(seed_dispersal_popind, file = "appendixB/seed_dispersal_popind.RDS")
 
 # Find more efficient way of doing this:
 
-# Mixed distribution for individuals
+# These are the best models with BIC
 popind %>%
   #filter(., data != "POP") %>%
   filter(., deltaBIC == 0) %>%
   dplyr::select(dist, data) %>%
   distinct()
+
+# Find the best with AIC
+
+popind %>%
+  #filter(., data != "POP") %>%
+  filter(., deltaAIC == 0) %>%
+  dplyr::select(dist, data) %>%
+  distinct()
+
 
 i_exp <- NULL
 for(i in c(1:1000, 3001:5000, 6001:7000, 8001:12000)){
