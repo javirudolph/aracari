@@ -5,7 +5,7 @@
 library(tidyverse)
 library(fitdistrplus)
 
-directory <- "appendixB/sim100"
+directory <- "appendixB/sim100/"
 
 
 ## Parameter setup
