@@ -110,22 +110,28 @@ set.seed(192)
 
 popind <- readRDS("appendixA/popindprms.RDS")
 
+popind %>%
+  mutate(dist_upper = dist,
+         dist = str_to_lower(dist),
+         dist = str_remove(dist, "onential"),
+         dist = str_replace(dist, "lognormal", "lnorm"),
+         param = str_to_lower(param)) -> popind
 
 # Population level
 popSims <- vector("list", 12000)
 for(i in 1:length(popSims)){
   popSims[[i]] <- main_simulation(nseeds = 5, params = popind %>%
-                                    dplyr::filter(data == "pop"))
+                                    dplyr::filter(data == "POP"))
 }
 
-saveRDS(popSims, "appendixA/populationSims.RDS")
+saveRDS(popSims, "appendixB/populationSims.RDS")
 
 #popSims <- readRDS("appendixA/populationSims.RDS")
 
 # These is the data for each seed that got dispersed
 # Since there are 5 seeds in each run, with 4 models, each run gets 20 distances
 popSeed_data <- get_seed_disp_info(popSims) %>%
-  mutate(data = "pop")
+  mutate(data = "POP")
 
 ggplot(popSeed_data, aes(x = model, y = dispersal)) +
   geom_boxplot()
@@ -172,21 +178,25 @@ for(i in 1:12){
 
 indSims <- setNames(indSims, IDs)
 
-saveRDS(indSims, "appendixA/individualSims.RDS")
+saveRDS(indSims, "appendixB/individualSims.RDS")
 
 #indSims <- readRDS("appendixA/individualSims.RDS")
 
 
 seed_dispersal_popind <- rbind.data.frame(popSeed_data, indSeed_data)
 
-saveRDS(seed_dispersal_popind, file = "appendixA/seed_dispersal_popind.RDS")
+saveRDS(seed_dispersal_popind, file = "appendixB/seed_dispersal_popind.RDS")
 
 
+
+# Find more efficient way of doing this:
 
 # Mixed distribution for individuals
 popind %>%
-  filter(., data != "pop") %>%
-  filter(., deltaBIC == 0)
+  #filter(., data != "POP") %>%
+  filter(., deltaBIC == 0) %>%
+  dplyr::select(dist, data) %>%
+  distinct()
 
 i_exp <- NULL
 for(i in c(1:1000, 3001:5000, 6001:7000, 8001:12000)){
@@ -220,7 +230,7 @@ popfam <- readRDS("appendixA/popfamprms.RDS")
 popSims.fam <- vector("list", 6000)
 for(i in 1:length(popSims.fam)){
   popSims.fam[[i]] <- main_simulation(nseeds = 5, params = popfam %>%
-                                    dplyr::filter(data == "pop"))
+                                    dplyr::filter(data == "POP"))
 }
 
 saveRDS(popSims.fam, "appendixA/populationSims_family.RDS")
