@@ -384,7 +384,6 @@ summary {
 <ul>
 <li><a href="#seed-dispersal-distance-at-the-different-organizational-levels">Seed dispersal distance at the different organizational levels</a></li>
 <li><a href="#summary-stats">Summary stats</a></li>
-<li><a href="#spatial-data">Spatial data</a></li>
 </ul>
 </div>
 
@@ -424,6 +423,24 @@ summary {
 </thead>
 <tbody>
 <tr class="odd">
+<td align="left">IND</td>
+<td align="left">lnorm</td>
+<td align="right">600</td>
+<td align="right">282.5921</td>
+<td align="right">1887.5554</td>
+<td align="right">103</td>
+<td align="right">0.1716667</td>
+</tr>
+<tr class="even">
+<td align="left">POP</td>
+<td align="left">lnorm</td>
+<td align="right">600</td>
+<td align="right">283.6219</td>
+<td align="right">1439.1680</td>
+<td align="right">78</td>
+<td align="right">0.1300000</td>
+</tr>
+<tr class="odd">
 <td align="left">AIC</td>
 <td align="left">mixed</td>
 <td align="right">600</td>
@@ -443,12 +460,30 @@ summary {
 </tr>
 <tr class="odd">
 <td align="left">IND</td>
+<td align="left">weibull</td>
+<td align="right">600</td>
+<td align="right">190.4216</td>
+<td align="right">1046.0807</td>
+<td align="right">26</td>
+<td align="right">0.0433333</td>
+</tr>
+<tr class="even">
+<td align="left">IND</td>
 <td align="left">exp</td>
 <td align="right">600</td>
 <td align="right">190.2750</td>
 <td align="right">791.8490</td>
 <td align="right">20</td>
 <td align="right">0.0333333</td>
+</tr>
+<tr class="odd">
+<td align="left">POP</td>
+<td align="left">gamma</td>
+<td align="right">600</td>
+<td align="right">205.8815</td>
+<td align="right">833.4802</td>
+<td align="right">17</td>
+<td align="right">0.0283333</td>
 </tr>
 <tr class="even">
 <td align="left">IND</td>
@@ -460,24 +495,6 @@ summary {
 <td align="right">0.0266667</td>
 </tr>
 <tr class="odd">
-<td align="left">IND</td>
-<td align="left">lnorm</td>
-<td align="right">600</td>
-<td align="right">282.5921</td>
-<td align="right">1887.5554</td>
-<td align="right">103</td>
-<td align="right">0.1716667</td>
-</tr>
-<tr class="even">
-<td align="left">IND</td>
-<td align="left">weibull</td>
-<td align="right">600</td>
-<td align="right">190.4216</td>
-<td align="right">1046.0807</td>
-<td align="right">26</td>
-<td align="right">0.0433333</td>
-</tr>
-<tr class="odd">
 <td align="left">POP</td>
 <td align="left">exp</td>
 <td align="right">600</td>
@@ -485,24 +502,6 @@ summary {
 <td align="right">680.8602</td>
 <td align="right">9</td>
 <td align="right">0.0150000</td>
-</tr>
-<tr class="even">
-<td align="left">POP</td>
-<td align="left">gamma</td>
-<td align="right">600</td>
-<td align="right">205.8815</td>
-<td align="right">833.4802</td>
-<td align="right">17</td>
-<td align="right">0.0283333</td>
-</tr>
-<tr class="odd">
-<td align="left">POP</td>
-<td align="left">lnorm</td>
-<td align="right">600</td>
-<td align="right">283.6219</td>
-<td align="right">1439.1680</td>
-<td align="right">78</td>
-<td align="right">0.1300000</td>
 </tr>
 <tr class="even">
 <td align="left">POP</td>
@@ -530,6 +529,33 @@ summary {
 </thead>
 <tbody>
 <tr class="odd">
+<td align="left">FAM</td>
+<td align="left">lnorm</td>
+<td align="right">300</td>
+<td align="right">289.7827</td>
+<td align="right">2499.1816</td>
+<td align="right">38</td>
+<td align="right">0.1266667</td>
+</tr>
+<tr class="even">
+<td align="left">POP</td>
+<td align="left">lnorm</td>
+<td align="right">300</td>
+<td align="right">274.6882</td>
+<td align="right">1269.6594</td>
+<td align="right">36</td>
+<td align="right">0.1200000</td>
+</tr>
+<tr class="odd">
+<td align="left">BIC</td>
+<td align="left">mixed</td>
+<td align="right">300</td>
+<td align="right">172.1792</td>
+<td align="right">816.2049</td>
+<td align="right">7</td>
+<td align="right">0.0233333</td>
+</tr>
+<tr class="even">
 <td align="left">AIC</td>
 <td align="left">mixed</td>
 <td align="right">300</td>
@@ -538,14 +564,23 @@ summary {
 <td align="right">4</td>
 <td align="right">0.0133333</td>
 </tr>
-<tr class="even">
-<td align="left">BIC</td>
-<td align="left">mixed</td>
+<tr class="odd">
+<td align="left">FAM</td>
+<td align="left">gamma</td>
 <td align="right">300</td>
-<td align="right">172.1792</td>
-<td align="right">816.2049</td>
-<td align="right">7</td>
-<td align="right">0.0233333</td>
+<td align="right">180.6946</td>
+<td align="right">733.4533</td>
+<td align="right">4</td>
+<td align="right">0.0133333</td>
+</tr>
+<tr class="even">
+<td align="left">POP</td>
+<td align="left">exp</td>
+<td align="right">300</td>
+<td align="right">172.3423</td>
+<td align="right">593.8559</td>
+<td align="right">4</td>
+<td align="right">0.0133333</td>
 </tr>
 <tr class="odd">
 <td align="left">FAM</td>
@@ -557,42 +592,6 @@ summary {
 <td align="right">0.0100000</td>
 </tr>
 <tr class="even">
-<td align="left">FAM</td>
-<td align="left">gamma</td>
-<td align="right">300</td>
-<td align="right">180.6946</td>
-<td align="right">733.4533</td>
-<td align="right">4</td>
-<td align="right">0.0133333</td>
-</tr>
-<tr class="odd">
-<td align="left">FAM</td>
-<td align="left">lnorm</td>
-<td align="right">300</td>
-<td align="right">289.7827</td>
-<td align="right">2499.1816</td>
-<td align="right">38</td>
-<td align="right">0.1266667</td>
-</tr>
-<tr class="even">
-<td align="left">FAM</td>
-<td align="left">weibull</td>
-<td align="right">300</td>
-<td align="right">177.3256</td>
-<td align="right">517.9746</td>
-<td align="right">2</td>
-<td align="right">0.0066667</td>
-</tr>
-<tr class="odd">
-<td align="left">POP</td>
-<td align="left">exp</td>
-<td align="right">300</td>
-<td align="right">172.3423</td>
-<td align="right">593.8559</td>
-<td align="right">4</td>
-<td align="right">0.0133333</td>
-</tr>
-<tr class="even">
 <td align="left">POP</td>
 <td align="left">gamma</td>
 <td align="right">300</td>
@@ -602,13 +601,13 @@ summary {
 <td align="right">0.0100000</td>
 </tr>
 <tr class="odd">
-<td align="left">POP</td>
-<td align="left">lnorm</td>
+<td align="left">FAM</td>
+<td align="left">weibull</td>
 <td align="right">300</td>
-<td align="right">274.6882</td>
-<td align="right">1269.6594</td>
-<td align="right">36</td>
-<td align="right">0.1200000</td>
+<td align="right">177.3256</td>
+<td align="right">517.9746</td>
+<td align="right">2</td>
+<td align="right">0.0066667</td>
 </tr>
 <tr class="even">
 <td align="left">POP</td>
@@ -621,9 +620,6 @@ summary {
 </tr>
 </tbody>
 </table>
-</div>
-<div id="spatial-data" class="section level1">
-<h1>Spatial data</h1>
 </div>
 
 

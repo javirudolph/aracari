@@ -1,5 +1,5 @@
 ---
-title: "Simulation of seed dispersal distance"
+title: "Simulation of seed dispersal distance - 10 runs"
 author: "Javiera Rudolph"
 output: 
   html_document:
@@ -14,7 +14,6 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, fig.cap = " ")
 
 ```
 
-
 ```{r loadPackages}
 library(tidyverse)
 library(lubridate)
@@ -23,7 +22,7 @@ library(cowplot)
 
 ```{r importData}
 
-directory <- "appendixB/"
+directory <- "appendixB/sim100/"
 
 seed_data_popind <- readRDS(paste0(directory, "seed_dispersal_popind.RDS"))
 
@@ -52,33 +51,6 @@ seed_data_popfam %>%
 
 plot_grid(a, b, nrow = 2)
 ```
-
-```{r}
-
-seed_data_popind %>%
-  mutate(., type = ifelse(data == "POP", "POP", "IND")) %>% 
-  #filter(., dist == "exp") %>% 
-  ggplot(., aes(x = dispersal, color = type, group = data)) +
-  facet_wrap(~dist, ncol = 4) +
-  geom_density() +
-  #scale_x_log10() +
-  NULL -> a
-
-seed_data_popfam %>%
-  mutate(., type = ifelse(data == "POP", "POP", "FAM")) %>% 
-  #filter(., dist == "exp") %>% 
-  ggplot(., aes(x = dispersal, color = type, group = data)) +
-  facet_wrap(~dist, ncol = 4) +
-  geom_density() +
-  #scale_x_log10() +
-  NULL -> b
-
-plot_grid(a, b, nrow = 2)
-
-```
-
-
-Distance in log scale 
 
 ```{r}
 
@@ -188,4 +160,65 @@ seed_data_popfam %>%
   arrange(., desc(prcnt_ldd)) %>% 
   knitr::kable()
 ```
+
+
+
+
+
+
+
+```{r eval = FALSE}
+
+
+# Spatial data
+sims.ind <- readRDS(paste0(directory, "individualSims.RDS"))
+
+
+sims.ind %>% 
+  map(., "exp_move")
+
+sims.ind$B1[[1]]$exp_move
+
+get_seed_disp_info <- function(simulations){
+  models <- c("exp_move", "gam_move", "weib_move", "lnorm_move")
+
+  df <- NULL
+  for(i in 1:4){
+    oneModel <- map(simulations, models[i])
+    dispInfo <- map(oneModel, "seedInfo") %>% 
+      unlist()
+    dispersal <- map(dispInfo, "seed_disp") %>%
+      unlist()
+
+    out <- data.frame(model = models[i], 
+                      #dispersal = dispersal,
+                      dispInfo)
+    df <- rbind.data.frame(df, out)
+  }
+
+  return(df)
+}
+
+get_seed_disp_info(sims.ind)
+
+
+IDs <- unique(seed_data_popind$data)[2:13]
+
+indSeed_data <- NULL
+indSims <- vector("list", 12)
+for(i in 1:12){
+  a <- indSim_fx(paramList = popind, individual = IDs[i])
+
+  b <- get_seed_disp_info(a) %>%
+    mutate(data = IDs[i])
+
+  indSeed_data <- rbind(indSeed_data, b)
+
+  indSims[[i]] <- a
+}
+
+
+```
+
+
 

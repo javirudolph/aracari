@@ -140,6 +140,7 @@ seed_data_popind %>%
             max_disp = max(dispersal), 
             n_ldd = sum(LDD),
             prcnt_ldd = n_ldd/n) %>% 
+  arrange(., desc(prcnt_ldd)) %>% 
   knitr::kable()
 
 ```
@@ -156,6 +157,7 @@ seed_data_popfam %>%
             max_disp = max(dispersal), 
             n_ldd = sum(LDD),
             prcnt_ldd = n_ldd/n) %>% 
+  arrange(., desc(prcnt_ldd)) %>% 
   knitr::kable()
 ```
 
