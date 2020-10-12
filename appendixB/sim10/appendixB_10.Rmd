@@ -1,0 +1,222 @@
+---
+title: "Simulation of seed dispersal distance - 10 runs"
+author: "Javiera Rudolph"
+output: 
+  html_document:
+    toc: true
+    fig_width: 12
+    fig_height: 6
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, fig.cap = " ")
+
+```
+
+```{r loadPackages}
+library(tidyverse)
+library(lubridate)
+library(cowplot)
+```
+
+```{r importData}
+
+directory <- "appendixB/sim10/"
+
+seed_data_popind <- readRDS(paste0(directory, "seed_dispersal_popind.RDS"))
+
+seed_data_popfam <- readRDS(paste0(directory, "seed_dispersal_popfam.RDS"))
+
+```
+
+
+
+# Seed dispersal distance at the different organizational levels
+
+```{r}
+seed_data_popind %>%
+  mutate(., type = ifelse(data == "POP", "POP", "IND")) %>% 
+  #filter(., dist == "exp") %>% 
+  ggplot(., aes(x = data, y = dispersal, color = type)) +
+  facet_wrap(~dist, ncol = 4) +
+  geom_boxplot() -> a
+
+seed_data_popfam %>%
+  mutate(., type = ifelse(data == "POP", "POP", "FAM")) %>% 
+  #filter(., dist == "exp") %>% 
+  ggplot(., aes(x = data, y = dispersal, color = type)) +
+  facet_wrap(~dist, ncol = 4) +
+  geom_boxplot() -> b
+
+plot_grid(a, b, nrow = 2)
+```
+
+```{r}
+
+seed_data_popind %>%
+  mutate(., type = ifelse(data == "POP", "POP", "IND")) %>% 
+  #filter(., dist == "exp") %>% 
+  ggplot(., aes(x = dispersal, color = type, group = data)) +
+  facet_wrap(~dist, ncol = 4) +
+  geom_density() +
+  scale_x_log10() +
+  NULL -> a
+
+seed_data_popfam %>%
+  mutate(., type = ifelse(data == "POP", "POP", "FAM")) %>% 
+  #filter(., dist == "exp") %>% 
+  ggplot(., aes(x = dispersal, color = type, group = data)) +
+  facet_wrap(~dist, ncol = 4) +
+  geom_density() +
+  scale_x_log10() +
+  NULL -> b
+
+plot_grid(a, b, nrow = 2)
+
+```
+
+
+The figure I actually want should have all these box plots on the same one because I'm still missing the mixed distribution one. 
+
+```{r}
+
+mixed_ind <- seed_data_popind %>% 
+  mutate(type = ifelse(data == "POP", "POP", "IND")) %>%
+  filter(., type == "IND") %>% 
+  filter(., bic_b == "1") %>% 
+  mutate(type = "BIC") %>% 
+  bind_rows(., seed_data_popind %>% 
+  mutate(type = ifelse(data == "POP", "POP", "IND")) %>%
+  filter(., type == "IND") %>% 
+  filter(., aic_b == "1") %>% 
+  mutate(type = "AIC")) %>% 
+  mutate(dist = "mixed")
+
+
+seed_data_popind %>% 
+  mutate(type = ifelse(data == "POP", "POP", "IND")) %>% 
+  bind_rows(., mixed_ind) %>% 
+  ggplot(., aes(x = dist, y = dispersal, color = type)) +
+  #facet_wrap(~dist, scales = "free") +
+  geom_boxplot() -> a
+
+mixed_fam <- seed_data_popfam %>% 
+  mutate(type = ifelse(data == "POP", "POP", "FAM")) %>%
+  filter(., type == "FAM") %>% 
+  filter(., bic_b == "1") %>% 
+  mutate(type = "BIC") %>% 
+  bind_rows(., seed_data_popfam %>% 
+  mutate(type = ifelse(data == "POP", "POP", "FAM")) %>%
+  filter(., type == "FAM") %>% 
+  filter(., aic_b == "1") %>% 
+  mutate(type = "AIC")) %>% 
+  mutate(dist = "mixed")
+
+
+seed_data_popfam %>% 
+  mutate(type = ifelse(data == "POP", "POP", "FAM")) %>% 
+  bind_rows(., mixed_fam) %>% 
+  ggplot(., aes(x = dist, y = dispersal, color = type)) +
+  #facet_wrap(~dist, scales = "free") +
+  geom_boxplot() -> b
+
+plot_grid(a, b, nrow = 2)
+
+```
+
+# Summary stats
+
+Individual level
+
+```{r}
+seed_data_popind %>% 
+  mutate(type = ifelse(data == "POP", "POP", "IND")) %>% 
+  bind_rows(., mixed_ind) %>% 
+  mutate(., LDD = ifelse(dispersal >= 500, 1, 0)) %>% 
+  group_by(type, dist) %>% 
+  summarise(n = n(),
+            mean_disp = mean(dispersal),
+            max_disp = max(dispersal), 
+            n_ldd = sum(LDD),
+            prcnt_ldd = n_ldd/n) %>% 
+  knitr::kable()
+
+```
+
+Family level
+```{r}
+seed_data_popfam %>% 
+  mutate(type = ifelse(data == "POP", "POP", "FAM")) %>% 
+  bind_rows(., mixed_fam) %>% 
+  mutate(., LDD = ifelse(dispersal >= 500, 1, 0)) %>% 
+  group_by(type, dist) %>% 
+  summarise(n = n(),
+            mean_disp = mean(dispersal),
+            max_disp = max(dispersal), 
+            n_ldd = sum(LDD),
+            prcnt_ldd = n_ldd/n) %>% 
+  knitr::kable()
+```
+
+
+
+
+
+
+
+```{r eval = FALSE}
+
+
+# Spatial data
+sims.ind <- readRDS(paste0(directory, "individualSims.RDS"))
+
+
+sims.ind %>% 
+  map(., "exp_move")
+
+sims.ind$B1[[1]]$exp_move
+
+get_seed_disp_info <- function(simulations){
+  models <- c("exp_move", "gam_move", "weib_move", "lnorm_move")
+
+  df <- NULL
+  for(i in 1:4){
+    oneModel <- map(simulations, models[i])
+    dispInfo <- map(oneModel, "seedInfo") %>% 
+      unlist()
+    dispersal <- map(dispInfo, "seed_disp") %>%
+      unlist()
+
+    out <- data.frame(model = models[i], 
+                      #dispersal = dispersal,
+                      dispInfo)
+    df <- rbind.data.frame(df, out)
+  }
+
+  return(df)
+}
+
+get_seed_disp_info(sims.ind)
+
+
+IDs <- unique(seed_data_popind$data)[2:13]
+
+indSeed_data <- NULL
+indSims <- vector("list", 12)
+for(i in 1:12){
+  a <- indSim_fx(paramList = popind, individual = IDs[i])
+
+  b <- get_seed_disp_info(a) %>%
+    mutate(data = IDs[i])
+
+  indSeed_data <- rbind(indSeed_data, b)
+
+  indSims[[i]] <- a
+}
+
+
+```
+
+
+
