@@ -22,7 +22,7 @@ library(cowplot)
 
 ```{r importData}
 
-directory <- "appendixB/sim10/"
+directory <- "appendixB/sim50k/"
 
 seed_data_popind <- readRDS(paste0(directory, "seed_dispersal_popind.RDS"))
 
