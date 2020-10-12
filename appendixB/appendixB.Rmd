@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, fig.cap = " ")
 
 ```
 
+
 ```{r loadPackages}
 library(tidyverse)
 library(lubridate)
@@ -21,9 +22,141 @@ library(cowplot)
 ```
 
 ```{r importData}
-seed_data_popind <- readRDS("appendixA/seed_dispersal_popind.RDS")
 
-seed_data_popfam <- readRDS("appendixA/seed_dispersal_popfam.RDS")
+directory <- "appendixB/"
 
+seed_data_popind <- readRDS(paste0(directory, "seed_dispersal_popind.RDS"))
+
+seed_data_popfam <- readRDS(paste0(directory, "seed_dispersal_popfam.RDS"))
+
+```
+
+
+
+# Seed dispersal distance at the different organizational levels
+
+```{r}
+seed_data_popind %>%
+  mutate(., type = ifelse(data == "POP", "POP", "IND")) %>% 
+  #filter(., dist == "exp") %>% 
+  ggplot(., aes(x = data, y = dispersal, color = type)) +
+  facet_wrap(~dist, ncol = 4) +
+  geom_boxplot() -> a
+
+seed_data_popfam %>%
+  mutate(., type = ifelse(data == "POP", "POP", "FAM")) %>% 
+  #filter(., dist == "exp") %>% 
+  ggplot(., aes(x = data, y = dispersal, color = type)) +
+  facet_wrap(~dist, ncol = 4) +
+  geom_boxplot() -> b
+
+plot_grid(a, b, nrow = 2)
+```
+
+```{r}
+
+seed_data_popind %>%
+  mutate(., type = ifelse(data == "POP", "POP", "IND")) %>% 
+  #filter(., dist == "exp") %>% 
+  ggplot(., aes(x = dispersal, color = type, group = data)) +
+  facet_wrap(~dist, ncol = 4) +
+  geom_density() +
+  scale_x_log10() +
+  NULL -> a
+
+seed_data_popfam %>%
+  mutate(., type = ifelse(data == "POP", "POP", "FAM")) %>% 
+  #filter(., dist == "exp") %>% 
+  ggplot(., aes(x = dispersal, color = type, group = data)) +
+  facet_wrap(~dist, ncol = 4) +
+  geom_density() +
+  scale_x_log10() +
+  NULL -> b
+
+plot_grid(a, b, nrow = 2)
+
+```
+
+
+The figure I actually want should have all these box plots on the same one because I'm still missing the mixed distribution one. 
+
+```{r}
+
+mixed_ind <- seed_data_popind %>% 
+  mutate(type = ifelse(data == "POP", "POP", "IND")) %>%
+  filter(., type == "IND") %>% 
+  filter(., bic_b == "1") %>% 
+  mutate(type = "BIC") %>% 
+  bind_rows(., seed_data_popind %>% 
+  mutate(type = ifelse(data == "POP", "POP", "IND")) %>%
+  filter(., type == "IND") %>% 
+  filter(., aic_b == "1") %>% 
+  mutate(type = "AIC")) %>% 
+  mutate(dist = "mixed")
+
+
+seed_data_popind %>% 
+  mutate(type = ifelse(data == "POP", "POP", "IND")) %>% 
+  bind_rows(., mixed_ind) %>% 
+  ggplot(., aes(x = dist, y = dispersal, color = type)) +
+  #facet_wrap(~dist, scales = "free") +
+  geom_boxplot() -> a
+
+mixed_fam <- seed_data_popfam %>% 
+  mutate(type = ifelse(data == "POP", "POP", "FAM")) %>%
+  filter(., type == "FAM") %>% 
+  filter(., bic_b == "1") %>% 
+  mutate(type = "BIC") %>% 
+  bind_rows(., seed_data_popfam %>% 
+  mutate(type = ifelse(data == "POP", "POP", "FAM")) %>%
+  filter(., type == "FAM") %>% 
+  filter(., aic_b == "1") %>% 
+  mutate(type = "AIC")) %>% 
+  mutate(dist = "mixed")
+
+
+seed_data_popfam %>% 
+  mutate(type = ifelse(data == "POP", "POP", "FAM")) %>% 
+  bind_rows(., mixed_fam) %>% 
+  ggplot(., aes(x = dist, y = dispersal, color = type)) +
+  #facet_wrap(~dist, scales = "free") +
+  geom_boxplot() -> b
+
+plot_grid(a, b, nrow = 2)
+
+```
+
+# Summary stats
+
+Individual level
+
+```{r}
+seed_data_popind %>% 
+  mutate(type = ifelse(data == "POP", "POP", "IND")) %>% 
+  bind_rows(., mixed_ind) %>% 
+  mutate(., LDD = ifelse(dispersal >= 500, 1, 0)) %>% 
+  group_by(type, dist) %>% 
+  summarise(n = n(),
+            mean_disp = mean(dispersal),
+            max_disp = max(dispersal), 
+            n_ldd = sum(LDD),
+            prcnt_ldd = n_ldd/n) %>% 
+  knitr::kable()
+
+```
+
+Family level
+```{r}
+seed_data_popfam %>% 
+  mutate(type = ifelse(data == "POP", "POP", "FAM")) %>% 
+  bind_rows(., mixed_fam) %>% 
+  mutate(., LDD = ifelse(dispersal >= 500, 1, 0)) %>% 
+  group_by(type, dist) %>% 
+  summarise(n = n(),
+            mean_disp = mean(dispersal),
+            max_disp = max(dispersal), 
+            n_ldd = sum(LDD),
+            prcnt_ldd = n_ldd/n) %>% 
+  knitr::kable()
 ```
 
