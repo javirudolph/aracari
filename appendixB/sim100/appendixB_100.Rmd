@@ -1,5 +1,5 @@
 ---
-title: "Simulation of seed dispersal distance - 10 runs"
+title: "Simulation of seed dispersal distance - 100 runs"
 author: "Javiera Rudolph"
 output: 
   html_document:
