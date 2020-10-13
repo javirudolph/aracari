@@ -87,11 +87,12 @@ get_seed_disp_info <- function(simulations){
   df <- NULL
   for(i in 1:4){
     oneModel <- map(simulations, models[i])
-    dispInfo <- map(oneModel, "seedInfo")
-    dispersal <- map(dispInfo, "seed_disp") %>%
-      unlist()
+    dispInfo <- map_df(oneModel, "seedInfo") %>%
+      rename(dispersal = seed_disp)
+    # dispersal <- map(dispInfo, "seed_disp") %>%
+    #   unlist()
 
-    out <- data.frame(model = models[i], dispersal = dispersal)
+    out <- data.frame(model = models[i], dispInfo)
     df <- rbind.data.frame(df, out)
   }
 
