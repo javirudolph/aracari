@@ -15,6 +15,25 @@ nruns <- 10
 
 source("appendixB/functions.R")
 
+# Change post function
+get_seed_disp_info <- function(simulations){
+  models <- c("exp_move", "gam_move", "weib_move", "lnorm_move")
+
+  df <- NULL
+  for(i in 1:4){
+    oneModel <- map(simulations, models[i])
+    dispInfo <- map_df(oneModel, "seedInfo") %>%
+      rename(dispersal = seed_disp)
+    # dispersal <- map(dispInfo, "seed_disp") %>%
+    #   unlist()
+
+    out <- data.frame(model = models[i], dispInfo)
+    df <- rbind.data.frame(df, out)
+  }
+
+  return(df)
+}
+
 # Start with the population level parameters
 # I need to set a seed
 set.seed(192)
