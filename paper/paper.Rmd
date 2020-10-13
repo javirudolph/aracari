@@ -32,6 +32,7 @@ In order to analyze the effect of differences in animal movement over final disp
 
 # Simulations at different organizational levels
 
+Our main hypothesis is about the incoporation of variance in animal movement at different organizational levels, meaning how are the differences in individual animal movement affecting population level estimates of seed dispersal. How does the underlying variation in individual animal movement impact our estimates of long distance seed dispersal. We explored the effects of individual differences in movement by modifying our base simulation, in which the probability density function used to model animal movement was different between populations or a subcategory. In simulations at the population level, we used a single pdf to sample step sizes from, while for individual and family level simulations we used multiple pdfs to sample step sizes from, where each pdf was associated to a specific individual or family group. 
 
 Commonly used probability distributions for sampling the animal movement step size included an exponential distribution [@jones_closing_2017], gamma distribution [citation], Weibull distribution[citation], and lognormal distribution [@levey_modelling_2008]. These four distributions are leptokurtic, and they vary in the fatness of their tails, thus allowing for different levels of variation in step size.
  
