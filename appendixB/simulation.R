@@ -37,7 +37,7 @@ for(i in 1:length(popSims)){
 
 saveRDS(popSims, paste0(directory, "populationSims.RDS"))
 
-#popSims <- readRDS("appendixA/populationSims.RDS")
+#popSims <- readRDS("appendixB/populationSims.RDS")
 
 # These is the data for each seed that got dispersed
 # Since there are 5 seeds in each run, with 4 models, each run gets 20 distances
@@ -91,8 +91,22 @@ indSims <- setNames(indSims, IDs)
 
 saveRDS(indSims, paste0(directory, "individualSims.RDS"))
 
-#indSims <- readRDS("appendixA/individualSims.RDS")
+#indSims <- readRDS("appendixB/individualSims.RDS")
 
+
+IDs <- unique(popind$data)[2:13]
+
+indSeed_data <- NULL
+for(i in 1:12){
+  a <- indSims[[i]]
+
+  b <- get_seed_disp_info(a) %>%
+    mutate(data = IDs[i])
+
+  indSeed_data <- rbind(indSeed_data, b)
+
+  indSims[[i]] <- a
+}
 
 seed_dispersal_popind <- rbind.data.frame(popSeed_data, indSeed_data)
 
@@ -152,6 +166,8 @@ for(i in 1:length(popSims.fam)){
 
 saveRDS(popSims.fam, paste0(directory, "populationSims_family.RDS"))
 
+# popSims.fam <- readRDS(paste0(directory, "populationSims_family.RDS"))
+
 # These is the data for each seed that got dispersed
 # Since there are 5 seeds in each run, with 4 models, each run gets 20 distances
 popSeed_data_fam <- get_seed_disp_info(popSims.fam) %>%
@@ -202,6 +218,21 @@ for(i in 1:6){
 famSims <- setNames(famSims, IDs)
 
 saveRDS(famSims, paste0(directory, "familySims.RDS"))
+
+#famSims <- readRDS(paste0(directory, "familySims.RDS"))
+
+famSeed_data <- NULL
+for(i in 1:6){
+  a <- famSims[[i]]
+
+  b <- get_seed_disp_info(a) %>%
+    mutate(data = IDs_fam[i])
+
+  famSeed_data <- rbind(famSeed_data, b)
+
+  famSims[[i]] <- a
+}
+
 
 
 seed_dispersal_popfam <- rbind.data.frame(popSeed_data_fam, famSeed_data)
