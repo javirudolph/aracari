@@ -11,7 +11,7 @@ The goal of aracari is to …
 
 Access the
 [paper](https://javirudolph.github.io/aracari/paper/paper.html), and
-[appendixA](https://javirudolph.github.io/aracari/appendixA/appendixA.html)
+[appendixA](https://javirudolph.github.io/aracari/appendixA/appendixA.html), [appendixB](https://javirudolph.github.io/aracari/appendixA/appendixB.html)
 
 -----
 
