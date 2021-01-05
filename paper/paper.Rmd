@@ -29,9 +29,48 @@ In this paper, we focus on the implications of intraspecific variation in animal
 # Methods
 ## Model description
 
-To study the effects of individual variation in animal movement over final dispersal distances of foraged seeds, we developed a spatially-explicit individual-based model in a homogenous landscape consisting of a single source tree. We incorporated animal movement focusing on two characteristics, a movement distance (MD) sampled from a probability density distribution, and a movement angle (MA). In addition to this, we included gut retention time (GRT), the time that ingested seeds stay within the frugivore until they are dropped. The animal was allowed to move freely within the landscape, and GRT determined when a seed would get dispersed. Once a seed was dropped, its location was recorded and seed dispersal distance was estimated as the distance from the origin to the seed's location. The average seed dispersal distance for each simulation run was calculated and used to estimate seed dispersion, calculated as the mean distance of each seed to the average location of all seeds in the run [@jones_closing_2017]. For each simulation run, the simulation started at the source tree, an animal received a specific number of seeds and each seed was assigned a specific GRT sampled from a gamma distribution [@morales_effects_2006]. The simulation was based on one minute time steps, where at each time step a movement distance (MD) and movement angle (MA) would determine the path for the animal to follow. For each seed, the location where it would get dropped was based on the animal's location at the time it reached the GRT for each of the seeds. The total simulation time for each run was determined by the largest GRT sampled for that specific simulation run. Once all seeds were dropped, the simulation run ended.
+To study the effects of individual variation in animal movement over final dispersal distances of foraged seeds, we developed a spatially-explicit individual-based model in a homogenous landscape consisting of a single source tree. We incorporated animal movement focusing on two characteristics, a movement distance (MD) sampled from a probability density distribution, and a movement angle (MA). In addition to this, we included gut retention time (GRT), the time that ingested seeds stay within the frugivore until they are dropped. The animal was allowed to move freely within the landscape, and GRT determined when a seed would get dispersed. Once a seed was dropped, its location was recorded and seed dispersal distance was estimated as the distance from the origin to the seed's location. The average seed dispersal distance for each simulation run was calculated and used to estimate seed dispersion, calculated as the mean distance of each seed to the average location of all seeds in the run [@jones_closing_2017]. For each simulation run, the simulation started at the source tree, an animal received a specific number of seeds and each seed was assigned a specific GRT sampled from a gamma distribution [@morales_effects_2006]. The simulation was based on one minute time steps, where at each time step a movement distance (MD) and movement angle (MA) would determine the path for the animal to follow. For each seed, the location where it would get dropped was based on the animal's location at the time it reached the GRT for each of the seeds. The total simulation time for each run was determined by the largest GRT sampled for that specific simulation run. Each simulation run focused on one individual animal dispersing seeds from one focus tree. Once all seeds in that run were dropped by the animal, the simulation run ended.
+
+<!--- I need to include in that first paragraph how we are comparing between models with and without individual variation--->
+
+```{r}
+
+library(ggplot2)
+
+# Panel 1: landscape with tree in the center, origin
+
+df <- data.frame()
+ggplot(df) + xlim(-100, 100) + ylim(-100, 100) + 
+  theme(
+  panel.background = element_rect(fill = "lightblue",
+                                colour = "lightblue",
+                                size = 0.5, linetype = "solid"),
+  panel.grid.major = element_line(size = 0.5, linetype = 'solid',
+                                colour = "white"), 
+  panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                colour = "white")
+  ) +
+  coord_equal() +
+  geom_point(aes(x = 0, y = 0), color = "red")
+
+# Panel 2: Table with gut retention times and the gamma distribution used for it
+
+grt_data <- rgamma(5, shape = 5, rate = 1/4) + 8
+
+
+# Panel 3: Exponential distribution used for animal movement lengths
+
+# Panel 5: Animal trajectory and locations of the seeds at the time the seeds are dropped
+
+# Panel 6: Calculation of seed dispersal distances to the focus tree
+
+# Panel 7: Calculation of seed dispersion
+```
+
 
 <!-- Here I would like to have a figure that incorporates all these different simulation components as a self explanatory box for how a simulation run happens, and what data goes in, what data is calculated and comes out. -->
+
+
 
 
 In order to analyze the effect of differences in animal movement over final dispersal distances of foraged seeds we developed a spatially-explicit individual-based model in a homogeneous landscape that incorporated animal movement distances and seed gut retention time (GRT). Our landscape consisted of a single source tree at the origin,  our simulation time steps were based on one minute intervals, and each simulation started at the source tree (0,0), where each individual bird was given five seeds and was allowed to move freely in the landscape until the simulation ended once all seeds were dropped, Figure1. Each seed's gut retention time was determined at the start of each simulation run, being randomly sampled from a Gamma distribution (shape = 4, scale = 5, shift = 8) [@morales_effects_2006] so that the average gut retention time was 28 minutes[@holbrook_dispersal_2009; @holbrook_using_2007]. For each simulation run, the total simulation time was determined by the largest gut retention time sampled for the five seeds, therefore, once the last seed was dropped, the simulation ended. We calculated the Euclidean distance from the source tree to each of the dropped seeds to determine their seed dispersal distance. We simulated animal movement using a memoryless process, a random walk with a uniformly distributed angular direction and a random step size chosen from a probability distribution. The probability distribution chosen to simulate step size varied according to the different models we propose in Table1. 
