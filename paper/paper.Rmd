@@ -33,7 +33,7 @@ To study the effects of individual variation in animal movement over final dispe
 
 <!--- I need to include in that first paragraph how we are comparing between models with and without individual variation--->
 
-```{r}
+```{r eval = TRUE, fig.width=6}
 set.seed(5)
 library(ggplot2)
 library(aracari)
