@@ -109,7 +109,7 @@ ggplot() +
   geom_segment(aes(x = seed_loc$xloc, xend = mean_seed_loc$x, y = seed_loc$yloc, yend = mean_seed_loc$y)) -> p6
 
 # ALL
-plot_grid(p1, p2, p3, p4, p5, p6, labels = LETTERS[1:6], nrow = 3)
+plot_grid(p1, p2, p3, p4, p5, p6, labels = LETTERS[1:6], label_size = 10, nrow = 3)
 
 ```
 
