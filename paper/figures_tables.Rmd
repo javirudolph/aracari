@@ -33,4 +33,9 @@ library(ggpubr)
 # Density figures from which step and grt are sampled from
 
 
+```{r movementdensity, fig.width=6, fig.height=2}
+
+```
+
+
 
