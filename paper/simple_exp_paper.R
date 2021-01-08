@@ -104,11 +104,12 @@ library(dplyr)
 library(purrr)
 library(ggplot2)
 library(purrr)
+library(cowplot)
 
 
 data(ptpl)
 
-average_movrate <- mean(ptpl$mpm)
+null_moverate <- data.frame(Bird_ID = unique(ptpl$Bird_ID), movrate = mean(ptpl$mpm))
 
 indiv_moverate <- ptpl %>%
   group_by(Bird_ID) %>%
@@ -120,12 +121,143 @@ fam_moverate <- ptpl %>%
 
 ids <- ptpl %>% distinct(., Bird_ID, fam_g)
 
-manysims <- vector("list", 10)
-for(i in 1:length(manysims)){
-  manysims[[i]] <- sim_run(28)
-  #manysims[[i]]$sim_run <- paste("sim_", i)
+#### Null model
+# Assume all individuals share the same movement rate, which is the average movement rate for all data points
+
+# Run 10,000 simulation runs per individual or family group
+
+nruns <- 100
+
+null_dispersal <- NULL
+null_dispersion <- NULL
+for(j in 1:length(null_moverate$Bird_ID)){
+  moverate <- null_moverate$movrate[j]
+
+  manysims <- vector("list", nruns)
+  for(i in 1:length(manysims)){
+    manysims[[i]] <- sim_run(moverate)
+    manysims[[i]]$sim_run <- paste("sim_", i)
+  }
+
+  dispersal <- map_df(manysims, "seed")$dispersal
+  id <- null_moverate$Bird_ID[j]
+  mean_dispersal <- map_dbl(manysims, "mean_dispersal")
+  se_dispersal <- map_dbl(manysims, "se_dispersal")
+  seed_dispersion <- map_dbl(manysims, "seed_dispersion")
+
+  out <- data.frame(dispersal = dispersal, id = id)
+  null_dispersal <- rbind.data.frame(null_dispersal, out)
+
+  out2 <- data.frame(id = id,
+                     mean_dispersal = mean_dispersal,
+                     se_dispersal = se_dispersal,
+                     seed_dispersion = seed_dispersion)
+  null_dispersion <- rbind.data.frame(null_dispersion, out2)
+
 }
 
+# Dispersal kernel plot
 
-dispersal <- map_df(manysims, "seed")$dispersal
-hist(dispersal)
+null_dispersal %>%
+  ggplot(., aes(x = dispersal)) +
+  geom_histogram()
+
+# Stats plots
+plot_grid(null_dispersion %>%
+            ggplot(., aes(y = mean_dispersal)) +
+            geom_boxplot(),
+          null_dispersion %>%
+            ggplot(., aes(y = seed_dispersion)) +
+            geom_boxplot())
+
+
+### Individual simulation
+
+indiv_dispersal <- NULL
+indiv_dispersion <- NULL
+for(j in 1:length(indiv_moverate$Bird_ID)){
+  moverate <- indiv_moverate$movrate[j]
+
+  manysims <- vector("list", nruns)
+  for(i in 1:length(manysims)){
+    manysims[[i]] <- sim_run(moverate)
+    manysims[[i]]$sim_run <- paste("sim_", i)
+  }
+
+  dispersal <- map_df(manysims, "seed")$dispersal
+  id <- indiv_moverate$Bird_ID[j]
+  mean_dispersal <- map_dbl(manysims, "mean_dispersal")
+  se_dispersal <- map_dbl(manysims, "se_dispersal")
+  seed_dispersion <- map_dbl(manysims, "seed_dispersion")
+
+  out <- data.frame(dispersal = dispersal, id = id)
+  indiv_dispersal <- rbind.data.frame(indiv_dispersal, out)
+
+  out2 <- data.frame(id = id,
+                     mean_dispersal = mean_dispersal,
+                     se_dispersal = se_dispersal,
+                     seed_dispersion = seed_dispersion)
+  indiv_dispersion <- rbind.data.frame(indiv_dispersion, out2)
+
+}
+
+# Dispersal kernel plot
+
+indiv_dispersal %>%
+  ggplot(., aes(x = dispersal)) +
+  geom_histogram()
+
+# Stats plots
+plot_grid(indiv_dispersion %>%
+            ggplot(., aes(y = mean_dispersal)) +
+            geom_boxplot(),
+          indiv_dispersion %>%
+            ggplot(., aes(y = seed_dispersion)) +
+            geom_boxplot())
+
+
+### Social or Family group simulation
+
+fam_dispersal <- NULL
+fam_dispersion <- NULL
+for(j in 1:length(fam_moverate$fam_g)){
+  moverate <- fam_moverate$movrate[j]
+
+  manysims <- vector("list", nruns)
+  for(i in 1:length(manysims)){
+    manysims[[i]] <- sim_run(moverate)
+    manysims[[i]]$sim_run <- paste("sim_", i)
+  }
+
+  dispersal <- map_df(manysims, "seed")$dispersal
+  id <- fam_moverate$fam_g[j]
+  mean_dispersal <- map_dbl(manysims, "mean_dispersal")
+  se_dispersal <- map_dbl(manysims, "se_dispersal")
+  seed_dispersion <- map_dbl(manysims, "seed_dispersion")
+
+  out <- data.frame(dispersal = dispersal, id = id)
+  fam_dispersal <- rbind.data.frame(fam_dispersal, out)
+
+  out2 <- data.frame(id = id,
+                     mean_dispersal = mean_dispersal,
+                     se_dispersal = se_dispersal,
+                     seed_dispersion = seed_dispersion)
+  fam_dispersion <- rbind.data.frame(fam_dispersion, out2)
+
+}
+
+# Dispersal kernel plot
+
+fam_dispersal %>%
+  ggplot(., aes(x = dispersal)) +
+  geom_histogram()
+
+# Stats plots
+plot_grid(fam_dispersion %>%
+            ggplot(., aes(y = mean_dispersal)) +
+            geom_boxplot(),
+          fam_dispersion %>%
+            ggplot(., aes(y = seed_dispersion)) +
+            geom_boxplot())
+
+
