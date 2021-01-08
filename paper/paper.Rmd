@@ -3,15 +3,23 @@ title: "Individual Variation in Animal Movement and Effects on Seed Dispersal Di
 abstract: |
   I don't like this abstract. Revisit at the end...Seed dispersal is a fundamental process in plant ecology and due to its high importance in the ecosystem, various modelling approaches have been developed to understand seed movement and dispersal mechanisms. In particular, long-distance seed dispersal (LDD) plays a significant role in determining a population's genetic diversity and range expansion. Animal-mediated seed dispersal is a key component of LDD events, as frugivores can travel long distances and transport seeds with them. In this study we seek to understand the implications of individual variation in animal movement and how these can impact estimates of long distance seed dispersal. We apply these methods to empirical data sets that contain locations for an araçari, *Pteroglossus pluricintus*, one of the primary frugivores for the Amazonian canopy tree *Virola flexuosa*. We combine animal movement data and gut retention time to simulate *Virola* seed dispersal. This approach showed that there is significant variation in individual araçari movement patterns which directly influence the estimated number of long-distance dispersal events for *Virola* seeds. We found that models that ignore this underlying variation in individual animal movement, underestimate the percentage of long-distance seed dispersal events and maximum seed dispersal distances.
 output:
-  html_document:
-    df_print: paged
   word_document:
     reference_docx: paper_ref.docx
+  html_document:
+    df_print: paged
 bibliography: mybibfile.bib
 ---
 
 ```{r setup, echo=FALSE}
-knitr::opts_chunk$set(eval = FALSE, echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE)
+```
+
+```{r libraries}
+library(ggplot2)
+library(aracari)
+library(cowplot)
+library(dplyr)
+
 ```
 
 \newpage
@@ -39,9 +47,6 @@ To understand the consequences of individual variation in animal movement and ho
 
 ```{r eval = TRUE, fig.width=6}
 set.seed(5)
-library(ggplot2)
-library(aracari)
-library(cowplot)
 
 data(ptpl)
 # Panel 1: landscape with tree in the center, origin
@@ -125,6 +130,7 @@ We focused our study on the many-banded araçari (*Pterglossus pluricinctus*), a
 To take advantage of all the locations recorded for series of successive points, despite this variation in duration of time intervals, we calculated rates of movement, as the average number of meters moved per minute over the entire tracking period for that individual bird. These movement rates were later used in our simulation models as the parameter to describe the probability distribution of movement distances at each one minute time step for each simulation run. In the case of our null model, the movement rate was averaged across all individuals for all the tracking periods, and at the social group level we took the average number of meters moved per minute over the tracking periods for all individuals belonging to that group, with a total of 7 independent groups.   
 
 Parameter values for gut retention time were also based on empirically collected data from previous studies [@holbrook_using_2007], were  passage trials were carried out with *Pteroglossus pluricinctus* individuals. However, these passage trials were not performed on every individual captured and some of the trials were also performed with captive birds, thus we could not explore individual variation in gut retention times for the individuals in the movement data set. These trials showed that the average gut retention time for *Pterglossus pluricinctus* was 28 minutes [@holbrook_using_2007], and maximum retention times over 100 minutes. The distribution of gut retention times is characteristically fat-tailed, thus we used a gamma distribution (shape = 4, scale = 5) with the appropriate shift to match our average retention time of 28 minutes [@morales_effects_2006; @levey_effects_2005], and used this distribution to sample gut retention times for each of our simulation runs.
+
 
 ## Model processes
 
