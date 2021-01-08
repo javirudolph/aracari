@@ -12,30 +12,55 @@ knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE, results = 'hide')
 ```
 
-```{r}
-library(dplyr)
-library(ggplot2)
-library(tidyr)
-library(purrr)
-library(fitdistrplus)
-library(ggpubr)
-
-```
-
-# Layout of steps of one simulation run
-
-# Figure with variation for parameter estimates
-
-# Table: Info criteria for family and individual levels
-
-# Facetted plot for seed dispersal distances
-
-# Density figures from which step and grt are sampled from
-
-
 ```{r movementdensity, fig.width=6, fig.height=2}
 
+load("paper/simple_exp_runs.RData")
+
+library(ggplot2)
+library(dplyr)
+
+
+# Figure for movement rates at the three levels
+
+rates <- data.frame(level = "null", movrate = null_moverate$movrate[1]) %>%
+  bind_rows(., indiv_moverate %>%
+              rename(level = Bird_ID)) %>%
+  bind_rows(., fam_moverate %>%
+              rename(level = fam_g)) %>%
+  mutate(model = ifelse(level == "null", "Null",
+                        ifelse(level %in% paste0("f", 1:7), "Family", "Individual")))
+
+n <- 1000
+dens_rates <- NULL
+for(i in 1:length(rates$level)) {
+  dens_exp <- rexp(n, rate = 1/rates$movrate[i])
+
+  out <- data.frame(level = rates$level[i], model = rates$model[i], value = dens_exp)
+  dens_rates <- rbind.data.frame(dens_rates, out)
+}
+
+dens_rates %>%
+  mutate(model = factor(model, levels = c("Null", "Individual", "Family"))) %>%
+  ggplot(., aes(x = value, group = level, color = model)) +
+  facet_wrap(~model) +
+  geom_density() +
+  scale_color_manual(values = c("red", "grey", "black"), guide = "none") +
+  theme_bw() + labs(x = "Distance in meters per minute") +
+  #coord_cartesian(xlim = c(100, 300), ylim = c(0, 0.0025))+
+  NULL
 ```
 
+```{r grt, fig.width=3, fig.height=2}
+
+n <- 10000
+grt_dens <- data.frame(seq = 1:n, dat = (rgamma(n, shape = 4, scale = 5) + 8))
+grt_data <- data.frame(time = round(sample(grt_dens$dat, 5)), seq = 1:5)
+tt <- max(grt_data$time)
+ggplot(grt_dens, aes(x = dat)) +
+  geom_density() + 
+  geom_point(data = grt_data, aes(x = time, y = 0)) +
+  theme_bw() + labs(x = "Time in minutes")
+
+```
 
 
