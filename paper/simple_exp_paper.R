@@ -106,6 +106,7 @@ library(ggplot2)
 library(purrr)
 library(cowplot)
 
+set.seed(27)
 
 data(ptpl)
 
