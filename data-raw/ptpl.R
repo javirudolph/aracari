@@ -61,7 +61,7 @@ ptpl %>%
                                       ifelse(id == 22, "f4",
                                              ifelse(id == 28, "f5",
                                                     ifelse(id %in% c(49,84),
-                                                           "f6", "unknown")
+                                                           "f6", "f7")
                                              )))))) -> ptpl
 # Add new variables used for the selection later
 # Some of the data was collected on a preliminary field season and it includes other time intervals. Here, we want to focus on the intervals that are multiples of 15, as that is how the majority of data is collected. From a biological stand point, a seed has a high probability of being regurgitated in 15-30 minutes.
