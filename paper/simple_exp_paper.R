@@ -126,7 +126,7 @@ ids <- ptpl %>% distinct(., Bird_ID, fam_g)
 
 # Run 10,000 simulation runs per individual or family group
 
-nruns <- 100
+nruns <- 10
 
 null_dispersal <- NULL
 null_dispersion <- NULL
@@ -156,19 +156,17 @@ for(j in 1:length(null_moverate$Bird_ID)){
 
 }
 
-# Dispersal kernel plot
-
-null_dispersal %>%
-  ggplot(., aes(x = dispersal)) +
-  geom_histogram()
-
-# Stats plots
-plot_grid(null_dispersion %>%
+# Plots
+plot_grid(
+  null_dispersal %>%
+    ggplot(., aes(x = dispersal)) +
+    geom_histogram(),
+  plot_grid(null_dispersion %>%
             ggplot(., aes(y = mean_dispersal)) +
             geom_boxplot(),
           null_dispersion %>%
             ggplot(., aes(y = seed_dispersion)) +
-            geom_boxplot())
+            geom_boxplot()), nrow = 2)
 
 
 ### Individual simulation
@@ -201,19 +199,17 @@ for(j in 1:length(indiv_moverate$Bird_ID)){
 
 }
 
-# Dispersal kernel plot
+# plots
+plot_grid(indiv_dispersal %>%
+            ggplot(., aes(x = dispersal)) +
+            geom_histogram(),
+          plot_grid(indiv_dispersion %>%
+                      ggplot(., aes(y = mean_dispersal)) +
+                      geom_boxplot(),
+                    indiv_dispersion %>%
+                      ggplot(., aes(y = seed_dispersion)) +
+                      geom_boxplot()), nrow = 2)
 
-indiv_dispersal %>%
-  ggplot(., aes(x = dispersal)) +
-  geom_histogram()
-
-# Stats plots
-plot_grid(indiv_dispersion %>%
-            ggplot(., aes(y = mean_dispersal)) +
-            geom_boxplot(),
-          indiv_dispersion %>%
-            ggplot(., aes(y = seed_dispersion)) +
-            geom_boxplot())
 
 
 ### Social or Family group simulation
@@ -246,18 +242,16 @@ for(j in 1:length(fam_moverate$fam_g)){
 
 }
 
-# Dispersal kernel plot
-
-fam_dispersal %>%
-  ggplot(., aes(x = dispersal)) +
-  geom_histogram()
-
-# Stats plots
-plot_grid(fam_dispersion %>%
+# Plots
+plot_grid(
+  fam_dispersal %>%
+    ggplot(., aes(x = dispersal)) +
+    geom_histogram(),
+  plot_grid(fam_dispersion %>%
             ggplot(., aes(y = mean_dispersal)) +
             geom_boxplot(),
           fam_dispersion %>%
             ggplot(., aes(y = seed_dispersion)) +
-            geom_boxplot())
+            geom_boxplot()), nrow = 2)
 
 
