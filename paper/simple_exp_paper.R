@@ -126,7 +126,7 @@ ids <- ptpl %>% distinct(., Bird_ID, fam_g)
 
 # Run 10,000 simulation runs per individual or family group
 
-nruns <- 10
+nruns <- 10000
 
 null_dispersal <- NULL
 null_dispersion <- NULL
@@ -254,4 +254,5 @@ plot_grid(
             ggplot(., aes(y = seed_dispersion)) +
             geom_boxplot()), nrow = 2)
 
+save.image(file = "paper/simple_exp_runs.RData")
 
