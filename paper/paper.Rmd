@@ -134,19 +134,14 @@ At the beginning of each simulation run, the animal consumed five seeds at the f
 
 ## Seed dispersal and aggregation metrics
 
+We calculated seed dispersal distance as the euclidean distance of each seed to the parent plant. Given that our models only considered one parent plant located at the origin per simmulation, we calculated seed dispersal distance (DD) as the distance from each seed's location to the origin as follows:
+$$DD_i = \sqrt{(0-x_i)^2 + (0-y_i)^2} $$
+where $DD_i$ is the dispersal distance for seed $i$ in the simulation run and $x_i$ and $y_i$ are its xy coordinates in the landscape. We also used an aggregation metric to determine how evenly seeds would be dispersed across the landscape, and calculated seed dispersion (SD) as the average distance of each seed to the mean seed location in each simulation run (following methods in [@jones_closing_2017]):
+$$SD = \frac{\sum \sqrt{(x_m - x_i)^2 + (y_m - y_i)^2}}{n}$$
+where $n$ is the number of seeds for each simulation run (5), and $x_m$ and $y_m$ is the mean seed location in the simulation run. The information on seed dispersal distance was used for the toucan-generated seed dispersal kernels for each one of our models (null, individual, and family group), and these seed dispersal distances were also classified as long distance dispersal events if they exceeded 500m [@holbrook_using_2007]. The proportion of long-distance dispersal events, maximum dispersal distance, and average seed dispersion were used to compare seed dispersal between our three models of individual variation.
 
 
-
-
- 
-Bring up that each seed gets dropped when the simulation reaches the seed's previously determined gut retention time, and thus the seed's location is the lcoation of the bird at the simulation time that matches the gut retention time. The simulation run ends when the last seed is dropped, which is determined by the largest gut retention time. 
-We did not have limits set on the landscape, as we are trying to also understand the effects of this variation on the potential for long-distance dispersal events in toucan-generated seed dispersal curves. Maximum recorded distances for these toucans in the datasets is of 3665m in a single 30 minute tracking interval, so we didn't want to limit the dispersal potential by setting the landscape to a torus and constricting its size.
-
-## Seed dispersal distance and agregation metrics
-
-How we calculated these distances, the averages and SD, and then how we calculated the dispersion, long distance dispersal events.
-
-## Seed dispersal kernel fitting
+## Seed dispersal kernels
 
 Look into this, but probably use a Weibull distribution like morales and carlo, and then compare the parameters to describe them. An alternative approach would be to use an extreme distribution like the garcia paper to describe this.
 
@@ -160,6 +155,8 @@ Look into this, but probably use a Weibull distribution like morales and carlo, 
 ## Extreme distributions to fit dispersal
 
 # Discussion
+
+Even though LDD events are rare or infrequent, they have a disproportionately large effect on gene flow and the genetic pool of populations (Jordano 2017). In the case of well mixed populations, long-distance dispersal can cause random genetic loss through drift or have the opposite effect and maintain high genetic variance in populations that initially drifted (Bohrer, Nathan, and Volis 2005). This is important as in the long-term, these genetic consequences of dispersal can have significant effects for the survival of populations. From a metapopulation perspective, LDD events can have significant consequences for species persistence by enhancing genetic variability and as mechanism for survival in spatially and temporally heterogenous environments. In particular, long-distance dispersal events have a higher probability of reaching isolated populations and therefore establishing a connection and maintaining unrelated populations. It is of special interest to focus in highly heterogenous habitats with rapid change in spatial structure where local extinctions are high, since long-distance dispersal can allow persistence of a metapopulation with immigration and emigration based on long distance dispersal. From a more evolutionary perspective, long-distance dispersal can allow for a species to colonize distant habitats and expand its range, which can also lead to differentiation and speciation (Ronce 2007). We have shown that individual differences in frugivore movement can have significant consequences on the number of long-distance seed dispersal events and it remains to be explored how these individual differences can influence population dynamics in the long term and at larger spatial scales.
 
 
 # Conclusion
