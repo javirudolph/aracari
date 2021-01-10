@@ -14,17 +14,20 @@ library(dplyr)
 null_weibull <- fitdist(null_dispersal$dispersal, distr = "weibull")
 
 null_weibull$estimate
+gofstat(null_weibull)
 # plot(null_weibull)
 
 
 indiv_weibull <- fitdist(indiv_dispersal$dispersal, distr = "weibull")
 
 indiv_weibull$estimate
+gofstat(indiv_weibull)
 # plot(indiv_weibull)
 
 fam_weibull <- fitdist(fam_dispersal$dispersal, distr = "weibull")
 
 fam_weibull$estimate
+gofstat(fam_weibull)
 # plot(fam_weibull)
 
 
