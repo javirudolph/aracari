@@ -14,18 +14,18 @@ library(dplyr)
 null_weibull <- fitdist(null_dispersal$dispersal, distr = "weibull")
 
 null_weibull$estimate
-plot(null_weibull)
+# plot(null_weibull)
 
 
 indiv_weibull <- fitdist(indiv_dispersal$dispersal, distr = "weibull")
 
 indiv_weibull$estimate
-plot(indiv_weibull)
+# plot(indiv_weibull)
 
 fam_weibull <- fitdist(fam_dispersal$dispersal, distr = "weibull")
 
 fam_weibull$estimate
-plot(fam_weibull)
+# plot(fam_weibull)
 
 
 
@@ -36,22 +36,69 @@ null_dispersal %>%
   group_by(., id) %>%
   summarize(max_d = max(dispersal),
             n_ldd = n(),
-            prop_ldd = n_ldd/10000)
+            prop_ldd = n_ldd/10000) %>%
+  ungroup() %>%
+  summarise(global_max = max(max_d),
+            max_mean = mean(max_d),
+            max_sd = sd(max_d),
+            sd_ldd = sd(prop_ldd),
+            prop_ldd = mean(prop_ldd),
+            prcnt_ldd = prop_ldd *100) -> null_ldd
 
 indiv_dispersal %>%
   filter(., dispersal >= 500) %>%
   group_by(., id) %>%
   summarize(max_d = max(dispersal),
             n_ldd = n(),
-            prop_ldd = n_ldd/10000)
+            prop_ldd = n_ldd/10000) %>%
+  ungroup() %>%
+  summarise(global_max = max(max_d),
+            max_mean = mean(max_d),
+            max_sd = sd(max_d),
+            sd_ldd = sd(prop_ldd),
+            prop_ldd = mean(prop_ldd),
+            prcnt_ldd = prop_ldd *100) -> indiv_ldd
 
 fam_dispersal %>%
   filter(., dispersal >= 500) %>%
   group_by(., id) %>%
   summarize(max_d = max(dispersal),
             n_ldd = n(),
-            prop_ldd = n_ldd/10000)
+            prop_ldd = n_ldd/10000)%>%
+  ungroup() %>%
+  summarise(global_max = max(max_d),
+            max_mean = mean(max_d),
+            max_sd = sd(max_d),
+            sd_ldd = sd(prop_ldd),
+            prop_ldd = mean(prop_ldd),
+            prcnt_ldd = prop_ldd *100) -> fam_ldd
 
+# Dispersal and dispersion calculation
+
+null_dispersion %>%
+  #group_by(., id) %>%
+  summarise(se_dispersal = mean(se_dispersal),
+            mean_dispersal = mean(mean_dispersal),
+            se_dispersion = sd(seed_dispersion),
+            mean_dispersion = mean(seed_dispersion)) -> null_mean_dispersion
+
+indiv_dispersion %>%
+  #group_by(., id) %>%
+  summarise(se_dispersal = mean(se_dispersal),
+            mean_dispersal = mean(mean_dispersal),
+            se_dispersion = sd(seed_dispersion),
+            mean_dispersion = mean(seed_dispersion)) -> indiv_mean_dispersion
+
+fam_dispersion %>%
+  #group_by(., id) %>%
+  summarise(se_dispersal = mean(se_dispersal),
+            mean_dispersal = mean(mean_dispersal),
+            se_dispersion = sd(seed_dispersion),
+            mean_dispersion = mean(seed_dispersion)) -> fam_mean_dispersion
+
+dispersion_table <- data.frame(model = c("Null", "Individual", "Family"))
+
+dispersion_table <- cbind(dispersion_table, rbind(null_mean_dispersion, indiv_mean_dispersion, fam_mean_dispersion))
 
 # Interesting that not all individuals produce LDD
 # For supplement, break down dispersal kernel by individual and family group. Panel to compare. Show clear variation in kernels produced by different individuals or groups.
@@ -64,4 +111,39 @@ indiv_dispersal %>%
 
 
 
+
+
+
+# Table:
+
+dispersal_kernel_table <- data.frame(
+  Model = c("Null", "Individual", "Family"),
+  Mean_dispersal = c(signif(mean(null_dispersal$dispersal), 4),
+                     signif(mean(indiv_dispersal$dispersal), 4),
+                     signif(mean(fam_dispersal$dispersal),4)),
+  Seed_dispersion = c(signif(mean(null_dispersion$seed_dispersion), 4),
+                      signif(mean(indiv_dispersion$seed_dispersion), 4),
+                      signif(mean(fam_dispersion$seed_dispersion),4)),
+  Max_dispersal = c(signif(max(null_ldd$global_max), 4),
+                           signif(max(indiv_ldd$global_max), 4),
+                           signif(max(fam_ldd$global_max), 4)),
+  # Max_dispersal = c(paste0(signif(null_ldd$max_mean, 3), " (", signif(null_ldd$max_sd, 1), ")"),
+  #                   paste0(signif(indiv_ldd$max_mean, 3), " (", signif(indiv_ldd$max_sd, 1), ")"),
+  #                   paste0(signif(fam_ldd$max_mean, 3), " (", signif(fam_ldd$max_sd, 1), ")")),
+  LDD = c(paste0(signif(null_ldd$prcnt_ldd, 3), " (", signif(null_ldd$sd_ldd, 1), ")", "%"),
+          paste0(signif(indiv_ldd$prcnt_ldd, 3), " (", signif(indiv_ldd$sd_ldd, 1), ")", "%"),
+          paste0(signif(fam_ldd$prcnt_ldd, 3), " (", signif(fam_ldd$sd_ldd, 1), ")", "%")),
+  Weibull_Shape = c(paste0(signif(null_weibull$estimate[2], 4), " (", signif(null_weibull$sd[2], 2), ")"),
+                     paste0(signif(indiv_weibull$estimate[2], 4), " (", signif(indiv_weibull$sd[2], 2), ")"),
+                     paste0(signif(fam_weibull$estimate[2], 4), " (", signif(fam_weibull$sd[2], 2), ")")),
+  Weibull_Scale = c(paste0(signif(null_weibull$estimate[1], 4), " (", signif(null_weibull$sd[1], 2), ")"),
+                  paste0(signif(indiv_weibull$estimate[1], 4), " (", signif(indiv_weibull$sd[1], 2), ")"),
+                  paste0(signif(fam_weibull$estimate[1], 4), " (", signif(fam_weibull$sd[1], 2), ")"))
+)
+
+
+
+
+
+save.image("paper/dispersal_kernels.RData")
 
