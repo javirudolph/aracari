@@ -131,6 +131,8 @@ To take advantage of all the locations recorded for series of successive points,
 
 Parameter values for gut retention time were also based on empirically collected data from previous studies [@holbrook_using_2007], were  passage trials were carried out with *Pteroglossus pluricinctus* individuals. However, these passage trials were not performed on every individual captured and some of the trials were also performed with captive birds, thus we could not explore individual variation in gut retention times for the individuals in the movement data set. These trials showed that the average gut retention time for *Pterglossus pluricinctus* was 28 minutes [@holbrook_using_2007], and maximum retention times over 100 minutes. The distribution of gut retention times is characteristically fat-tailed, thus we used a gamma distribution (shape = 4, scale = 5) with the appropriate shift to match our average retention time of 28 minutes [@morales_effects_2006; @levey_effects_2005], and used this distribution to sample gut retention times for each of our simulation runs.
 
+*Include table in the supplement with the movement rates*
+
 
 ## Model processes
 
@@ -149,7 +151,12 @@ where $n$ is the number of seeds for each simulation run (5), and $x_m$ and $y_m
 
 ## Seed dispersal kernels
 
-- Already fit the weibull distribution for this. I have
+- Already fit the weibull distribution for this. Mention that we chose this distribution because it is commonly used in dispersal ecology due to its felixibility, how adjusting the scale parameter changes the tail of the distribution. This is both in Garcia2017 (>1 fast decaying, <1 low decay fat tail, =1 exponential decay) and Carlomorales2006 papers, but I think they present it slightly different. 
+
+- We inspected the QQ plots to check for fitting. Figuere Supplement
+
+- They mention declustering the data, and perhaps in that case I could be using the mean_xy_dispersal.
+
 
 # Results
 
@@ -240,6 +247,12 @@ knitr::kable(dispersal_kernel_table)
 ```
 
 ## Extreme distributions to fit dispersal
+
+Explain what are statistics of extremes and why they can be useful here. cite the GArcia 2017 paper, the Gaines and Denny 1993, Katz 2005. Coles 2001 for the theory or base knowledge. In our case, because we are looking at these simulated seed dispersal kernels, we use a peak over threshold (POT) approach, in which we find the threshold for the data and use an extreme value distribution to fit the tail. 
+Describe the math probabilty density functions and the three laws that the extreme value distribution follows. 
+For POT use a generalized pareto distribution. 
+
+- Based on Diagnostic plots, we used these values as the threshold for each of the models.
 
 
 # Discussion
