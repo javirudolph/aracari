@@ -77,6 +77,7 @@ sim_run <- function(movrate){
 
   x_m <- mean(seed_loc$xloc)
   y_m <- mean(seed_loc$yloc)
+  mean_xy_dispersal <- sqrt((x_m^2) + (y_m^2))
   mean_dispersal <- mean(seed_loc$dispersal)
   se_dispersal <- sd(seed_loc$dispersal)/sqrt(length(seed_loc$dispersal))
 
@@ -88,6 +89,7 @@ sim_run <- function(movrate){
   outsim <- list(lengths = movedist,
                  movement = animalTraj,
                  seed = seed_loc,
+                 mean_xy_dispersal = mean_xy_dispersal,
                  mean_dispersal = mean_dispersal,
                  se_dispersal = se_dispersal,
                  seed_dispersion = seed_dispersion)
@@ -142,6 +144,7 @@ for(j in 1:length(null_moverate$Bird_ID)){
 
   dispersal <- map_df(manysims, "seed")$dispersal
   id <- null_moverate$Bird_ID[j]
+  mean_xy_dispersal <- map_dbl(manysims, "mean_xy_dispersal")
   mean_dispersal <- map_dbl(manysims, "mean_dispersal")
   se_dispersal <- map_dbl(manysims, "se_dispersal")
   seed_dispersion <- map_dbl(manysims, "seed_dispersion")
@@ -150,6 +153,7 @@ for(j in 1:length(null_moverate$Bird_ID)){
   null_dispersal <- rbind.data.frame(null_dispersal, out)
 
   out2 <- data.frame(id = id,
+                     mean_xy_dispersal = mean_xy_dispersal,
                      mean_dispersal = mean_dispersal,
                      se_dispersal = se_dispersal,
                      seed_dispersion = seed_dispersion)
@@ -185,6 +189,7 @@ for(j in 1:length(indiv_moverate$Bird_ID)){
 
   dispersal <- map_df(manysims, "seed")$dispersal
   id <- indiv_moverate$Bird_ID[j]
+  mean_xy_dispersal <- map_dbl(manysims, "mean_xy_dispersal")
   mean_dispersal <- map_dbl(manysims, "mean_dispersal")
   se_dispersal <- map_dbl(manysims, "se_dispersal")
   seed_dispersion <- map_dbl(manysims, "seed_dispersion")
@@ -193,6 +198,7 @@ for(j in 1:length(indiv_moverate$Bird_ID)){
   indiv_dispersal <- rbind.data.frame(indiv_dispersal, out)
 
   out2 <- data.frame(id = id,
+                     mean_xy_dispersal = mean_xy_dispersal,
                      mean_dispersal = mean_dispersal,
                      se_dispersal = se_dispersal,
                      seed_dispersion = seed_dispersion)
@@ -228,6 +234,7 @@ for(j in 1:length(fam_moverate$fam_g)){
 
   dispersal <- map_df(manysims, "seed")$dispersal
   id <- fam_moverate$fam_g[j]
+  mean_xy_dispersal <- map_dbl(manysims, "mean_xy_dispersal")
   mean_dispersal <- map_dbl(manysims, "mean_dispersal")
   se_dispersal <- map_dbl(manysims, "se_dispersal")
   seed_dispersion <- map_dbl(manysims, "seed_dispersion")
@@ -236,6 +243,7 @@ for(j in 1:length(fam_moverate$fam_g)){
   fam_dispersal <- rbind.data.frame(fam_dispersal, out)
 
   out2 <- data.frame(id = id,
+                     mean_xy_dispersal = mean_xy_dispersal,
                      mean_dispersal = mean_dispersal,
                      se_dispersal = se_dispersal,
                      seed_dispersion = seed_dispersion)
