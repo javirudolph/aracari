@@ -206,9 +206,14 @@ null_dispersion %>%
   bind_rows(indiv_dispersion %>% 
               mutate(model = "Individual")) %>% 
   bind_rows(fam_dispersion %>% 
-              mutate(model = "Family")) -> all_disp_data
+              mutate(model = "Family")) %>% 
+  mutate(model = factor(model, levels = c("Null", "Individual", "Family"))) -> all_disp_data
 
   
+all_disp_data %>% 
+  ggplot(., aes(y = mean_xy_dispersal, x = model)) +
+  geom_boxplot() -> dispersal_xy_box
+
 all_disp_data %>% 
   ggplot(., aes(y = mean_dispersal, x = model)) +
   geom_boxplot() -> dispersal_box
@@ -218,7 +223,7 @@ all_disp_data %>%
   ggplot(., aes(y = seed_dispersion, x = model)) +
   geom_boxplot() -> dispersion_box
 
-plot_grid(dispersal_box, dispersion_box, nrow = 2)
+plot_grid(dispersal_xy_box, dispersal_box, dispersion_box, nrow = 3)
 
 # Edit redundant labels
 # Fix names for axes
