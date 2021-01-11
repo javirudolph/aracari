@@ -97,7 +97,7 @@ for(i in 1:1000){
   out <- data.frame(boot = paste0("boot_", i), scale = scale, shape = shape)
   null_boot <- rbind.data.frame(null_boot, out)
   dist_range <- seq(null_thresh, 4000, by = 100)
-  out2 <- data.frame(distance = dist_range,
+  out2 <- data.frame(boot = paste0("boot_", i), distance = dist_range,
                            prob = pextRemes(null_fit, dist_range, lower.tail = FALSE))
   null_boot_probs <- rbind.data.frame(null_boot_probs, out2)
 }
@@ -105,8 +105,8 @@ for(i in 1:1000){
 null_lines <- purrr::map(seq(1:1000), function(y) stat_function(fun = devd, args = list(type = "GP", scale = null_boot$scale[y], shape = null_boot$shape[i]), color = "grey"))
 
 # CI
-hist(null_boot$scale)
-hist(null_boot$shape)
+hist(scale(null_boot$scale))
+hist(scale(null_boot$shape))
 
 # Calculate confidence interval according to t-distribution
 confidence_interval <- function(vector, interval) {
@@ -119,7 +119,7 @@ confidence_interval <- function(vector, interval) {
   # Error according to t distribution
   error <- qt((interval + 1)/2, df = n - 1) * vec_sd / sqrt(n)
   # Confidence interval as a vector
-  result <- c("lower" = vec_mean - error, "upper" = vec_mean + error)
+  result <- data.frame("lower" = vec_mean - error, "upper" = vec_mean + error)
   return(result)
 }
 
@@ -133,7 +133,6 @@ null_base_plot + null_lines +
   stat_function(fun = devd, n = 101, args = list(type = "GP", scale = null_ci_scale$upper, shape = null_ci_shape$upper),
                 linetype = "dashed", size = 1)
 
-ggsave("null_dens.png")
 
 # 4. Calculate probability of getting those LDD events
 #   a. make a figure with probability on the y axis, and distance in the x.
