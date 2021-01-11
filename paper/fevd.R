@@ -64,19 +64,55 @@ orig_thres <- 500
 null_threshplot <- threshrange.plot(null_dispersal$dispersal, type = "GP", nint = 200)
 null_mrl <- mrlplot(null_dispersal$dispersal, nint = 200)
 
-null_thres <- 500
+null_thresh <- 500
 # 2. Fit Generalized Pareto Distribution
 
-null_fit <- fevd(null_dispersal, threshold = null_thresh, type = "GP")
+null_fit <- fevd(null_dispersal$dispersal, threshold = null_thresh, type = "GP")
 null_qq <- plot(null_fit, type = "qq")
-summary(null_fit)
-
+null_summ <- summary(null_fit)
+null_scale <- null_summ$par[1]
+null_shape <- null_summ$par[2]
+null_scale_se <- null_summ$se.theta[1]
+null_shape_se <- null_summ$se.theta[2]
 
 # 3. Plot the distribution
 #   a. Plot density with estimated parameters
 #   b. Plot density with the 95% confidence intervals
-#   c. Plot bootstrap estimates: sample 10000 from the data, 1000 times and get those parameters. Make those density plots
+#   c. Plot bootstrap? estimates: sample 10000 from the data, 1000 times and get those parameters. Make those density plots
 
+ggplot(data = data.frame(x = c(100, 2000)), aes(x)) +
+  stat_function(fun = devd, n = 101, args = list(type = "GP", scale = null_scale, shape = null_shape), size = 1) -> null_base_plot
+
+
+# Don't know if this is called bootstrapping
+
+null_boot <- NULL
+null_boot_probs <- NULL
+for(i in 1:1000){
+  samp <- sample(null_dispersal$dispersal, 1000)
+  fitD <- fevd(samp, threshold = null_thresh, type = "GP")
+  scale <- fitD$results$par[1]
+  shape <- fitD$results$par[2]
+  out <- data.frame(boot = paste0("boot_", i), scale = scale, shape = shape)
+  null_boot <- rbind.data.frame(null_boot, out)
+  dist_range <- seq(null_thresh, 4000, by = 100)
+  out2 <- data.frame(distance = dist_range,
+                           probpextRemes(null_fit, dist_range, lower.tail = FALSE))
+  null_boot_probs <- rbind.data.frame(null_boot_probs, out2)
+}
+
+null_lines <- purrr::map(seq(1:1000), function(y) stat_function(fun = devd, args = list(type = "GP", scale = null_boot$scale[y], shape = null_boot$shape[i]), color = "grey"))
+
+null_base_plot + null_lines +
+  stat_function(fun = devd, n = 101, args = list(type = "GP", scale = null_scale, shape = null_shape), size = 1) +
+  coord_cartesian(xlim = c(200, 1000))
+
+# 4. Calculate probability of getting those LDD events
+#   a. make a figure with probability on the y axis, and distance in the x.
+
+dist_range <- seq(null_thresh, 4000, by = 100)
+null_probs <- data.frame(distance = dist_range,
+                         probpextRemes(null_fit, dist_range, lower.tail = FALSE))
 
 
 
