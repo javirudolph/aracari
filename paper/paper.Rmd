@@ -254,6 +254,8 @@ For POT use a generalized pareto distribution.
 
 - Based on Diagnostic plots, we used these values as the threshold for each of the models.
 
+From extRemes package: "where shape = 0 gives rise to the exponential df (light tail), shape > 0 the Pareto df (heavy tail) and shape < 0 the Beta df (bounded upper tail at location - scale.u/shape). Theoretical justification supports the use of the GP df family for modeling excesses over a high threshold (i.e., y = x - threshold)."
+
 
 # Discussion
 
