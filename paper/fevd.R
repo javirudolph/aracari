@@ -77,6 +77,15 @@ null_shape <- null_summ$par[2]
 null_scale_se <- null_summ$se.theta[1]
 null_shape_se <- null_summ$se.theta[2]
 
+null_scale + 1.96 * null_summ$cov.theta[1,1]
+null_scale - 1.96 * null_summ$cov.theta[1,1]
+null_scale + null_scale_se
+null_scale - null_scale_se
+
+null_shape + 1.96 * null_summ$cov.theta[2,2]
+null_shape - 1.96 * null_summ$cov.theta[2,2]
+null_shape + null_shape_se
+null_shape - null_shape_se
 
 # INDIVIDUAL MODEL
 # 1. Determine threshold
