@@ -64,26 +64,7 @@ orig_thres <- 500
 # 1. Determine threshold
 
 null_threshplot <- threshrange.plot(null_dispersal$dispersal, type = "GP", nint = 200)
-
 null_mrl <- mrlplot(null_dispersal$dispersal, nint = 200)
-
-par(mfrow=c(2,1))
-nint <- 200
-r <- quantile(null_dispersal$dispersal, probs=c(0.75,0.99))
-u.i <- matrix(seq(r[1],r[2],,200), ncol=1)
-plotdata <- as.data.frame(null_threshplot) %>%
-  mutate(x = u.i)
-out <- null_threshplot
-xlb <- "Threshold"
-yl <- range(c(out[,c("low.t.scale","t.scale","up.t.scale")]), finite=TRUE)
-plot(u.i, out[,"t.scale"], ylim=yl, xlab=xlb, ylab="reparameterized scale", type="b")
-for(j in 1:nint) lines(c(u.i[j],u.i[j]), out[j,c("low.t.scale","up.t.scale")])
-
-yl <- range(c(out[,c("low.shape","shape","up.shape")]), finite=TRUE)
-plot(u.i, out[,"shape"], ylim=yl, xlab="Threshold", ylab="shape", type="b")
-for(j in 1:nint) lines(c(u.i[j],u.i[j]), out[j,c("low.shape","up.shape")])
-
-
 
 null_thresh <- orig_thres
 # 2. Fit Generalized Pareto Distribution
@@ -176,6 +157,90 @@ evd_table
 
 save.image("paper/fevd.RData")
 
+#### THRESHOLD PLOTS
+# NULL
+# threshplot
+par(mfrow=c(2,1))
+nint <- 200
+r <- quantile(null_dispersal$dispersal, probs=c(0.75,0.99))
+u.i <- matrix(seq(r[1],r[2],, nint), ncol=1)
+out <- null_threshplot
+xlb <- "Threshold"
+yl <- range(c(out[,c("low.t.scale","t.scale","up.t.scale")]), finite=TRUE)
+plot(u.i, out[,"t.scale"], ylim=yl, xlab=xlb, ylab="reparameterized scale", type="b")
+for(j in 1:nint) lines(c(u.i[j],u.i[j]), out[j,c("low.t.scale","up.t.scale")])
+
+yl <- range(c(out[,c("low.shape","shape","up.shape")]), finite=TRUE)
+plot(u.i, out[,"shape"], ylim=yl, xlab="Threshold", ylab="shape", type="b")
+for(j in 1:nint) lines(c(u.i[j],u.i[j]), out[j,c("low.shape","up.shape")])
+
+
+# mrl
+par(mfrow=c(1,1))
+out <- null_mrl
+r <- range(null_dispersal$dispersal, finite=TRUE)
+u.i <- matrix(seq(r[1], r[2] - 1,, nint), ncol=1)
+
+yl <- range(c(out), finite=TRUE)
+plot(u.i, out[,2], type="l", xlab=xlab, ylab="Mean Excess", ylim=yl)
+lines(u.i, out[,1], lty=2, col="gray", lwd=1.5)
+lines(u.i, out[,3], lty=2, col="gray", lwd=1.5)
+
+# INDIV
+# threshplot
+par(mfrow=c(2,1))
+nint <- 200
+r <- quantile(indiv_dispersal$dispersal, probs=c(0.75,0.99))
+u.i <- matrix(seq(r[1],r[2],, nint), ncol=1)
+out <- indiv_threshplot
+xlb <- "Threshold"
+yl <- range(c(out[,c("low.t.scale","t.scale","up.t.scale")]), finite=TRUE)
+plot(u.i, out[,"t.scale"], ylim=yl, xlab=xlb, ylab="reparameterized scale", type="b")
+for(j in 1:nint) lines(c(u.i[j],u.i[j]), out[j,c("low.t.scale","up.t.scale")])
+
+yl <- range(c(out[,c("low.shape","shape","up.shape")]), finite=TRUE)
+plot(u.i, out[,"shape"], ylim=yl, xlab="Threshold", ylab="shape", type="b")
+for(j in 1:nint) lines(c(u.i[j],u.i[j]), out[j,c("low.shape","up.shape")])
+
+
+# mrl
+par(mfrow=c(1,1))
+out <- indiv_mrl
+r <- range(indiv_dispersal$dispersal, finite=TRUE)
+u.i <- matrix(seq(r[1], r[2] - 1,, nint), ncol=1)
+
+yl <- range(c(out), finite=TRUE)
+plot(u.i, out[,2], type="l", xlab=xlab, ylab="Mean Excess", ylim=yl)
+lines(u.i, out[,1], lty=2, col="gray", lwd=1.5)
+lines(u.i, out[,3], lty=2, col="gray", lwd=1.5)
+
+#FAM
+# threshplot
+par(mfrow=c(2,1))
+nint <- 200
+r <- quantile(fam_dispersal$dispersal, probs=c(0.75,0.99))
+u.i <- matrix(seq(r[1],r[2],, nint), ncol=1)
+out <- fam_threshplot
+xlb <- "Threshold"
+yl <- range(c(out[,c("low.t.scale","t.scale","up.t.scale")]), finite=TRUE)
+plot(u.i, out[,"t.scale"], ylim=yl, xlab=xlb, ylab="reparameterized scale", type="b")
+for(j in 1:nint) lines(c(u.i[j],u.i[j]), out[j,c("low.t.scale","up.t.scale")])
+
+yl <- range(c(out[,c("low.shape","shape","up.shape")]), finite=TRUE)
+plot(u.i, out[,"shape"], ylim=yl, xlab="Threshold", ylab="shape", type="b")
+for(j in 1:nint) lines(c(u.i[j],u.i[j]), out[j,c("low.shape","up.shape")])
+
+
+# mrl
+par(mfrow=c(1,1))
+out <- fam_mrl
+r <- range(fam_dispersal$dispersal, finite=TRUE)
+u.i <- matrix(seq(r[1], r[2] - 1,, nint), ncol=1)
+
+yl <- range(c(out), finite=TRUE)
+plot(u.i, out[,2], type="l", xlab=xlab, ylab="Mean Excess", ylim=yl)
+lines(u.i, out[,1], lty=2, col="gray", lwd=1.5)
+lines(u.i, out[,3], lty=2, col="gray", lwd=1.5)
 
 #*****************************************************************************************
 load("paper/fevd.RData")
