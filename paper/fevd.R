@@ -8,7 +8,7 @@ library(ggplot2)
 library(cowplot)
 library(extRemes)
 
-
+#################################################################################################################
 # Just testing
 
 null_sample <- sample(null_dispersal$dispersal, 10000)
@@ -55,7 +55,7 @@ p + lines +
   stat_function(fun = devd, n = 101, args = list(type = "GP", scale = 1, shape = 0), linetype = "dashed", size = 2) +
   stat_function(fun = devd, n = 101, args = list(type = "GP", scale = 1, shape = 0.5))
 
-
+################################################################################################################################
 
 # Now to my actual data
 orig_thres <- 500
@@ -103,8 +103,34 @@ for(i in 1:1000){
 
 null_lines <- purrr::map(seq(1:1000), function(y) stat_function(fun = devd, args = list(type = "GP", scale = null_boot$scale[y], shape = null_boot$shape[i]), color = "grey"))
 
+# CI
+hist(null_boot$scale)
+hist(null_boot$shape)
+
+# Calculate confidence interval according to t-distribution
+confidence_interval <- function(vector, interval) {
+  # Standard deviation of sample
+  vec_sd <- sd(vector)
+  # Sample size
+  n <- length(vector)
+  # Mean of sample
+  vec_mean <- mean(vector)
+  # Error according to t distribution
+  error <- qt((interval + 1)/2, df = n - 1) * vec_sd / sqrt(n)
+  # Confidence interval as a vector
+  result <- c("lower" = vec_mean - error, "upper" = vec_mean + error)
+  return(result)
+}
+
+null_ci_scale <- confidence_interval(null_boot$scale, 0.95)
+null_ci_shape <- confidence_interval(null_boot$shape, 0.95)
+
 null_base_plot + null_lines +
   stat_function(fun = devd, n = 101, args = list(type = "GP", scale = null_scale, shape = null_shape), size = 1) +
+  stat_function(fun = devd, n = 101, args = list(type = "GP", scale = null_ci_scale$lower, shape = null_ci_shape$lower),
+                linetype = "dashed", size = 1) +
+  stat_function(fun = devd, n = 101, args = list(type = "GP", scale = null_ci_scale$upper, shape = null_ci_shape$upper),
+                linetype = "dashed", size = 1)
   coord_cartesian(xlim = c(200, 1000))
 
 # 4. Calculate probability of getting those LDD events
@@ -113,7 +139,6 @@ null_base_plot + null_lines +
 dist_range <- seq(null_thresh, 4000, by = 100)
 null_probs <- data.frame(distance = dist_range,
                          probpextRemes(null_fit, dist_range, lower.tail = FALSE))
-
 
 
 
