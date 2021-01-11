@@ -57,15 +57,16 @@ p + lines +
 
 ################################################################################################################################
 
+orig_thres <- 500
 #*****************************************************************************************
 # NULL MODEL
-orig_thres <- 500
+
 # 1. Determine threshold
 
 null_threshplot <- threshrange.plot(null_dispersal$dispersal, type = "GP", nint = 200)
 null_mrl <- mrlplot(null_dispersal$dispersal, nint = 200)
 
-null_thresh <- 500
+null_thresh <- orig_thres
 # 2. Fit Generalized Pareto Distribution
 
 null_fit <- fevd(null_dispersal$dispersal, threshold = null_thresh, type = "GP")
@@ -75,6 +76,42 @@ null_scale <- null_summ$par[1]
 null_shape <- null_summ$par[2]
 null_scale_se <- null_summ$se.theta[1]
 null_shape_se <- null_summ$se.theta[2]
+
+
+# INDIVIDUAL MODEL
+# 1. Determine threshold
+
+indiv_threshplot <- threshrange.plot(indiv_dispersal$dispersal, type = "GP", nint = 200)
+indiv_mrl <- mrlplot(indiv_dispersal$dispersal, nint = 200)
+
+indiv_thresh <- orig_thres
+# 2. Fit Generalized Pareto Distribution
+
+indiv_fit <- fevd(indiv_dispersal$dispersal, threshold = indiv_thresh, type = "GP")
+indiv_qq <- plot(indiv_fit, type = "qq")
+indiv_summ <- summary(indiv_fit)
+indiv_scale <- indiv_summ$par[1]
+indiv_shape <- indiv_summ$par[2]
+indiv_scale_se <- indiv_summ$se.theta[1]
+indiv_shape_se <- indiv_summ$se.theta[2]
+
+
+# FAMILY MODEL
+# 1. Determine threshold
+
+fam_threshplot <- threshrange.plot(fam_dispersal$dispersal, type = "GP", nint = 200)
+fam_mrl <- mrlplot(fam_dispersal$dispersal, nint = 200)
+
+fam_thresh <- orig_thres
+# 2. Fit Generalized Pareto Distribution
+
+fam_fit <- fevd(fam_dispersal$dispersal, threshold = fam_thresh, type = "GP")
+fam_qq <- plot(fam_fit, type = "qq")
+fam_summ <- summary(fam_fit)
+fam_scale <- fam_summ$par[1]
+fam_shape <- fam_summ$par[2]
+fam_scale_se <- fam_summ$se.theta[1]
+fam_shape_se <- fam_summ$se.theta[2]
 
 # 3. Plot the distribution
 #   a. Plot density with estimated parameters
