@@ -41,3 +41,13 @@ ggplot(data = data.frame(x = c(0.1, 6)), aes(x)) +
   ylab("") +
   scale_y_continuous(breaks = NULL)
 
+
+lines <- purrr::map(seq(0, 1, 0.1), function(y) stat_function(fun = devd, args = list(type = "GP", scale = 1, shape = y), color = "grey"))
+
+ggplot(data = data.frame(x = c(0.1, 6)), aes(x)) +
+  ylab("") +
+  scale_y_continuous(breaks = NULL) -> p
+
+p + lines +
+  stat_function(fun = devd, n = 101, args = list(type = "GP", scale = 1, shape = 0), linetype = "dashed", size = 2) +
+  stat_function(fun = devd, n = 101, args = list(type = "GP", scale = 1, shape = 0.5))
