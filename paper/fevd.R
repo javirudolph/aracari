@@ -113,8 +113,23 @@ fam_shape <- fam_summ$par[2]
 fam_scale_se <- fam_summ$se.theta[1]
 fam_shape_se <- fam_summ$se.theta[2]
 
+
+# Make the table
+evd_table <- data.frame(Model = c("Null", "Individual", "Family"),
+                        Scale = c(paste0(signif(null_scale, 4), " \u00b1 ", signif(null_scale_se, 4)),
+                                  paste0(signif(indiv_scale, 4), " \u00b1 ", signif(indiv_scale_se, 4)),
+                                  paste0(signif(fam_scale, 4), " \u00b1 ", signif(fam_scale_se, 4))),
+                        Shape = c(paste0(signif(null_shape, 4), " \u00b1 ", signif(null_shape_se, 4)),
+                                  paste0(signif(indiv_shape, 4), " \u00b1 ", signif(indiv_shape_se, 4)),
+                                  paste0(signif(fam_shape, 4), " \u00b1 ", signif(fam_shape_se, 4))))
+evd_table
+
 save.image("paper/fevd.RData")
 
+
+#*****************************************************************************************
+load("paper/fevd.RData")
+#*
 # 3. Plot the distribution
 #   a. Plot density with estimated parameters
 #   b. Plot density with the 95% confidence intervals
@@ -128,14 +143,15 @@ ggplot(data = data.frame(x = c(100, 2000)), aes(x)) +
 
 null_boot <- NULL
 null_boot_probs <- NULL
-for(i in 1:1000){
+for(i in 1:10){
   samp <- sample(null_dispersal$dispersal, 1000)
   fitD <- fevd(samp, threshold = null_thresh, type = "GP")
   scale <- fitD$results$par[1]
   shape <- fitD$results$par[2]
   out <- data.frame(boot = paste0("boot_", i), scale = scale, shape = shape)
   null_boot <- rbind.data.frame(null_boot, out)
-  dist_range <- seq(null_thresh, 4000, by = 100)
+
+  dist_range <- seq(null_thresh, 5000, by = 100)
   out2 <- data.frame(boot = paste0("boot_", i), distance = dist_range,
                            prob = pextRemes(null_fit, dist_range, lower.tail = FALSE))
   null_boot_probs <- rbind.data.frame(null_boot_probs, out2)
@@ -161,6 +177,13 @@ confidence_interval <- function(vector, interval) {
   result <- data.frame("lower" = vec_mean - error, "upper" = vec_mean + error)
   return(result)
 }
+
+norm.interval = function(data, variance = var(data), conf.level = 0.95) {
+  z = qnorm((1 - conf.level)/2, lower.tail = FALSE)
+  xbar = mean(data)
+  sdx = sqrt(variance/length(data))
+  c(xbar - z * sdx, xbar + z * sdx)
+  }
 
 null_ci_scale <- confidence_interval(null_boot$scale, 0.95)
 null_ci_shape <- confidence_interval(null_boot$shape, 0.95)
