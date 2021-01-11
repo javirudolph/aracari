@@ -21,6 +21,9 @@ qqnorm(null_sample)
 a <- threshrange.plot(null_sample, r = c(300, 700), nint = 200)
 b <- mrlplot(null_sample, xlim = c(300, 700), nint = 100)
 
+c <- decluster(null_sample, threshold = 500)
+plot(c)
+
 fit_D <- fevd(null_sample, threshold = 500, type = "GP")
 #fit_D$results
 summary(fit_D)
@@ -51,3 +54,36 @@ ggplot(data = data.frame(x = c(0.1, 6)), aes(x)) +
 p + lines +
   stat_function(fun = devd, n = 101, args = list(type = "GP", scale = 1, shape = 0), linetype = "dashed", size = 2) +
   stat_function(fun = devd, n = 101, args = list(type = "GP", scale = 1, shape = 0.5))
+
+
+
+# Now to my actual data
+orig_thres <- 500
+# 1. Determine threshold
+
+null_threshplot <- threshrange.plot(null_dispersal$dispersal, type = "GP", nint = 200)
+null_mrl <- mrlplot(null_dispersal$dispersal, nint = 200)
+
+null_thres <- 500
+# 2. Fit Generalized Pareto Distribution
+
+null_fit <- fevd(null_dispersal, threshold = null_thresh, type = "GP")
+null_qq <- plot(null_fit, type = "qq")
+summary(null_fit)
+
+
+# 3. Plot the distribution
+#   a. Plot density with estimated parameters
+#   b. Plot density with the 95% confidence intervals
+#   c. Plot bootstrap estimates: sample 10000 from the data, 1000 times and get those parameters. Make those density plots
+
+
+
+
+
+
+
+
+
+
+
