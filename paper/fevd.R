@@ -116,12 +116,12 @@ fam_shape_se <- fam_summ$se.theta[2]
 
 # Make the table
 evd_table <- data.frame(Model = c("Null", "Individual", "Family"),
-                        Scale = c(paste0(signif(null_scale, 4), " \u00b1 ", signif(null_scale_se, 4)),
-                                  paste0(signif(indiv_scale, 4), " \u00b1 ", signif(indiv_scale_se, 4)),
-                                  paste0(signif(fam_scale, 4), " \u00b1 ", signif(fam_scale_se, 4))),
-                        Shape = c(paste0(signif(null_shape, 4), " \u00b1 ", signif(null_shape_se, 4)),
-                                  paste0(signif(indiv_shape, 4), " \u00b1 ", signif(indiv_shape_se, 4)),
-                                  paste0(signif(fam_shape, 4), " \u00b1 ", signif(fam_shape_se, 4))))
+                        Scale = c(paste0(signif(null_scale, 4), " \u00b1 ", signif(null_scale_se, 3)),
+                                  paste0(signif(indiv_scale, 4), " \u00b1 ", signif(indiv_scale_se, 3)),
+                                  paste0(signif(fam_scale, 4), " \u00b1 ", signif(fam_scale_se, 3))),
+                        Shape = c(paste0(signif(null_shape, 4), " \u00b1 ", signif(null_shape_se, 3)),
+                                  paste0(signif(indiv_shape, 4), " \u00b1 ", signif(indiv_shape_se, 3)),
+                                  paste0(signif(fam_shape, 4), " \u00b1 ", signif(fam_shape_se, 3))))
 evd_table
 
 save.image("paper/fevd.RData")
