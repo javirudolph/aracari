@@ -64,7 +64,26 @@ orig_thres <- 500
 # 1. Determine threshold
 
 null_threshplot <- threshrange.plot(null_dispersal$dispersal, type = "GP", nint = 200)
+
 null_mrl <- mrlplot(null_dispersal$dispersal, nint = 200)
+
+par(mfrow=c(2,1))
+nint <- 200
+r <- quantile(null_dispersal$dispersal, probs=c(0.75,0.99))
+u.i <- matrix(seq(r[1],r[2],,200), ncol=1)
+plotdata <- as.data.frame(null_threshplot) %>%
+  mutate(x = u.i)
+out <- null_threshplot
+xlb <- "Threshold"
+yl <- range(c(out[,c("low.t.scale","t.scale","up.t.scale")]), finite=TRUE)
+plot(u.i, out[,"t.scale"], ylim=yl, xlab=xlb, ylab="reparameterized scale", type="b")
+for(j in 1:nint) lines(c(u.i[j],u.i[j]), out[j,c("low.t.scale","up.t.scale")])
+
+yl <- range(c(out[,c("low.shape","shape","up.shape")]), finite=TRUE)
+plot(u.i, out[,"shape"], ylim=yl, xlab="Threshold", ylab="shape", type="b")
+for(j in 1:nint) lines(c(u.i[j],u.i[j]), out[j,c("low.shape","up.shape")])
+
+
 
 null_thresh <- orig_thres
 # 2. Fit Generalized Pareto Distribution
@@ -86,6 +105,8 @@ null_shape + 1.96 * null_summ$cov.theta[2,2]
 null_shape - 1.96 * null_summ$cov.theta[2,2]
 null_shape + null_shape_se
 null_shape - null_shape_se
+
+ci(null_fit, type = parameter)
 
 # INDIVIDUAL MODEL
 # 1. Determine threshold
