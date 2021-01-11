@@ -104,6 +104,16 @@ indiv_shape <- indiv_summ$par[2]
 indiv_scale_se <- indiv_summ$se.theta[1]
 indiv_shape_se <- indiv_summ$se.theta[2]
 
+indiv_scale + 1.96 * indiv_summ$cov.theta[1,1]
+indiv_scale - 1.96 * indiv_summ$cov.theta[1,1]
+indiv_scale + indiv_scale_se
+indiv_scale - indiv_scale_se
+
+indiv_shape + 1.96 * indiv_summ$cov.theta[2,2]
+indiv_shape - 1.96 * indiv_summ$cov.theta[2,2]
+indiv_shape + indiv_shape_se
+indiv_shape - indiv_shape_se
+
 
 # FAMILY MODEL
 # 1. Determine threshold
@@ -121,6 +131,16 @@ fam_scale <- fam_summ$par[1]
 fam_shape <- fam_summ$par[2]
 fam_scale_se <- fam_summ$se.theta[1]
 fam_shape_se <- fam_summ$se.theta[2]
+
+fam_scale + 1.96 * fam_summ$cov.theta[1,1]
+fam_scale - 1.96 * fam_summ$cov.theta[1,1]
+fam_scale + fam_scale_se
+fam_scale - fam_scale_se
+
+fam_shape + 1.96 * fam_summ$cov.theta[2,2]
+fam_shape - 1.96 * fam_summ$cov.theta[2,2]
+fam_shape + fam_shape_se
+fam_shape - fam_shape_se
 
 
 # Make the table
