@@ -57,7 +57,8 @@ p + lines +
 
 ################################################################################################################################
 
-# Now to my actual data
+#*****************************************************************************************
+# NULL MODEL
 orig_thres <- 500
 # 1. Determine threshold
 
@@ -97,7 +98,7 @@ for(i in 1:1000){
   null_boot <- rbind.data.frame(null_boot, out)
   dist_range <- seq(null_thresh, 4000, by = 100)
   out2 <- data.frame(distance = dist_range,
-                           probpextRemes(null_fit, dist_range, lower.tail = FALSE))
+                           prob = pextRemes(null_fit, dist_range, lower.tail = FALSE))
   null_boot_probs <- rbind.data.frame(null_boot_probs, out2)
 }
 
@@ -131,14 +132,15 @@ null_base_plot + null_lines +
                 linetype = "dashed", size = 1) +
   stat_function(fun = devd, n = 101, args = list(type = "GP", scale = null_ci_scale$upper, shape = null_ci_shape$upper),
                 linetype = "dashed", size = 1)
-  coord_cartesian(xlim = c(200, 1000))
+
+ggsave("null_dens.png")
 
 # 4. Calculate probability of getting those LDD events
 #   a. make a figure with probability on the y axis, and distance in the x.
 
 dist_range <- seq(null_thresh, 4000, by = 100)
 null_probs <- data.frame(distance = dist_range,
-                         probpextRemes(null_fit, dist_range, lower.tail = FALSE))
+                         prob = pextRemes(null_fit, dist_range, lower.tail = FALSE))
 
 
 
