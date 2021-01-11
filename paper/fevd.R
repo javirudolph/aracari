@@ -58,13 +58,15 @@ p + lines +
 ################################################################################################################################
 
 orig_thres <- 500
+nint <- 200
+r <- c(0, 700)
 #*****************************************************************************************
 # NULL MODEL
 
 # 1. Determine threshold
 
-null_threshplot <- threshrange.plot(null_dispersal$dispersal, type = "GP", nint = 200)
-null_mrl <- mrlplot(null_dispersal$dispersal, nint = 200)
+null_threshplot <- threshrange.plot(null_dispersal$dispersal, r = r, type = "GP", nint = nint)
+null_mrl <- mrlplot(null_dispersal$dispersal, nint = nint)
 
 null_thresh <- orig_thres
 # 2. Fit Generalized Pareto Distribution
@@ -92,8 +94,8 @@ ci(null_fit, type = parameter)
 # INDIVIDUAL MODEL
 # 1. Determine threshold
 
-indiv_threshplot <- threshrange.plot(indiv_dispersal$dispersal, type = "GP", nint = 200)
-indiv_mrl <- mrlplot(indiv_dispersal$dispersal, nint = 200)
+indiv_threshplot <- threshrange.plot(indiv_dispersal$dispersal, r = r, type = "GP", nint = nint)
+indiv_mrl <- mrlplot(indiv_dispersal$dispersal, nint = nint)
 
 indiv_thresh <- orig_thres
 # 2. Fit Generalized Pareto Distribution
@@ -120,8 +122,8 @@ indiv_shape - indiv_shape_se
 # FAMILY MODEL
 # 1. Determine threshold
 
-fam_threshplot <- threshrange.plot(fam_dispersal$dispersal, type = "GP", nint = 200)
-fam_mrl <- mrlplot(fam_dispersal$dispersal, nint = 200)
+fam_threshplot <- threshrange.plot(fam_dispersal$dispersal, r = r, type = "GP", nint = nint)
+fam_mrl <- mrlplot(fam_dispersal$dispersal, nint = nint)
 
 fam_thresh <- orig_thres
 # 2. Fit Generalized Pareto Distribution
