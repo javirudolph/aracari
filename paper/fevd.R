@@ -113,6 +113,8 @@ fam_shape <- fam_summ$par[2]
 fam_scale_se <- fam_summ$se.theta[1]
 fam_shape_se <- fam_summ$se.theta[2]
 
+save.image("paper/fevd.RData")
+
 # 3. Plot the distribution
 #   a. Plot density with estimated parameters
 #   b. Plot density with the 95% confidence intervals
