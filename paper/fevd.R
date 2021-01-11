@@ -11,7 +11,7 @@ library(extRemes)
 #################################################################################################################
 # Just testing
 
-null_sample <- sample(null_dispersal$dispersal, 10000)
+null_sample <- sample(null_dispersal$dispersal, 1000)
 hist(null_sample)
 #hist(log(null_sample))
 #qqnorm(log(null_sample))
@@ -64,7 +64,6 @@ r <- c(0, 700)
 # NULL MODEL
 
 # 1. Determine threshold
-
 null_threshplot <- threshrange.plot(null_dispersal$dispersal, r = r, type = "GP", nint = nint)
 null_mrl <- mrlplot(null_dispersal$dispersal, nint = nint)
 
@@ -188,6 +187,11 @@ plot(u.i, out[,2], type="l", xlab=xlab, ylab="Mean Excess", ylim=yl)
 lines(u.i, out[,1], lty=2, col="gray", lwd=1.5)
 lines(u.i, out[,3], lty=2, col="gray", lwd=1.5)
 
+slope <- out[1:nint-1,2]-out[2:nint,2]
+yslope <- slope[1:198] - slope[2:199]
+plot(u.i[1:length(yslope)], yslope, ylim = c(-5, 5))
+abline(h = 0, col = "red")
+
 # INDIV
 # threshplot
 par(mfrow=c(2,1))
@@ -216,6 +220,11 @@ plot(u.i, out[,2], type="l", xlab=xlab, ylab="Mean Excess", ylim=yl)
 lines(u.i, out[,1], lty=2, col="gray", lwd=1.5)
 lines(u.i, out[,3], lty=2, col="gray", lwd=1.5)
 
+slope <- out[1:nint-1,2]-out[2:nint,2]
+yslope <- slope[1:198] - slope[2:199]
+plot(u.i[1:length(yslope)], yslope, ylim = c(-5, 5))
+abline(h = 0, col = "red")
+
 #FAM
 # threshplot
 par(mfrow=c(2,1))
@@ -243,6 +252,11 @@ yl <- range(c(out), finite=TRUE)
 plot(u.i, out[,2], type="l", xlab=xlab, ylab="Mean Excess", ylim=yl)
 lines(u.i, out[,1], lty=2, col="gray", lwd=1.5)
 lines(u.i, out[,3], lty=2, col="gray", lwd=1.5)
+
+slope <- out[1:nint-1,2]-out[2:nint,2]
+yslope <- slope[1:198] - slope[2:199]
+plot(u.i[1:length(yslope)], yslope, ylim = c(-5, 5))
+abline(h = 0, col = "red")
 
 #*****************************************************************************************
 load("paper/fevd.RData")
