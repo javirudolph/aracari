@@ -102,17 +102,8 @@ From extRemes package: "where shape = 0 gives rise to the exponential df (light 
 ## Seed dispersion aggregation
 The mean dispersal in the boxplots is not the same as the dispersal distances before. This mean dispersal is the distance from the origin to the mean seed location in each simulation run. The mean seed location is used to calculate dispersion, as the average distance of each seed to the mean seed location, as shown in Figure 1.
 
-```{r}
-knitr::kable(dispersion_table)
-```
-
 ## Weibull seed dispersal kernel 
 
-**Table 1.**
-```{r}
-
-knitr::kable(dispersal_kernel_table)
-```
 
 ## Extreme distributions to fit dispersal
 
