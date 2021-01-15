@@ -116,7 +116,7 @@ plot_grid(fig_traj, fig_disp, fig_agg, ncol = 3, align = "h", labels = "auto", l
 ## Figure 3.
 Variation in Weibull distributions determined by the value of the shape parameter. The scale parameter is defined as $b=1$, and the shape parameters are defined as follows: solid line $a=\nu=1$ shows an exponential decay tail, dashed line $a=\nu=0.2$ shows a thin tail, and $a=\nu=2$ describes a fat tail with the dotted line.
 
-```{r}
+```{r fig.width=3, fig.height=2.5}
 # shape
 exptail <- 1
 thintail <- 0.2
@@ -130,73 +130,85 @@ kappafat <- b^-fattail
 
 ggplot(data = data.frame(x = c(0.1, 4)), aes(x)) +
   stat_function(fun = dweibull, n = 100, args = list(scale = b, shape = thintail),
-                color = "black", linetype = "dashed", size = 1.2) +
+                color = "black", linetype = "dashed", size = 0.8) +
   stat_function(fun = dweibull, n = 100, args = list(scale = b, shape = exptail), 
-                color = "black", linetype = "dotted", size = 1.2) +
+                color = "black", linetype = "dotted", size = 0.8) +
   stat_function(fun = dweibull, n = 100, args = list(scale = b, shape = fattail),
-                color = "black", linetype = "solid", size = 1.2) +
+                color = "black", linetype = "solid", size = 0.8) +
   ylab("") + xlab("") +
   theme_bw()
   
 ```
 
+```{r}
+load("paper/dispersal_kernels.RData")
+
+```
+
 ## Figure 4. 
-Seed dispersal kernels produced by the three models considered
+Seed dispersal kernels produced by the three models considered with Weibull distribution overlaid
+
+```{r fig.width=3}
+bind_rows(null_dispersal %>% mutate(model = "Null"), 
+          indiv_dispersal %>% mutate(model = "Individual"),
+          fam_dispersal %>% mutate(model = "Family")) %>% 
+  mutate(model = factor(model, levels = c("Null", "Individual", "Family"))) -> dispersal_data
+  
+dispersal_data %>% 
+  ggplot(., aes(x = dispersal, group = model)) +
+  facet_wrap(~model, nrow = 3) +
+  geom_histogram(aes(y = ..density..), binwidth = 50) +
+  theme_bw() +
+  theme(strip.background = element_rect(fill = "white")) +
+  labs(y = "Density", x = "Seed dispersal (m)")
+  
+```
+
+```{r}
+null_dispersal %>% 
+  ggplot(., aes(x = dispersal)) +
+  geom_histogram(aes(y = ..density..), binwidth = 50) +
+  stat_function(fun = dweibull, n = 100, args = list(shape = null_weibull$estimate[1], scale = null_weibull$estimate[2]),
+                linetype = "solid", size = 1) +
+  theme_bw() +
+  labs(y = "Density", "Seed dispersal (m)") +
+  lims(y = c(0, 0.004), x = c(0, 1500))
+```
+
 
 ```{r}
 
-```
+null_dispersion %>% 
+  mutate(model = "Null") %>% 
+  bind_rows(indiv_dispersion %>% 
+              mutate(model = "Individual")) %>% 
+  bind_rows(fam_dispersion %>% 
+              mutate(model = "Family")) %>% 
+  mutate(model = factor(model, levels = c("Null", "Individual", "Family"))) -> all_disp_data
 
 
-```{r movementdensity, fig.width=6, fig.height=2}
+all_disp_data %>% 
+  ggplot(., aes(y = mean_dispersal, group = model)) +
+  #facet_wrap(~model, ncol = 3) +
+  geom_boxplot() +
+  theme_bw()  +
+  labs(y = "Seed dispersal (m)") -> b
 
-load("paper/simple_exp_runs.RData")
+all_disp_data %>% 
+  ggplot(., aes(y = seed_dispersion)) +
+  facet_wrap(~model, ncol = 3) +
+  geom_boxplot() +
+  theme_bw() +
+  theme(strip.background = element_blank(),
+        strip.text = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank()) +
+  labs(y = "Dispersion (m)") -> c
 
-library(ggplot2)
-library(dplyr)
 
+#plot_grid(a,b, nrow = 2)
 
-# Figure for movement rates at the three levels
-
-rates <- data.frame(level = "null", movrate = null_moverate$movrate[1]) %>%
-  bind_rows(., indiv_moverate %>%
-              rename(level = Bird_ID)) %>%
-  bind_rows(., fam_moverate %>%
-              rename(level = fam_g)) %>%
-  mutate(model = ifelse(level == "null", "Null",
-                        ifelse(level %in% paste0("f", 1:7), "Family", "Individual")))
-
-n <- 1000
-dens_rates <- NULL
-for(i in 1:length(rates$level)) {
-  dens_exp <- rexp(n, rate = 1/rates$movrate[i])
-
-  out <- data.frame(level = rates$level[i], model = rates$model[i], value = dens_exp)
-  dens_rates <- rbind.data.frame(dens_rates, out)
-}
-
-dens_rates %>%
-  mutate(model = factor(model, levels = c("Null", "Individual", "Family"))) %>%
-  ggplot(., aes(x = value, group = level, color = model)) +
-  facet_wrap(~model) +
-  geom_density() +
-  scale_color_manual(values = c("red", "grey", "black"), guide = "none") +
-  theme_bw() + labs(x = "Distance in meters per minute") +
-  #coord_cartesian(xlim = c(100, 300), ylim = c(0, 0.0025))+
-  NULL
-```
-
-```{r grt, fig.width=3, fig.height=2}
-
-n <- 10000
-grt_dens <- data.frame(seq = 1:n, dat = (rgamma(n, shape = 4, scale = 5) + 8))
-grt_data <- data.frame(time = round(sample(grt_dens$dat, 5)), seq = 1:5)
-tt <- max(grt_data$time)
-ggplot(grt_dens, aes(x = dat)) +
-  geom_density() + 
-  geom_point(data = grt_data, aes(x = time, y = 0)) +
-  theme_bw() + labs(x = "Time in minutes")
+# Edit redundant labels
+# Fix names for axes
 
 ```
-
-
