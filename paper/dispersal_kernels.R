@@ -30,7 +30,11 @@ fam_weibull$estimate
 gofstat(fam_weibull)
 # plot(fam_weibull)
 
-
+weibull_params <- data.frame(model = c("Null", "Individual", "Family"),
+                             shape = c(null_weibull$estimate[1], indiv_weibull$estimate[1], fam_weibull$estimate[1]),
+                             shape_sd = c(null_weibull$sd[1], indiv_weibull$sd[1], fam_weibull$sd[1]),
+                             scale = c(null_weibull$estimate[2], indiv_weibull$estimate[2], fam_weibull$estimate[2]),
+                             scale_sd = c(null_weibull$sd[2], indiv_weibull$sd[2], fam_weibull$sd[2]))
 
 # Long distance dispersal calculations
 
@@ -46,7 +50,8 @@ null_dispersal %>%
             max_sd = sd(max_d),
             sd_ldd = sd(prop_ldd),
             prop_ldd = mean(prop_ldd),
-            prcnt_ldd = prop_ldd *100) -> null_ldd
+            prcnt_ldd = prop_ldd *100) %>%
+  mutate(model = "Null")-> null_ldd
 
 indiv_dispersal %>%
   filter(., dispersal >= 500) %>%
@@ -60,7 +65,8 @@ indiv_dispersal %>%
             max_sd = sd(max_d),
             sd_ldd = sd(prop_ldd),
             prop_ldd = mean(prop_ldd),
-            prcnt_ldd = prop_ldd *100) -> indiv_ldd
+            prcnt_ldd = prop_ldd *100) %>%
+  mutate(model = "Individual") -> indiv_ldd
 
 fam_dispersal %>%
   filter(., dispersal >= 500) %>%
@@ -74,7 +80,10 @@ fam_dispersal %>%
             max_sd = sd(max_d),
             sd_ldd = sd(prop_ldd),
             prop_ldd = mean(prop_ldd),
-            prcnt_ldd = prop_ldd *100) -> fam_ldd
+            prcnt_ldd = prop_ldd *100) %>%
+  mutate(model = "Family") -> fam_ldd
+
+ldd_table <- bind_rows(null_ldd, indiv_ldd, fam_ldd)
 
 # Dispersal and dispersion calculation
 
@@ -112,7 +121,17 @@ indiv_dispersal %>%
   facet_wrap(~id, nrow=2) +
   geom_histogram()
 
+null_dispersal %>%
+  #filter(., id == "30") %>%
+  ggplot(., aes(x = dispersal)) +
+  facet_wrap(~id, nrow=2) +
+  geom_histogram()
 
+fam_dispersal %>%
+  #filter(., id == "30") %>%
+  ggplot(., aes(x = dispersal)) +
+  facet_wrap(~id, nrow=2) +
+  geom_histogram()
 
 
 
@@ -135,14 +154,15 @@ dispersal_kernel_table <- data.frame(
   #                   paste0(signif(fam_ldd$max_mean, 3), " (", signif(fam_ldd$max_sd, 1), ")")),
   LDD = c(paste0(signif(null_ldd$prcnt_ldd, 3), " (", signif(null_ldd$sd_ldd, 1), ")", "%"),
           paste0(signif(indiv_ldd$prcnt_ldd, 3), " (", signif(indiv_ldd$sd_ldd, 1), ")", "%"),
-          paste0(signif(fam_ldd$prcnt_ldd, 3), " (", signif(fam_ldd$sd_ldd, 1), ")", "%")),
+          paste0(signif(fam_ldd$prcnt_ldd, 3), " (", signif(fam_ldd$sd_ldd, 1), ")", "%")))
+
+weibull_table <- data.frame(
   Weibull_Shape = c(paste0(signif(null_weibull$estimate[1], 4), " (", signif(null_weibull$sd[1], 2), ")"),
                     paste0(signif(indiv_weibull$estimate[1], 4), " (", signif(indiv_weibull$sd[1], 2), ")"),
                     paste0(signif(fam_weibull$estimate[1], 4), " (", signif(fam_weibull$sd[1], 2), ")")),
   Weibull_Scale = c(paste0(signif(null_weibull$estimate[2], 4), " (", signif(null_weibull$sd[2], 2), ")"),
-                     paste0(signif(indiv_weibull$estimate[2], 4), " (", signif(indiv_weibull$sd[2], 2), ")"),
-                     paste0(signif(fam_weibull$estimate[2], 4), " (", signif(fam_weibull$sd[2], 2), ")"))
-
+                    paste0(signif(indiv_weibull$estimate[2], 4), " (", signif(indiv_weibull$sd[2], 2), ")"),
+                    paste0(signif(fam_weibull$estimate[2], 4), " (", signif(fam_weibull$sd[2], 2), ")"))
 )
 
 
