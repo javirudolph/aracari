@@ -146,8 +146,5 @@ dispersal_kernel_table <- data.frame(
 )
 
 
-
-
-
 save.image("paper/dispersal_kernels.RData")
 
