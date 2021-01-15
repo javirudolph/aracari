@@ -146,7 +146,9 @@ load("paper/dispersal_kernels.RData")
 
 ```
 
-```{r eval = FALSE,  fig.width=3}
+### Figure x.
+Distribution of dispersal distances produced by each of the simulation models considered.
+```{r fig.width=3}
 bind_rows(null_dispersal %>% mutate(model = "Null"), 
           indiv_dispersal %>% mutate(model = "Individual"),
           fam_dispersal %>% mutate(model = "Family")) %>% 
@@ -234,6 +236,10 @@ plot_grid(a,b, nrow = 2)
 # Edit redundant labels
 # Fix names for axes
 
+```
+
+```{r fig.width=6, fig.height=3}
+plot_grid(a,b, ncol = 2)
 ```
 
 # Table 1.
