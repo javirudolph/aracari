@@ -3,15 +3,16 @@ title: "Individual Variation in Animal Movement and Effects on Seed Dispersal Di
 abstract: |
   I don't like this abstract. Revisit at the end...Seed dispersal is a fundamental process in plant ecology and due to its high importance in the ecosystem, various modelling approaches have been developed to understand seed movement and dispersal mechanisms. In particular, long-distance seed dispersal (LDD) plays a significant role in determining a population's genetic diversity and range expansion. Animal-mediated seed dispersal is a key component of LDD events, as frugivores can travel long distances and transport seeds with them. In this study we seek to understand the implications of individual variation in animal movement and how these can impact estimates of long distance seed dispersal. We apply these methods to empirical data sets that contain locations for an araçari, *Pteroglossus pluricintus*, one of the primary frugivores for the Amazonian canopy tree *Virola flexuosa*. We combine animal movement data and gut retention time to simulate *Virola* seed dispersal. This approach showed that there is significant variation in individual araçari movement patterns which directly influence the estimated number of long-distance dispersal events for *Virola* seeds. We found that models that ignore this underlying variation in individual animal movement, underestimate the percentage of long-distance seed dispersal events and maximum seed dispersal distances.
 output:
-  html_document:
-    df_print: paged
   word_document:
     reference_docx: paper_ref.docx
+  html_document:
+    df_print: paged
 bibliography: mybibfile.bib
 ---
 
-```{r setup, echo=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE)
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
 ```
 
 ```{r libraries}
@@ -21,7 +22,6 @@ library(cowplot)
 library(dplyr)
 
 ```
-
 \newpage
 # Introduction
 A main goal of ecologists and evolutionary biologists is to document and predict the structure and dynamics of ecological systems. Although most of our current understanding of ecological systems is based on the average patterns observed in nature, understanding variability and its consequences in ecological processes has recently raised the interests of researchers [@benedetti-cecchi_importance_2003; @inouye_importance_2005]. Variation is now considered a property of ecological systems that might contain as much ecological information as do averages and regularities in nature [@benedetti-cecchi_importance_2003; @violle_return_2012].
@@ -60,7 +60,92 @@ Parameter values for gut retention time were also based on empirically collected
 
 Each simulation run in our models consisted of one animal in a homogeneous landscape starting at the focus tree located at coordinates (0,0). We assume the landscape is in meters, as the sampling of movement distances for animal movement comes from estimates of meters moved per minute, the movement rates.  Informed from field observations, *Pteroglossus pluricinctus* have a mean visit length of 4.0 minutes for each fruiting tree, consuming between 2 and 5 seeds during each visit, and not visiting another fruiting tree immediately after feeding (Holbrook's dissertation and [@holbrook2007seed]). Due to this underlying behavior, we decided to focus our simulations specifically to the events associated to feeding from one focus tree, and the animal movement occurring after foraging and before visiting another fruiting tree. Since one of the objectives for this paper is to explore the occurrence of long-distance dispersal events, we did not set boundaries for the landscape, as using the boundaries associated to the radiotracking sampling would limit animal movement and seed dispersal distances to only the scale sampled by previous researchers. *Pteroglossus pluricinctus* has shown maximum travel distances exceeding 3500m in a single 30 minute tracking interval, thus showing the potential to disperse *Virola* seeds at long ranges [@holbrook_home_2011]. 
 
-At the beginning of each simulation run, the animal consumed five seeds at the focus tree location, and each of these seeds was assigned a gut retention time sampled from a gamma distribution (shape=4, scale=5, shift=8). Once the animal in the simulation consumed the seeds, a movement distance was sampled from the assigned exponential distribution (which varied depending on the underlying model such as the null, individual or family group model) and a random direction from $0^o$ to $360^o$ degrees was used to determine the animal's position for the next time step, repeating this process for every time step and thus following an uncorrelated random walk with no directional tendency (*Edit references* Turchin 1998). Once the simulation run's time matched the gut retention time for a seed, that seed would get dropped at the animal's location at that specific time point, thus allowing us to record seed location in the landscape. For each of our models we ran 10,000 simulation runs per individual or family group, depending on the model, and collected information on animal and seed locations at every time step.
+At the beginning of each simulation run, the animal consumed five seeds at the focus tree location, and each of these seeds was assigned a gut retention time sampled from a gamma distribution (shape=4, scale=5, shift=8, Figure 1a). Once the animal in the simulation consumed the seeds, a movement distance was sampled from the assigned exponential distribution (Figure 1b), which varied depending on the underlying model such as the null, individual or family group model. A random direction from $0^o$ to $360^o$ degrees was used to determine the angle of movement, which with the movement distance would determine the animal's position for the next time step, repeating this process for every time step and thus following an uncorrelated random walk with no directional tendency (*Edit references* Turchin 1998). Once the simulation run's time matched the gut retention time for a seed, that seed would get dropped at the animal's location at that specific time point, thus allowing us to record seed location in the landscape (Figure 2a). For each of our models we ran 10,000 simulation runs per individual or family group, depending on the model, and collected information on animal and seed locations at every time step.
+
+```{r}
+# Simulate the data for one run
+
+set.seed(5)
+
+data(ptpl)
+
+# Panel 2: Table with gut retention times and the gamma distribution used for it
+n <- 10000
+grt_dens <- data.frame(seq = 1:n, dat = (rgamma(n, shape = 4, scale = 5) + 8))
+grt_data <- data.frame(time = round(sample(grt_dens$dat, 5)), seq = 1:5)
+tt <- max(grt_data$time)
+ggplot(grt_dens, aes(x = dat)) +
+  geom_density() + 
+  geom_point(data = grt_data, aes(x = time, y = 0), color = "red") +
+  #geom_point(aes(x = tt, y = 0), color = "red") +
+  theme_bw() + labs(x = "Time in minutes", y = "Density") -> fig_GRT
+
+
+# Panel 3: Exponential distribution used for animal movement lengths
+rate <- 1/mean(ptpl$mpm)
+md_dens <- data.frame(seq = 1:n, dat = rexp(n, rate = rate))
+md_hist <- data.frame(md = round(sample(md_dens$dat, tt)))
+
+ggplot(md_dens, aes(x = dat)) +
+  geom_density() + 
+  geom_point(data = md_hist, aes(x = md, y = 0)) +
+  theme_bw() + labs(x = "Distance in meters", y = "Density") -> fig_MD
+
+
+ggplot(md_hist, aes(x = md)) +
+  geom_histogram() +
+  theme_bw() + labs(x = "Distance in meters", y = "Count") -> fig_MD_hist
+
+# Panel 4: Animal trajectory and locations of the seeds at the time the seeds are dropped
+set.seed(5)
+distance <- md_hist$md
+angle <- runif(tt, min = 0, max = 360)
+distx <- distance*cos(angle)
+xloc <- c(0, cumsum(distx))
+disty <- distance*sin(angle)
+yloc <- c(0, cumsum(disty))
+animalTraj <- data.frame(time = 0:tt, xloc = xloc, yloc = yloc)
+seed_loc <- merge(animalTraj, grt_data, by = "time")
+mean_seed_loc <- data.frame(x = mean(seed_loc$xloc), y = mean(seed_loc$yloc))
+
+ggplot() +
+  geom_path(data = animalTraj, aes(x = xloc, y = yloc), size = 1, color = "darkgrey") +
+  geom_point(data = animalTraj, aes(x = xloc, y = yloc), color = "black", size = 1) +
+  geom_point(data = seed_loc, aes(x = xloc, y = yloc), color = "red", size = 3) +
+  geom_point(aes(x = 0, y = 0), color = "black", size = 5)+
+  geom_vline(aes(xintercept=0), linetype = "dotted") + geom_hline(aes(yintercept = 0), linetype = "dotted") +
+  labs(x = "x", y = "y") +
+  coord_fixed() +
+  theme_bw() -> fig_traj
+
+ggplot() +
+  geom_point(data = seed_loc, aes(x = xloc, y = yloc), color = "red", size = 3) +
+  geom_point(aes(x = 0, y = 0), color = "black", size = 5)+
+  geom_vline(aes(xintercept=0), linetype = "dotted") + geom_hline(aes(yintercept = 0), linetype = "dotted") +
+  geom_segment(aes(x = seed_loc$xloc, xend = 0, y = seed_loc$yloc, yend = 0), linetype = "dashed", color = "red") +
+  labs(x = "x", y = "y") +
+  coord_fixed() +
+  theme_bw() -> fig_disp
+
+ggplot() +
+  geom_point(data = seed_loc, aes(x = xloc, y = yloc), color = "red", size = 3) +
+  geom_point(aes(x = 0, y = 0), color = "black", size = 5)+
+  geom_vline(aes(xintercept=0), linetype = "dotted") + geom_hline(aes(yintercept = 0), linetype = "dotted") +
+  #geom_segment(aes(x = seed_loc$xloc, xend = 0, y = seed_loc$yloc, yend = 0), linetype = "dashed", color = "red") +
+  geom_point(data = mean_seed_loc, aes(x = x, y = y), color = "blue", size = 4) +
+  geom_segment(aes(x = seed_loc$xloc, xend = mean_seed_loc$x, y = seed_loc$yloc, yend = mean_seed_loc$y), linetype = "dashed", color = "blue") +
+  labs(x = "x", y = "y") +
+  coord_fixed() +
+  theme_bw() -> fig_agg
+
+```
+
+#### Figure 1. 
+Density distributions from which we sample gut retention time (GRT) and movement distance (MD). 
+
+```{r fig.width=2.5, fig.height=4}
+plot_grid(fig_GRT, fig_MD, align = "v", nrow = 2, labels = "auto", label_size = 10)
+```
 
 ## Seed dispersal and aggregation metrics
 
@@ -70,6 +155,13 @@ where $DD_i$ is the dispersal distance for seed $i$ in the simulation run and $x
 $$SD_j = \frac{\sum \sqrt{(x_{mj} - x_{ij})^2 + (y_{mj} - y_{ij})^2}}{n}$$
 where $n$ is the number of seeds for each simulation run (5), and $x_{mj}$ and $y_{mj}$ is the mean seed location in the $j$ simulation run. We obtained measures of seed dispersion for each simulation run, thus we calculated the average seed dispersion for each model as $\overline{SD} = \frac{\sum{SD_j}}{N}$, where $N$ is the total number of simulation runs for the model being considered.The information on seed dispersal distance was used for the toucan-generated seed dispersal kernels for each one of our models (null, individual, and family group), and these seed dispersal distances were also classified as long distance dispersal events if they exceeded 500m [@holbrook_using_2007]. The proportion of long-distance dispersal events, maximum dispersal distance, and average seed dispersion were used to compare seed dispersal between our three models of individual variation (Table1).
 
+#### Figure 2.
+Simulation example where animal movement determines location for seeds dropped. Calculations for seed dispersal distance from the parent tree and seed distance to the mean seed location as a measure of aggregation. 
+
+```{r fig.height=2, fig.width=6}
+plot_grid(fig_traj, fig_disp, fig_agg, ncol = 3, align = "h", labels = "auto", label_size = 8)
+```
+
 
 ## Seed dispersal kernels
 
@@ -78,7 +170,34 @@ $$W(x) = \left(\frac{a}{b}\right) \left(\frac{x}{b}\right)^{a-1} exp[-(x/{b})^{a
 
 Where the shape parameter $a$ determines the tail of the distribution, and $b$ is the scale parameter. It is worth mentioning that the standard parameterization of the Weibull in 'R' is different from the parameterization used in Morales and Carlo  [-@morales_effects_2006], where the shape parameter $a = \nu$ remains the same, but the scale parameter is defined as $\kappa = b^{-\nu}$, giving a density distribution function of $W(r)= \kappa\nu r^{\nu-1} exp[-{\kappa r}^\nu]$. 
 <!-- Here, we report the scale parameter following the alternative parameterization, but the original values returned after fitting the Weibull distribution using R can be found in the Supplementary Table 1.  -->
-Since the shape parameter remains the same, we can note that for $a=\nu=1$ the distribution shows a tail with exponential decay, with values of $\nu <1$ the tail shows fast-decay, and when $\nu>1$ we can see a fat-tailed distribution (Fig 2.) We visually assessed the fit of the distributions via qqplots and used the Kolmogorov-Smirnov statistic to assess goodness of fit (Supplementary information).
+Since the shape parameter remains the same, we can note that for $a=\nu=1$ the distribution shows a tail with exponential decay, with values of $\nu <1$ the tail shows fast-decay, and when $\nu>1$ we can see a fat-tailed distribution (Fig 3.) We visually assessed the fit of the distributions via qqplots and used the Kolmogorov-Smirnov statistic to assess goodness of fit (Supplementary information).
+
+#### Figure 3.
+Variation in Weibull distributions determined by the value of the shape parameter. The scale parameter is defined as $b=1$, and the shape parameters are defined as follows: solid line $a=\nu=1$ shows an exponential decay tail, dashed line $a=\nu=0.2$ shows a thin tail, and $a=\nu=2$ describes a fat tail with the dotted line.
+
+```{r fig.width=3, fig.height=2.5}
+# shape
+exptail <- 1
+thintail <- 0.2
+fattail <- 2
+
+#scale
+b <- 1
+kappaexp <- b^-exptail
+kappathin <- b^-thintail
+kappafat <- b^-fattail
+
+ggplot(data = data.frame(x = c(0.1, 4)), aes(x)) +
+  stat_function(fun = dweibull, n = 100, args = list(scale = b, shape = thintail),
+                color = "black", linetype = "dashed", size = 0.8) +
+  stat_function(fun = dweibull, n = 100, args = list(scale = b, shape = exptail), 
+                color = "black", linetype = "dotted", size = 0.8) +
+  stat_function(fun = dweibull, n = 100, args = list(scale = b, shape = fattail),
+                color = "black", linetype = "solid", size = 0.8) +
+  ylab("") + xlab("") +
+  theme_bw()
+  
+```
 
 
 Explain what are statistics of extremes and why they can be useful here. cite the GArcia 2017 paper, the Gaines and Denny 1993, Katz 2005. Coles 2001 for the theory or base knowledge. In our case, because we are looking at these simulated seed dispersal kernels, we use a peak over threshold (POT) approach, in which we find the threshold for the data and use an extreme value distribution to fit the tail. 
