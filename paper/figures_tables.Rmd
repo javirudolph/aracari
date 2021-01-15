@@ -164,6 +164,15 @@ dispersal_data %>%
   
 ```
 
+```{r}
+dispersal_data %>% 
+  gplot(., aes(x = dispersal, color = model)) +
+  geom_histogram(aes(y = ..density..), binwidth = 50) +
+  theme_bw() +
+  labs(y = "Density", x = "Seed dispersal (m)")
+
+```
+
 ```{r eval = FALSE}
 null_prms <- null_weibull$estimate
 null_sd <- null_weibull$sd
