@@ -108,7 +108,7 @@ library(ggplot2)
 library(purrr)
 library(cowplot)
 
-set.seed(27)
+set.seed(227)
 
 data(ptpl)
 
