@@ -3,10 +3,10 @@ title: "Individual Variation in Animal Movement and Effects on Seed Dispersal Di
 abstract: |
   I don't like this abstract. Revisit at the end...Seed dispersal is a fundamental process in plant ecology and due to its high importance in the ecosystem, various modelling approaches have been developed to understand seed movement and dispersal mechanisms. In particular, long-distance seed dispersal (LDD) plays a significant role in determining a population's genetic diversity and range expansion. Animal-mediated seed dispersal is a key component of LDD events, as frugivores can travel long distances and transport seeds with them. In this study we seek to understand the implications of individual variation in animal movement and how these can impact estimates of long distance seed dispersal. We apply these methods to empirical data sets that contain locations for an araçari, *Pteroglossus pluricintus*, one of the primary frugivores for the Amazonian canopy tree *Virola flexuosa*. We combine animal movement data and gut retention time to simulate *Virola* seed dispersal. This approach showed that there is significant variation in individual araçari movement patterns which directly influence the estimated number of long-distance dispersal events for *Virola* seeds. We found that models that ignore this underlying variation in individual animal movement, underestimate the percentage of long-distance seed dispersal events and maximum seed dispersal distances.
 output:
-  word_document:
-    reference_docx: paper_ref.docx
   html_document:
     df_print: paged
+  word_document:
+    reference_docx: paper_ref.docx
 bibliography: mybibfile.bib
 ---
 
@@ -22,6 +22,11 @@ library(cowplot)
 library(dplyr)
 
 ```
+
+```{r}
+load("paper/dispersal_kernels.RData")
+```
+
 \newpage
 # Introduction
 A main goal of ecologists and evolutionary biologists is to document and predict the structure and dynamics of ecological systems. Although most of our current understanding of ecological systems is based on the average patterns observed in nature, understanding variability and its consequences in ecological processes has recently raised the interests of researchers [@benedetti-cecchi_importance_2003; @inouye_importance_2005]. Variation is now considered a property of ecological systems that might contain as much ecological information as do averages and regularities in nature [@benedetti-cecchi_importance_2003; @violle_return_2012].
@@ -133,7 +138,10 @@ ggplot() +
   geom_vline(aes(xintercept=0), linetype = "dotted") + geom_hline(aes(yintercept = 0), linetype = "dotted") +
   #geom_segment(aes(x = seed_loc$xloc, xend = 0, y = seed_loc$yloc, yend = 0), linetype = "dashed", color = "red") +
   geom_point(data = mean_seed_loc, aes(x = x, y = y), color = "blue", size = 4) +
-  geom_segment(aes(x = seed_loc$xloc, xend = mean_seed_loc$x, y = seed_loc$yloc, yend = mean_seed_loc$y), linetype = "dashed", color = "blue") +
+  geom_segment(aes(x = seed_loc$xloc, xend = mean_seed_loc$x, y = seed_loc$yloc, yend = mean_seed_loc$y),
+               linetype = "dashed", color = "blue") +
+  geom_segment(aes(x = 0, xend = mean_seed_loc$x, y = 0, yend = mean_seed_loc$y),
+               linetype = "solid", color = "black") +
   labs(x = "x", y = "y") +
   coord_fixed() +
   theme_bw() -> fig_agg
@@ -149,7 +157,7 @@ plot_grid(fig_GRT, fig_MD, align = "v", nrow = 2, labels = "auto", label_size = 
 
 ## Seed dispersal and aggregation metrics
 
-We calculated seed dispersal distance as the euclidean distance of each seed to the parent plant. Given that our models only considered one parent plant located at the origin per simmulation, we calculated seed dispersal distance (DD) as the distance from each seed's location to the origin as follows:
+We calculated seed dispersal distance as the euclidean distance of each seed to the parent plant. Given that our models only considered one parent plant located at the origin per simulation, we calculated seed dispersal distance (DD) as the distance from each seed's location to the origin as follows:
 $$DD_i = \sqrt{(0-x_i)^2 + (0-y_i)^2} $$
 where $DD_i$ is the dispersal distance for seed $i$ in the simulation run and $x_i$ and $y_i$ are its xy coordinates in the landscape. We also used an aggregation metric to determine how evenly seeds would be dispersed across the landscape, and calculated seed dispersion (SD) as the average distance of each seed to the mean seed location in each simulation run (following methods in [@jones_closing_2017]):
 $$SD_j = \frac{\sum \sqrt{(x_{mj} - x_{ij})^2 + (y_{mj} - y_{ij})^2}}{n}$$
@@ -213,15 +221,69 @@ From extRemes package: "where shape = 0 gives rise to the exponential df (light 
 
 # Results
 
-## Seed dispersal distances and long distance dispersal 
+## Seed dispersal distances and aggregation
+
+```{r fig.width=6}
+bind_rows(null_dispersal %>% mutate(model = "Null"), 
+          indiv_dispersal %>% mutate(model = "Individual"),
+          fam_dispersal %>% mutate(model = "Family")) %>% 
+  mutate(model = factor(model, levels = c("Null", "Individual", "Family"))) -> dispersal_data
+  
+dispersal_data %>% 
+  ggplot(., aes(x = dispersal, group = model)) +
+  facet_wrap(~model, ncol = 3) +
+  geom_histogram(aes(y = ..density..), binwidth = 50) +
+  theme_bw() +
+  theme(strip.background = element_rect(fill = "white")) +
+  labs(y = "Density", x = "Seed dispersal (m)") -> histograms
+
+  
+null_dispersion %>% 
+  mutate(model = "Null") %>% 
+  bind_rows(indiv_dispersion %>% 
+              mutate(model = "Individual")) %>% 
+  bind_rows(fam_dispersion %>% 
+              mutate(model = "Family")) %>% 
+  mutate(model = factor(model, levels = c("Null", "Individual", "Family"))) -> all_disp_data
+  
+all_disp_data %>% 
+  ggplot(., aes(y = mean_xy_dispersal, x = model)) +
+  geom_boxplot() +
+  theme_bw() +
+  labs(y = "Mean dispersal (m)") +
+  theme(axis.title.x = element_blank()) -> a
 
 
+all_disp_data %>% 
+  ggplot(., aes(y = seed_dispersion, x = model)) +
+  geom_boxplot() +
+  theme_bw() +
+  labs(y = "Seed dispersion (m)") +
+  theme(axis.title.x = element_blank()) -> b
 
 
-## Seed dispersion aggregation
+boxplots <- plot_grid(a,b, ncol = 2, align = "h", labels = c("b", "c"))
+
+plot_grid(histograms, boxplots, nrow=2, labels = c("a", ""))
+
+# Edit redundant labels
+# Fix names for axes
+
+```
+
+## Long distance dispersal
+
 The mean dispersal in the boxplots is not the same as the dispersal distances before. This mean dispersal is the distance from the origin to the mean seed location in each simulation run. The mean seed location is used to calculate dispersion, as the average distance of each seed to the mean seed location, as shown in Figure 1.
 
+```{r}
+knitr::kable(dispersal_kernel_table %>% 
+               rename(Long_distance = LDD))
+```
+
 ## Weibull seed dispersal kernel 
+```{r}
+knitr::kable(weibull_table)
+```
 
 
 ## Extreme distributions to fit dispersal
