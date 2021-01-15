@@ -3,10 +3,10 @@ title: "Individual Variation in Animal Movement and Effects on Seed Dispersal Di
 abstract: |
   I don't like this abstract. Revisit at the end...Seed dispersal is a fundamental process in plant ecology and due to its high importance in the ecosystem, various modelling approaches have been developed to understand seed movement and dispersal mechanisms. In particular, long-distance seed dispersal (LDD) plays a significant role in determining a population's genetic diversity and range expansion. Animal-mediated seed dispersal is a key component of LDD events, as frugivores can travel long distances and transport seeds with them. In this study we seek to understand the implications of individual variation in animal movement and how these can impact estimates of long distance seed dispersal. We apply these methods to empirical data sets that contain locations for an araçari, *Pteroglossus pluricintus*, one of the primary frugivores for the Amazonian canopy tree *Virola flexuosa*. We combine animal movement data and gut retention time to simulate *Virola* seed dispersal. This approach showed that there is significant variation in individual araçari movement patterns which directly influence the estimated number of long-distance dispersal events for *Virola* seeds. We found that models that ignore this underlying variation in individual animal movement, underestimate the percentage of long-distance seed dispersal events and maximum seed dispersal distances.
 output:
-  html_document:
-    df_print: paged
   word_document:
     reference_docx: paper_ref.docx
+  html_document:
+    df_print: paged
 bibliography: mybibfile.bib
 ---
 
@@ -45,84 +45,6 @@ To understand the consequences of individual variation in animal movement and ho
 
 <!-- Here I would like to have a figure that incorporates all these different simulation components as a self explanatory box for how a simulation run happens, and what data goes in, what data is calculated and comes out. -->
 
-```{r eval = TRUE, fig.width=6}
-set.seed(5)
-
-data(ptpl)
-# Panel 1: landscape with tree in the center, origin
-
-df <- data.frame()
-ggplot(df) + xlim(-100, 100) + ylim(-100, 100) + 
-  theme(
-  panel.background = element_rect(fill = "lightblue",
-                                colour = "lightblue",
-                                size = 0.5, linetype = "solid"),
-  panel.grid.major = element_line(size = 0.5, linetype = 'solid',
-                                colour = "white"), 
-  panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                colour = "white")
-  ) +
-  coord_equal() +
-  geom_point(aes(x = 0, y = 0), color = "green") -> p1
-
-# Panel 2: Table with gut retention times and the gamma distribution used for it
-n <- 10000
-grt_dens <- data.frame(seq = 1:n, dat = (rgamma(n, shape = 4, scale = 5) + 8))
-grt_data <- data.frame(time = round(sample(grt_dens$dat, 5)), seq = 1:5)
-tt <- max(grt_data$time)
-ggplot(grt_dens, aes(x = dat)) +
-  geom_density() + 
-  geom_point(data = grt_data, aes(x = time, y = 0)) +
-  theme_bw() + labs(x = "Time in minutes") -> p2
-
-
-# Panel 3: Exponential distribution used for animal movement lengths
-rate <- 1/mean(ptpl$mpm)
-md_dens <- data.frame(seq = 1:n, dat = rexp(n, rate = rate))
-ggplot(md_dens, aes(x = dat)) +
-  geom_density() + 
-  theme_bw() + labs(x = "Length of movement in one minute") -> p3
-
-
-
-# Panel 4: Animal trajectory and locations of the seeds at the time the seeds are dropped
-
-distance <- sample(md_dens$dat, tt)
-angle <- runif(tt, min = 0, max = 360)
-distx <- distance*cos(angle)
-xloc <- c(0, cumsum(distx))
-disty <- distance*sin(angle)
-yloc <- c(0, cumsum(disty))
-animalTraj <- data.frame(time = 0:tt, xloc = xloc, yloc = yloc)
-seed_loc <- merge(animalTraj, grt_data, by = "time")
-mean_seed_loc <- data.frame(x = mean(seed_loc$xloc), y = mean(seed_loc$yloc))
-
-ggplot() +
-  geom_path(data = animalTraj, aes(x = xloc, y = yloc)) +
-  geom_point(data = seed_loc, aes(x = xloc, y = yloc), color = "red") +
-  geom_point(aes(x = 0, y = 0), color = "green") -> p4
-
-# Panel 5: Calculation of seed dispersal distances to the focus tree
-
-ggplot() +
-  geom_point(data = seed_loc, aes(x = xloc, y = yloc), color = "red") +
-  geom_point(aes(x = 0, y = 0), color = "green") +
-  geom_segment(aes(x = seed_loc$xloc, xend = 0, y = seed_loc$yloc, yend = 0)) -> p5
-
-
-# Panel 6: Calculation of seed dispersion
-
-ggplot() +
-  geom_point(data = seed_loc, aes(x = xloc, y = yloc), color = "red") +
-  geom_point(data = mean_seed_loc, aes(x = x, y = y), color = "blue") +
-  geom_segment(aes(x = seed_loc$xloc, xend = mean_seed_loc$x, y = seed_loc$yloc, yend = mean_seed_loc$y)) -> p6
-
-# ALL
-plot_grid(p1, p2, p3, p4, p5, p6, labels = LETTERS[1:6], label_size = 10, nrow = 3)
-
-```
-
-
 ## Parameterization
 
 We focused our study on the many-banded araçari (*Pterglossus pluricinctus*), a small toucan, and its role as a frugivore of the *Virola flexuosa* tree. Previous studies by Holbrook [-@holbrook_home_2011] collected radiotracking information for various dispersers over a period of four years, from 2001 to 2005, in the Ecuadorian Amazon rainforest. The methodology used at the time consisted of capturing and radio-tagging individuals from various toucan species, including *Pterglossus pluricinctus* and two larger Ramphastids, although data on the latter was scarce. Tracking periods lasted between four and six daylight hours, alternating morning and afternoons, attempting to record bird locations every 15 minutes, a time interval shown to represent the minimum seed retention time for *Virola flexuosa* seeds [@holbrook_using_2007]. Out of the data collected, and following Holbrook [-@holbrook_home_2011], we selected data from individuals with at least 40 recorded point locations. Even though location recordings were attempted every 15 minutes, this was not always possible, due to the individual being too far out from range or due to canopy cover, therefore point locations data is available every 15 minutes or multiples of 15 minutes, with the majority of point location recordings between 15 and 30 minutes [@holbrook_home_2011]. Further details on field methods can be found in Holbrook [-@holbrook_home_2011].  
@@ -154,12 +76,15 @@ where $n$ is the number of seeds for each simulation run (5), and $x_{mj}$ and $
 Seed dispersal kernels are functions used to describe the probability of a seed being dispersed or deposited at a specific distance away from its parent plant [@nathan_spatial_2000]. The resulting data from our three simulation models provided a dispersal distance for each simulated seed, and thus we used this information to describe the seed dispersal kernels for each model (null, individual, and family). Dispersal kernels in nature tend to be leptokurtic, with a peak near the origin and long tails, therefore kernel shape can be summarized by its kurtosis [@morales_effects_2006]. We quantified the dispersal kernels produced in our models by the sample statistics of mean and kurtosis to describe the overall shape and tail of distribution of seed dispersal distances. In addition to this, we also fit a Weibull distribution via maximum likelihood to obtain estimates of the shape and scale parameters in this distribution. This probability distribution is commonly used in dispersal ecology and has been shown to be flexible enough to accommodate variability in the tails and provide informative parameters associated to the mean dispersal distance and fatness of the tail [@morales_effects_2006]. We fit the data associated to seed dispersal distances produced by each of the three models via Maximum Likelihood using the Weibull density function associated with the package 'fitdistrplus'[@fitdistrplus]:
 $$W(x) = \left(\frac{a}{b}\right) \left(\frac{x}{b}\right)^{a-1} exp[-(x/{b})^{a}]$$
 
-Where the shape parameter $a$ determines the tail of the distribution, and $b$ is the scale parameter. It is worth mentioning that the standard parameterization of the Weibull in 'R' is different from the parameterization used in Morales and Carlo [-@Morales_effects_2006], where the shape parameter $a = \nu$ remains the same, but the scale parameter is defined as $\kappa = b^{-\nu}$, giving a density distribution function of $W(r)= \kappa\nu r^{\nu-1} exp[-{\kappa r}^\nu]$. Here, we report the scale parameter following the alternative parameterization, but the original values returned after fitting the Weibull distribution using R can be found in the Supplementary Table 1. Since the shape parameter remains the same, we can note that for $a=\nu=1$ the distribution shows a tail with exponential decay, with values of $\nu <1$ the tail shows fast-decay, and when $\nu>1$ we can see a fat-tailed distribution (Fig 2.) We visually assessed the fit of the distributions via qqplots and used the Kolmogorov-Smirnov statistic to assess goodness of fit (Supplementary information).
+Where the shape parameter $a$ determines the tail of the distribution, and $b$ is the scale parameter. It is worth mentioning that the standard parameterization of the Weibull in 'R' is different from the parameterization used in Morales and Carlo  [-@morales_effects_2006], where the shape parameter $a = \nu$ remains the same, but the scale parameter is defined as $\kappa = b^{-\nu}$, giving a density distribution function of $W(r)= \kappa\nu r^{\nu-1} exp[-{\kappa r}^\nu]$. 
+<!-- Here, we report the scale parameter following the alternative parameterization, but the original values returned after fitting the Weibull distribution using R can be found in the Supplementary Table 1.  -->
+Since the shape parameter remains the same, we can note that for $a=\nu=1$ the distribution shows a tail with exponential decay, with values of $\nu <1$ the tail shows fast-decay, and when $\nu>1$ we can see a fat-tailed distribution (Fig 2.) We visually assessed the fit of the distributions via qqplots and used the Kolmogorov-Smirnov statistic to assess goodness of fit (Supplementary information).
 
-Fig 2. Capation: Variation in Weibull distributions determined by the value of the shape parameter. The scale parameter is defined as $b=1$, and the shape parameters are defined as follows: solid line $a=\nu=1$ shows an exponential decay tail, dashed line $a=\nu=0.2$ shows a thin tail, and $a=\nu=2$ describes a fat tail with the dotted line.
+Fig 2. Caption: Variation in Weibull distributions determined by the value of the shape parameter. The scale parameter is defined as $b=1$, and the shape parameters are defined as follows: solid line $a=\nu=1$ shows an exponential decay tail, dashed line $a=\nu=0.2$ shows a thin tail, and $a=\nu=2$ describes a fat tail with the dotted line.
 
-```{r}
+```{r fig.width=3, fig.height=2.5}
 library(ggplot2)
+library(dplyr)
 
 # shape
 exptail <- 1
@@ -179,17 +104,19 @@ ggplot(data = data.frame(x = c(0.1, 4)), aes(x)) +
                 color = "black", linetype = "dotted", size = 1.2) +
   stat_function(fun = dweibull, n = 100, args = list(scale = b, shape = fattail),
                 color = "black", linetype = "solid", size = 1.2) +
-  ylab("") +
+  ylab("") + xlab("") +
   theme_bw()
   
 ```
+Explain what are statistics of extremes and why they can be useful here. cite the GArcia 2017 paper, the Gaines and Denny 1993, Katz 2005. Coles 2001 for the theory or base knowledge. In our case, because we are looking at these simulated seed dispersal kernels, we use a peak over threshold (POT) approach, in which we find the threshold for the data and use an extreme value distribution to fit the tail. 
+Describe the math probabilty density functions and the three laws that the extreme value distribution follows. 
+For POT use a generalized pareto distribution. 
+
+- Based on Diagnostic plots, we used these values as the threshold for each of the models.
+
+From extRemes package: "where shape = 0 gives rise to the exponential df (light tail), shape > 0 the Pareto df (heavy tail) and shape < 0 the Beta df (bounded upper tail at location - scale.u/shape). Theoretical justification supports the use of the GP df family for modeling excesses over a high threshold (i.e., y = x - threshold)."
 
 
-- Already fit the weibull distribution for this. Mention that we chose this distribution because it is commonly used in dispersal ecology due to its felixibility, how adjusting the scale parameter changes the tail of the distribution. This is both in Garcia2017 (>1 fast decaying, <1 low decay fat tail, =1 exponential decay) and Carlomorales2006 papers, but I think they present it slightly different. 
-
-- We inspected the QQ plots to check for fitting. Figuere Supplement
-
-- They mention declustering the data, and perhaps in that case I could be using the mean_xy_dispersal, but no because this immendiately brings down the extent of long distance dispersal events.
 
 
 # Results
@@ -201,6 +128,8 @@ load("dispersal_kernels.RData")
 
 **Figure 3.**
 ```{r fig.width=6}
+library(dplyr)
+library(cowplot)
 
 null_kernel <- null_dispersal %>% 
   ggplot(., aes(x = dispersal)) +
@@ -271,6 +200,9 @@ plot_grid(dispersal_xy_box, dispersal_box, dispersion_box, nrow = 3)
 
 ```
 
+```{r}
+knitr::kable(dispersion_table)
+```
 
 ## Weibull seed dispersal kernel 
 
