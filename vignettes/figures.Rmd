@@ -1,0 +1,115 @@
+---
+title: "Manuscript Figures"
+author: "Javiera Rudolph"
+date: "1/15/2021"
+output: html_document
+---
+
+```{r setup, echo=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE)
+```
+
+```{r libraries}
+library(ggplot2)
+library(aracari)
+library(cowplot)
+library(dplyr)
+
+```
+
+```{r}
+# Simulate the data for one run
+
+set.seed(5)
+
+data(ptpl)
+
+# Panel 2: Table with gut retention times and the gamma distribution used for it
+n <- 10000
+grt_dens <- data.frame(seq = 1:n, dat = (rgamma(n, shape = 4, scale = 5) + 8))
+grt_data <- data.frame(time = round(sample(grt_dens$dat, 5)), seq = 1:5)
+tt <- max(grt_data$time)
+ggplot(grt_dens, aes(x = dat)) +
+  geom_density() + 
+  geom_point(data = grt_data, aes(x = time, y = 0), color = "red") +
+  #geom_point(aes(x = tt, y = 0), color = "red") +
+  theme_bw() + labs(x = "Time in minutes", y = "Density") -> fig_GRT
+
+
+# Panel 3: Exponential distribution used for animal movement lengths
+rate <- 1/mean(ptpl$mpm)
+md_dens <- data.frame(seq = 1:n, dat = rexp(n, rate = rate))
+md_hist <- data.frame(md = round(sample(md_dens$dat, tt)))
+
+ggplot(md_dens, aes(x = dat)) +
+  geom_density() + 
+  geom_point(data = md_hist, aes(x = md, y = 0)) +
+  theme_bw() + labs(x = "Distance in meters", y = "Density") -> fig_MD
+
+
+ggplot(md_hist, aes(x = md)) +
+  geom_histogram() +
+  theme_bw() + labs(x = "Distance in meters", y = "Count") -> fig_MD_hist
+
+# Panel 4: Animal trajectory and locations of the seeds at the time the seeds are dropped
+set.seed(5)
+distance <- md_hist$md
+angle <- runif(tt, min = 0, max = 360)
+distx <- distance*cos(angle)
+xloc <- c(0, cumsum(distx))
+disty <- distance*sin(angle)
+yloc <- c(0, cumsum(disty))
+animalTraj <- data.frame(time = 0:tt, xloc = xloc, yloc = yloc)
+seed_loc <- merge(animalTraj, grt_data, by = "time")
+mean_seed_loc <- data.frame(x = mean(seed_loc$xloc), y = mean(seed_loc$yloc))
+
+ggplot() +
+  geom_path(data = animalTraj, aes(x = xloc, y = yloc), size = 1, color = "darkgrey") +
+  geom_point(data = animalTraj, aes(x = xloc, y = yloc), color = "black", size = 1) +
+  geom_point(data = seed_loc, aes(x = xloc, y = yloc), color = "red", size = 3) +
+  geom_point(aes(x = 0, y = 0), color = "black", size = 5)+
+  geom_vline(aes(xintercept=0), linetype = "dotted") + geom_hline(aes(yintercept = 0), linetype = "dotted") +
+  labs(x = "x", y = "y") +
+  coord_fixed() +
+  theme_bw() -> fig_traj
+
+ggplot() +
+  geom_point(data = seed_loc, aes(x = xloc, y = yloc), color = "red", size = 3) +
+  geom_point(aes(x = 0, y = 0), color = "black", size = 5)+
+  geom_vline(aes(xintercept=0), linetype = "dotted") + geom_hline(aes(yintercept = 0), linetype = "dotted") +
+  geom_segment(aes(x = seed_loc$xloc, xend = 0, y = seed_loc$yloc, yend = 0), linetype = "dashed", color = "red") +
+  labs(x = "x", y = "y") +
+  coord_fixed() +
+  theme_bw() -> fig_disp
+
+ggplot() +
+  geom_point(data = seed_loc, aes(x = xloc, y = yloc), color = "red", size = 3) +
+  geom_point(aes(x = 0, y = 0), color = "black", size = 5)+
+  geom_vline(aes(xintercept=0), linetype = "dotted") + geom_hline(aes(yintercept = 0), linetype = "dotted") +
+  #geom_segment(aes(x = seed_loc$xloc, xend = 0, y = seed_loc$yloc, yend = 0), linetype = "dashed", color = "red") +
+  geom_point(data = mean_seed_loc, aes(x = x, y = y), color = "blue", size = 4) +
+  geom_segment(aes(x = seed_loc$xloc, xend = mean_seed_loc$x, y = seed_loc$yloc, yend = mean_seed_loc$y), linetype = "dashed", color = "blue") +
+  labs(x = "x", y = "y") +
+  coord_fixed() +
+  theme_bw() -> fig_agg
+
+plot_grid(fig_GRT, fig_MD, fig_MD_hist, fig_traj, fig_disp, fig_agg)
+
+```
+
+
+Figure 2. Probability density functions used for sampling gut retention time (GRT) and movement distance per meter (MD) used for each time step in the simulations
+```{r}
+
+n <- 10000
+grt_dens <- data.frame(seq = 1:n, dat = (rgamma(n, shape = 4, scale = 5) + 8))
+grt_data <- data.frame(time = round(sample(grt_dens$dat, 5)), seq = 1:5)
+grt_data2 <- data.frame(time = round(sample(grt_dens$dat, 5)), seq = 1:5)
+grt_data3 <- data.frame(time = round(sample(grt_dens$dat, 5)), seq = 1:5)
+
+tt <- max(grt_data$time)
+ggplot(grt_dens, aes(x = dat)) +
+  geom_density() + 
+  geom_point(data = grt_data, aes(x = time, y = 0)) +
+  theme_bw() + labs(x = "Time in minutes")
+```
