@@ -136,12 +136,13 @@ dispersal_kernel_table <- data.frame(
   LDD = c(paste0(signif(null_ldd$prcnt_ldd, 3), " (", signif(null_ldd$sd_ldd, 1), ")", "%"),
           paste0(signif(indiv_ldd$prcnt_ldd, 3), " (", signif(indiv_ldd$sd_ldd, 1), ")", "%"),
           paste0(signif(fam_ldd$prcnt_ldd, 3), " (", signif(fam_ldd$sd_ldd, 1), ")", "%")),
-  Weibull_Shape = c(paste0(signif(null_weibull$estimate[2], 4), " (", signif(null_weibull$sd[2], 2), ")"),
+  Weibull_Shape = c(paste0(signif(null_weibull$estimate[1], 4), " (", signif(null_weibull$sd[1], 2), ")"),
+                    paste0(signif(indiv_weibull$estimate[1], 4), " (", signif(indiv_weibull$sd[1], 2), ")"),
+                    paste0(signif(fam_weibull$estimate[1], 4), " (", signif(fam_weibull$sd[1], 2), ")")),
+  Weibull_Scale = c(paste0(signif(null_weibull$estimate[2], 4), " (", signif(null_weibull$sd[2], 2), ")"),
                      paste0(signif(indiv_weibull$estimate[2], 4), " (", signif(indiv_weibull$sd[2], 2), ")"),
-                     paste0(signif(fam_weibull$estimate[2], 4), " (", signif(fam_weibull$sd[2], 2), ")")),
-  Weibull_Scale = c(paste0(signif(null_weibull$estimate[1], 4), " (", signif(null_weibull$sd[1], 2), ")"),
-                  paste0(signif(indiv_weibull$estimate[1], 4), " (", signif(indiv_weibull$sd[1], 2), ")"),
-                  paste0(signif(fam_weibull$estimate[1], 4), " (", signif(fam_weibull$sd[1], 2), ")"))
+                     paste0(signif(fam_weibull$estimate[2], 4), " (", signif(fam_weibull$sd[2], 2), ")"))
+
 )
 
 
