@@ -1,15 +1,17 @@
 ---
 title: "Figures and Tables"
-subtitle: " "
+subtitle: ' '
 output:
   html_document:
-      toc: true
-bibliography: "../paper/mybibfile.bib"
+    toc: yes
+  word_document:
+    toc: yes
+bibliography: ../paper/mybibfile.bib
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
-knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE, results = 'hide')
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
 ```
 
 ```{r libraries}
@@ -103,7 +105,6 @@ Density distributions from which we sample gut retention time (GRT) and movement
 
 ```{r fig.width=2.5, fig.height=4}
 plot_grid(fig_GRT, fig_MD, align = "v", nrow = 2, labels = "auto", label_size = 10)
-#ggsave("testfig.tiff", dpi = 300, width = 3, units = "in")
 ```
 
 ## Figure 2.
@@ -145,10 +146,7 @@ load("paper/dispersal_kernels.RData")
 
 ```
 
-## Figure 4. 
-Seed dispersal kernels produced by the three models considered with Weibull distribution overlaid
-
-```{r fig.width=3}
+```{r eval = FALSE,  fig.width=3}
 bind_rows(null_dispersal %>% mutate(model = "Null"), 
           indiv_dispersal %>% mutate(model = "Individual"),
           fam_dispersal %>% mutate(model = "Family")) %>% 
@@ -164,17 +162,45 @@ dispersal_data %>%
   
 ```
 
-```{r}
+```{r eval = FALSE}
+null_prms <- null_weibull$estimate
+null_sd <- null_weibull$sd
 null_dispersal %>% 
   ggplot(., aes(x = dispersal)) +
-  geom_histogram(aes(y = ..density..), binwidth = 50) +
-  stat_function(fun = dweibull, n = 100, args = list(shape = null_weibull$estimate[1], scale = null_weibull$estimate[2]),
-                linetype = "solid", size = 1) +
+  geom_histogram(aes(y = ..density..), color = "grey", fill = "grey") +
+  stat_function(fun = dweibull, n = 100, args = list(shape = null_prms[1], scale = null_prms[2]),
+                linetype = "solid", size = 1, color = "black") +
   theme_bw() +
-  labs(y = "Density", "Seed dispersal (m)") +
-  lims(y = c(0, 0.004), x = c(0, 1500))
+  labs(y = "Density", x = "Seed dispersal (m)") +
+  lims(y = c(0, 0.004), x = c(0, 1500)) -> null_kernel
+
+indiv_prms <- indiv_weibull$estimate
+indiv_sd <- indiv_weibull$sd
+indiv_dispersal %>% 
+  ggplot(., aes(x = dispersal)) +
+  geom_histogram(aes(y = ..density..), color = "grey", fill = "grey") +
+  stat_function(fun = dweibull, n = 100, args = list(shape = indiv_prms[1], scale = indiv_prms[2]),
+                linetype = "solid", size = 1, color = "black") +
+  theme_bw() +
+  labs(y = "Density", x = "Seed dispersal (m)") +
+  lims(y = c(0, 0.004), x = c(0, 1500)) -> indiv_kernel
+
+fam_prms <- fam_weibull$estimate
+fam_sd <- fam_weibull$sd
+fam_dispersal %>% 
+  ggplot(., aes(x = dispersal)) +
+  geom_histogram(aes(y = ..density..), color = "grey", fill = "grey") +
+  stat_function(fun = dweibull, n = 100, args = list(shape = fam_prms[1], scale = fam_prms[2]),
+                linetype = "solid", size = 1, color = "black") +
+  theme_bw() +
+  labs(y = "Density", x = "Seed dispersal (m)") +
+  lims(y = c(0, 0.004), x = c(0, 1500)) -> fam_kernel
+
+plot_grid(null_kernel, indiv_kernel, fam_kernel, ncol = 1)
 ```
 
+## Figure 4. 
+Box plots to show the distribution of mean seed dispersal distance and seed dispersion per simulation run. In this case, we are looking at the data per simulation run, since we calculate seed dispersion in relation to the mean seed location, and this is done for each simulation run with five seeds each. Here, we consider mean seed dispersal as the distance from the origin to the mean seed location for each simulation run.
 
 ```{r}
 
@@ -185,30 +211,59 @@ null_dispersion %>%
   bind_rows(fam_dispersion %>% 
               mutate(model = "Family")) %>% 
   mutate(model = factor(model, levels = c("Null", "Individual", "Family"))) -> all_disp_data
-
-
+  
 all_disp_data %>% 
-  ggplot(., aes(y = mean_dispersal, group = model)) +
-  #facet_wrap(~model, ncol = 3) +
-  geom_boxplot() +
-  theme_bw()  +
-  labs(y = "Seed dispersal (m)") -> b
-
-all_disp_data %>% 
-  ggplot(., aes(y = seed_dispersion)) +
-  facet_wrap(~model, ncol = 3) +
+  ggplot(., aes(y = mean_xy_dispersal, x = model)) +
   geom_boxplot() +
   theme_bw() +
-  theme(strip.background = element_blank(),
-        strip.text = element_blank(),
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank()) +
-  labs(y = "Dispersion (m)") -> c
+  labs(y = "Mean dispersal (m)") +
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank()) -> a
 
 
-#plot_grid(a,b, nrow = 2)
+all_disp_data %>% 
+  ggplot(., aes(y = seed_dispersion, x = model)) +
+  geom_boxplot() +
+  theme_bw() +
+  labs(y = "Seed dispersion (m)") +
+  theme(axis.title.x = element_blank()) -> b
+
+
+plot_grid(a,b, nrow = 2)
 
 # Edit redundant labels
 # Fix names for axes
 
 ```
+
+# Table 1.
+
+```{r}
+dispersal_kernel_table <- data.frame(
+  Model = c("Null", "Individual", "Family"),
+  Mean_dispersal = c(signif(mean(null_dispersal$dispersal), 4),
+                     signif(mean(indiv_dispersal$dispersal), 4),
+                     signif(mean(fam_dispersal$dispersal),4)),
+  Seed_dispersion = c(signif(mean(null_dispersion$seed_dispersion), 4),
+                      signif(mean(indiv_dispersion$seed_dispersion), 4),
+                      signif(mean(fam_dispersion$seed_dispersion),4)),
+  Max_dispersal = c(signif(max(null_ldd$global_max), 4),
+                           signif(max(indiv_ldd$global_max), 4),
+                           signif(max(fam_ldd$global_max), 4)),
+  # Max_dispersal = c(paste0(signif(null_ldd$max_mean, 3), " (", signif(null_ldd$max_sd, 1), ")"),
+  #                   paste0(signif(indiv_ldd$max_mean, 3), " (", signif(indiv_ldd$max_sd, 1), ")"),
+  #                   paste0(signif(fam_ldd$max_mean, 3), " (", signif(fam_ldd$max_sd, 1), ")")),
+  LDD = c(paste0(signif(null_ldd$prcnt_ldd, 3), " (", signif(null_ldd$sd_ldd, 1), ")", "%"),
+          paste0(signif(indiv_ldd$prcnt_ldd, 3), " (", signif(indiv_ldd$sd_ldd, 1), ")", "%"),
+          paste0(signif(fam_ldd$prcnt_ldd, 3), " (", signif(fam_ldd$sd_ldd, 1), ")", "%")),
+  Weibull_Shape = c(paste0(signif(null_weibull$estimate[1], 4), " (", signif(null_weibull$sd[1], 2), ")"),
+                    paste0(signif(indiv_weibull$estimate[1], 4), " (", signif(indiv_weibull$sd[1], 2), ")"),
+                    paste0(signif(fam_weibull$estimate[1], 4), " (", signif(fam_weibull$sd[1], 2), ")")),
+  Weibull_Scale = c(paste0(signif(null_weibull$estimate[2], 4), " (", signif(null_weibull$sd[2], 2), ")"),
+                     paste0(signif(indiv_weibull$estimate[2], 4), " (", signif(indiv_weibull$sd[2], 2), ")"),
+                     paste0(signif(fam_weibull$estimate[2], 4), " (", signif(fam_weibull$sd[2], 2), ")"))
+
+)
+
+```
+
