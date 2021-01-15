@@ -94,84 +94,13 @@ From extRemes package: "where shape = 0 gives rise to the exponential df (light 
 
 # Results
 
-```{r}
-load("dispersal_kernels.RData")
-```
 ## Seed dispersal distances and long distance dispersal 
 
-**Figure 3.**
-```{r fig.width=6}
-library(dplyr)
-library(cowplot)
 
-null_kernel <- null_dispersal %>% 
-  ggplot(., aes(x = dispersal)) +
-  geom_histogram(aes(y = ..density..))
-
-indiv_kernel <- indiv_dispersal %>% 
-  ggplot(., aes(x = dispersal)) +
-  geom_histogram(aes(y = ..density..))
-
-fam_kernel <- fam_dispersal %>% 
-  ggplot(., aes(x = dispersal)) +
-  geom_histogram(aes(y = ..density..))
-
-plot_grid(null_kernel, indiv_kernel, fam_kernel, nrow = 3)
-
-# Make the axis be the same length and beaks
-# Remove redundant labels
-# Test 3 rows or 3 columns
-# Add red vertical line for LDD cutoff
-# Include a zoom cut off for the tail
-
-
-# plot_grid(
-#   fam_dispersal %>%
-#     ggplot(., aes(x = dispersal)) +
-#     geom_histogram(),
-#   plot_grid(fam_dispersion %>%
-#             ggplot(., aes(y = mean_dispersal)) +
-#             geom_boxplot(),
-#           fam_dispersion %>%
-#             ggplot(., aes(y = seed_dispersion)) +
-#             geom_boxplot()), nrow = 2)
-```
 
 
 ## Seed dispersion aggregation
 The mean dispersal in the boxplots is not the same as the dispersal distances before. This mean dispersal is the distance from the origin to the mean seed location in each simulation run. The mean seed location is used to calculate dispersion, as the average distance of each seed to the mean seed location, as shown in Figure 1.
-
-**Figure 4.**
-```{r fig.width=3, fig.height=5}
-
-null_dispersion %>% 
-  mutate(model = "Null") %>% 
-  bind_rows(indiv_dispersion %>% 
-              mutate(model = "Individual")) %>% 
-  bind_rows(fam_dispersion %>% 
-              mutate(model = "Family")) %>% 
-  mutate(model = factor(model, levels = c("Null", "Individual", "Family"))) -> all_disp_data
-
-  
-all_disp_data %>% 
-  ggplot(., aes(y = mean_xy_dispersal, x = model)) +
-  geom_boxplot() -> dispersal_xy_box
-
-all_disp_data %>% 
-  ggplot(., aes(y = mean_dispersal, x = model)) +
-  geom_boxplot() -> dispersal_box
-
-
-all_disp_data %>% 
-  ggplot(., aes(y = seed_dispersion, x = model)) +
-  geom_boxplot() -> dispersion_box
-
-plot_grid(dispersal_xy_box, dispersal_box, dispersion_box, nrow = 3)
-
-# Edit redundant labels
-# Fix names for axes
-
-```
 
 ```{r}
 knitr::kable(dispersion_table)
