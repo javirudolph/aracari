@@ -18,12 +18,16 @@ plot(u.i, out[,"shape"], ylim=yl, xlab="Threshold", ylab="shape", type="b")
 for(j in 1:nint) lines(c(u.i[j],u.i[j]), out[j,c("low.shape","up.shape")])
 
 
+
 # mrl
+# The mean residual life plot depicts the Thresholds (u) vs Mean Excess flow.
+# The idea is to ﬁnd the lowest threshold where the plot is nearly linear;
+# taking into account the 95% conﬁdence bounds.
 par(mfrow=c(1,1))
 out <- null_mrl
 r <- range(null_dispersal$dispersal, finite=TRUE)
 u.i <- matrix(seq(r[1], r[2] - 1,, nint), ncol=1)
-xlab <- "Values"
+xlab <- "Threshold values"
 yl <- range(c(out), finite=TRUE)
 plot(u.i, out[,2], type="l", xlab=xlab, ylab="Mean Excess", ylim=yl)
 lines(u.i, out[,1], lty=2, col="gray", lwd=1.5)
