@@ -23,7 +23,7 @@ par(mfrow=c(1,1))
 out <- null_mrl
 r <- range(null_dispersal$dispersal, finite=TRUE)
 u.i <- matrix(seq(r[1], r[2] - 1,, nint), ncol=1)
-
+xlab <- "Values"
 yl <- range(c(out), finite=TRUE)
 plot(u.i, out[,2], type="l", xlab=xlab, ylab="Mean Excess", ylim=yl)
 lines(u.i, out[,1], lty=2, col="gray", lwd=1.5)
