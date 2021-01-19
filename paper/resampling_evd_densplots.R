@@ -12,6 +12,13 @@ evd_table
 
 #### THRESHOLD PLOTS
 # NULL
+
+orig_thres <- 500
+nint <- 100
+r <- c(0, 700)
+null_threshplot <- threshrange.plot(null_dispersal$dispersal, r = r, type = "GP", nint = nint)
+null_mrl <- mrlplot(null_dispersal$dispersal, nint = nint)
+
 # threshplot
 par(mfrow=c(2,1))
 nint <- 200
@@ -28,8 +35,28 @@ yl <- range(c(out[,c("low.shape","shape","up.shape")]), finite=TRUE)
 plot(u.i, out[,"shape"], ylim=yl, xlab="Threshold", ylab="shape", type="b")
 for(j in 1:nint) lines(c(u.i[j],u.i[j]), out[j,c("low.shape","up.shape")])
 
+# ggplot threshold
+as.data.frame(null_threshplot) %>%
+  mutate(u.i = seq(r[1], r[2], length.out = 200)) %>%
+  ggplot(., aes(y = t.scale, x = u.i)) +
+  geom_point(shape = 1, size = 3) +
+  geom_linerange(aes(x = u.i, ymin = low.t.scale, ymax = up.t.scale)) +
+  labs(x = "Threshold", y = "Reparameterized \n scale") +
+  theme_bw() +
+  # coord_cartesian(xlim = c(200, 550)) +
+  NULL -> thresh_null_scale
 
+as.data.frame(null_threshplot) %>%
+  mutate(u.i = seq(r[1], r[2], length.out = 200)) %>%
+  ggplot(., aes(y = shape, x = u.i)) +
+  geom_point() +
+  geom_linerange(aes(x = u.i, ymin = low.shape, ymax = up.shape)) +
+  labs(x = "Threshold", y = "Reparameterized \n shape") +
+  theme_bw() +
+  # coord_cartesian(xlim = c(200, 550)) +
+  NULL -> thresh_null_shape
 
+plot_grid(thresh_null_scale, thresh_null_shape, nrow = 2)
 
 # mrl
 # The mean residual life plot depicts the Thresholds (u) vs Mean Excess flow.
