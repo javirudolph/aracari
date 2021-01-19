@@ -159,15 +159,4 @@ evd_table
 save.image("paper/fevd.RData")
 
 
-##### Test figures and such
-
-load("paper/fevd.RData")
-library(dplyr)
-library(ggplot2)
-library(cowplot)
-library(extRemes)
-
-
-
-
 
