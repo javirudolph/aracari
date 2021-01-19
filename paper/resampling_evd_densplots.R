@@ -19,11 +19,9 @@ r <- c(0, 700)
 null_threshplot <- threshrange.plot(null_dispersal$dispersal, r = r, type = "GP", nint = nint)
 null_mrl <- mrlplot(null_dispersal$dispersal, nint = nint)
 
-# threshplot
+# threshplot: using extRemes source code
 par(mfrow=c(2,1))
-nint <- 200
-r <- quantile(null_dispersal$dispersal, probs=c(0.75,0.99))
-r <- c(0, 700)
+# r <- quantile(null_dispersal$dispersal, probs=c(0.75,0.99))
 u.i <- matrix(seq(r[1],r[2],, nint), ncol=1)
 out <- null_threshplot
 xlb <- "Threshold"
@@ -37,26 +35,26 @@ for(j in 1:nint) lines(c(u.i[j],u.i[j]), out[j,c("low.shape","up.shape")])
 
 # ggplot threshold
 as.data.frame(null_threshplot) %>%
-  mutate(u.i = seq(r[1], r[2], length.out = 200)) %>%
+  mutate(u.i = seq(r[1], r[2], length.out = nint)) %>%
   ggplot(., aes(y = t.scale, x = u.i)) +
-  geom_point(shape = 1, size = 3) +
+  geom_point(shape = 1, size = 2) +
+  #geom_line(linetype = "dashed") +
   geom_linerange(aes(x = u.i, ymin = low.t.scale, ymax = up.t.scale)) +
   labs(x = "Threshold", y = "Reparameterized \n scale") +
   theme_bw() +
   # coord_cartesian(xlim = c(200, 550)) +
-  NULL -> thresh_null_scale
+  NULL
 
 as.data.frame(null_threshplot) %>%
-  mutate(u.i = seq(r[1], r[2], length.out = 200)) %>%
+  mutate(u.i = seq(r[1], r[2], length.out = nint)) %>%
   ggplot(., aes(y = shape, x = u.i)) +
-  geom_point() +
+  geom_point(shape = 1, size = 2) +
   geom_linerange(aes(x = u.i, ymin = low.shape, ymax = up.shape)) +
   labs(x = "Threshold", y = "Reparameterized \n shape") +
   theme_bw() +
   # coord_cartesian(xlim = c(200, 550)) +
-  NULL -> thresh_null_shape
+  NULL
 
-plot_grid(thresh_null_scale, thresh_null_shape, nrow = 2)
 
 # mrl
 # The mean residual life plot depicts the Thresholds (u) vs Mean Excess flow.
@@ -64,22 +62,60 @@ plot_grid(thresh_null_scale, thresh_null_shape, nrow = 2)
 # taking into account the 95% conﬁdence bounds.
 par(mfrow=c(1,1))
 out <- null_mrl
-r <- range(null_dispersal$dispersal, finite=TRUE)
-u.i <- matrix(seq(r[1], r[2] - 1,, nint), ncol=1)
+r_mrl <- range(null_dispersal$dispersal, finite=TRUE)
+u.i <- matrix(seq(r_mrl[1], r_mrl[2] - 1,, nint), ncol=1)
 xlab <- "Threshold values"
 yl <- range(c(out), finite=TRUE)
 plot(u.i, out[,2], type="l", xlab=xlab, ylab="Mean Excess", ylim=yl)
 lines(u.i, out[,1], lty=2, col="gray", lwd=1.5)
 lines(u.i, out[,3], lty=2, col="gray", lwd=1.5)
 
-slope <- out[1:nint-1,2]-out[2:nint,2]
-yslope <- slope[1:198] - slope[2:199]
-plot(u.i[1:length(yslope)], yslope, ylim = c(-1, 1))
-abline(h = 0, col = "red")
+as.data.frame(null_mrl) %>%
+  mutate(u.i = seq(r_mrl[1], r_mrl[2], length.out = nint),
+         slope = `Mean Excess` - lag(`Mean Excess`)) -> null_mrl
 
-##### From the plots, I dare to say that for the NULL model, the threshold is around 200
-plot(u.i[200:300], yslope, ylim = c(-1, 1))
-abline(h = 0, col = "red")
+null_mrl %>%
+  ggplot(., aes(x = u.i, y = `Mean Excess`)) +
+  geom_line() +
+  geom_line(aes(y = `95% lower`), linetype = "dashed", color = "grey") +
+  geom_line(aes(y = `95% upper`), linetype = "dashed", color = "grey") +
+  theme_bw() +
+  coord_cartesian(xlim = c(200, 700)) +
+  NULL
+
+# slope <- out[1:nint-1,2]-out[2:nint,2]
+# yslope <- slope[1:198] - slope[2:199]
+# plot(u.i[1:length(yslope)], yslope, ylim = c(-1, 1))
+# abline(h = 0, col = "red")
+
+# From the plots, and the mrl data, the slope starts to be zero, or close to zero for threshold 300
+
+
+# ggplot threshold
+as.data.frame(null_threshplot) %>%
+  mutate(u.i = seq(r[1], r[2], length.out = nint)) %>%
+  ggplot(., aes(y = t.scale, x = u.i)) +
+  geom_point(shape = 1, size = 2) +
+  #geom_line(linetype = "dashed") +
+  geom_linerange(aes(x = u.i, ymin = low.t.scale, ymax = up.t.scale)) +
+  labs(x = "Threshold", y = "Reparameterized \n scale") +
+  theme_bw() +
+  # coord_cartesian(xlim = c(200, 550)) +
+  NULL -> thresh_null_scale
+
+as.data.frame(null_threshplot) %>%
+  mutate(u.i = seq(r[1], r[2], length.out = nint)) %>%
+  ggplot(., aes(y = shape, x = u.i)) +
+  geom_point(shape = 1, size = 2) +
+  geom_linerange(aes(x = u.i, ymin = low.shape, ymax = up.shape)) +
+  labs(x = "Threshold", y = "Reparameterized \n shape") +
+  theme_bw() +
+  geom_hline(yintercept = 0, color = "red") + # check where the shape is >0
+  # coord_cartesian(xlim = c(200, 550)) +
+  NULL -> thresh_null_shape
+
+plot_grid(thresh_null_scale, thresh_null_shape, nrow = 2)
+
 
 # INDIV
 # threshplot
