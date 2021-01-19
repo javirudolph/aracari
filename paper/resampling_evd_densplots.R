@@ -1,11 +1,16 @@
 load("paper/fevd.RData")
 
+# just checking:
+
+evd_table
+
 #### THRESHOLD PLOTS
 # NULL
 # threshplot
 par(mfrow=c(2,1))
 nint <- 200
 r <- quantile(null_dispersal$dispersal, probs=c(0.75,0.99))
+r <- c(0, 700)
 u.i <- matrix(seq(r[1],r[2],, nint), ncol=1)
 out <- null_threshplot
 xlb <- "Threshold"
@@ -35,7 +40,11 @@ lines(u.i, out[,3], lty=2, col="gray", lwd=1.5)
 
 slope <- out[1:nint-1,2]-out[2:nint,2]
 yslope <- slope[1:198] - slope[2:199]
-plot(u.i[1:length(yslope)], yslope, ylim = c(-5, 5))
+plot(u.i[1:length(yslope)], yslope, ylim = c(-1, 1))
+abline(h = 0, col = "red")
+
+##### From the plots, I dare to say that for the NULL model, the threshold is around 200
+plot(u.i[200:300], yslope, ylim = c(-1, 1))
 abline(h = 0, col = "red")
 
 # INDIV
