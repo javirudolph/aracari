@@ -105,6 +105,12 @@ plot(u.i[1:length(yslope)], yslope, ylim = c(-5, 5))
 abline(h = 0, col = "red")
 
 #*****************************************************************************************
+
+# Find source for this:
+
+# the influence of the outlier is much smaller when using L-moments estimation.
+
+#*****************************************************************************************
 load("paper/fevd.RData")
 #*
 # 3. Plot the distribution
