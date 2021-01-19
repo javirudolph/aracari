@@ -1,5 +1,11 @@
 load("paper/fevd.RData")
 
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+library(extRemes)
+
+
 # just checking:
 
 evd_table
@@ -21,6 +27,7 @@ for(j in 1:nint) lines(c(u.i[j],u.i[j]), out[j,c("low.t.scale","up.t.scale")])
 yl <- range(c(out[,c("low.shape","shape","up.shape")]), finite=TRUE)
 plot(u.i, out[,"shape"], ylim=yl, xlab="Threshold", ylab="shape", type="b")
 for(j in 1:nint) lines(c(u.i[j],u.i[j]), out[j,c("low.shape","up.shape")])
+
 
 
 
