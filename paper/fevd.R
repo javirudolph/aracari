@@ -151,19 +151,19 @@ evd_table
 
 # NULL MODEL
 null_fit_500 <- fevd(null_dispersal$dispersal, threshold = orig_thres, type = "GP")
-null_qq_500 <- plot(null_fit, type = "qq")
-null_ci_500 <- ci(null_fit, type = "parameter")
+null_qq_500 <- plot(null_fit_500, type = "qq")
+null_ci_500 <- ci(null_fit_500, type = "parameter")
 
 # INDIVIDUAL MODEL
 indiv_fit_500 <- fevd(indiv_dispersal$dispersal, threshold = orig_thres, type = "GP")
-indiv_qq_500 <- plot(indiv_fit, type = "qq")
-indiv_ci_500 <- ci(indiv_fit, type = "parameter")
+indiv_qq_500 <- plot(indiv_fit_500, type = "qq")
+indiv_ci_500 <- ci(indiv_fit_500, type = "parameter")
 
 # FAMILY MODEL
 # NULL MODEL
 fam_fit_500 <- fevd(fam_dispersal$dispersal, threshold = orig_thres, type = "GP")
-fam_qq_500 <- plot(fam_fit, type = "qq")
-fam_ci_500 <- ci(fam_fit, type = "parameter")
+fam_qq_500 <- plot(fam_fit_500, type = "qq")
+fam_ci_500 <- ci(fam_fit_500, type = "parameter")
 
 rbind(null_ci,
       indiv_ci,
