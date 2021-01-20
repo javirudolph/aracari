@@ -138,40 +138,64 @@ fam_ci <- ci(fam_fit, type = "parameter")
 
 # Make the table
 evd_table <- data.frame(Model = c("Null", "Individual", "Family"),
-                        Scale = c(paste0(signif(null_scale, 4), " \u00b1 ", signif(null_scale_se, 3)),
-                                  paste0(signif(indiv_scale, 4), " \u00b1 ", signif(indiv_scale_se, 3)),
-                                  paste0(signif(fam_scale, 4), " \u00b1 ", signif(fam_scale_se, 3))),
-                        Shape = c(paste0(signif(null_shape, 4), " \u00b1 ", signif(null_shape_se, 3)),
-                                  paste0(signif(indiv_shape, 4), " \u00b1 ", signif(indiv_shape_se, 3)),
-                                  paste0(signif(fam_shape, 4), " \u00b1 ", signif(fam_shape_se, 3))))
+                        Scale = c(paste0(signif(null_scale, 4), " \u00b1 ", signif(null_scale_se, 2)),
+                                  paste0(signif(indiv_scale, 4), " \u00b1 ", signif(indiv_scale_se, 2)),
+                                  paste0(signif(fam_scale, 4), " \u00b1 ", signif(fam_scale_se, 2))),
+                        Shape = c(paste0(signif(null_shape, 4), " \u00b1 ", signif(null_shape_se, 2)),
+                                  paste0(signif(indiv_shape, 4), " \u00b1 ", signif(indiv_shape_se, 2)),
+                                  paste0(signif(fam_shape, 4), " \u00b1 ", signif(fam_shape_se, 2))))
 evd_table
 
-
+###################################################################################################################
 # Comparisson with classic threshold of 500
 
 # NULL MODEL
 null_fit_500 <- fevd(null_dispersal$dispersal, threshold = orig_thres, type = "GP")
 null_qq_500 <- plot(null_fit_500, type = "qq")
 null_ci_500 <- ci(null_fit_500, type = "parameter")
+null_summ_500 <- summary(null_fit_500)
+null_scale_500 <- null_summ_500$par[1]
+null_shape_500 <- null_summ_500$par[2]
+null_scale_se_500 <- null_summ_500$se.theta[1]
+null_shape_se_500 <- null_summ_500$se.theta[2]
 
 # INDIVIDUAL MODEL
 indiv_fit_500 <- fevd(indiv_dispersal$dispersal, threshold = orig_thres, type = "GP")
 indiv_qq_500 <- plot(indiv_fit_500, type = "qq")
 indiv_ci_500 <- ci(indiv_fit_500, type = "parameter")
+indiv_summ_500 <- summary(indiv_fit_500)
+indiv_scale_500 <- indiv_summ_500$par[1]
+indiv_shape_500 <- indiv_summ_500$par[2]
+indiv_scale_se_500 <- indiv_summ_500$se.theta[1]
+indiv_shape_se_500 <- indiv_summ_500$se.theta[2]
 
 # FAMILY MODEL
 # NULL MODEL
 fam_fit_500 <- fevd(fam_dispersal$dispersal, threshold = orig_thres, type = "GP")
 fam_qq_500 <- plot(fam_fit_500, type = "qq")
 fam_ci_500 <- ci(fam_fit_500, type = "parameter")
+fam_summ_500 <- summary(fam_fit_500)
+fam_scale_500 <- fam_summ_500$par[1]
+fam_shape_500 <- fam_summ_500$par[2]
+fam_scale_se_500 <- fam_summ_500$se.theta[1]
+fam_shape_se_500 <- fam_summ_500$se.theta[2]
 
-rbind(null_ci,
-      indiv_ci,
-      fam_ci)
-
-rbind(null_ci_500,
-      indiv_ci_500,
-      fam_ci_500)
+evd_table_500 <- data.frame(Model = c("Null", "Individual", "Family"),
+                        Scale = c(paste0(signif(null_scale_500, 4), " \u00b1 ", signif(null_scale_se_500, 2)),
+                                  paste0(signif(indiv_scale_500, 4), " \u00b1 ", signif(indiv_scale_se_500, 2)),
+                                  paste0(signif(fam_scale_500, 4), " \u00b1 ", signif(fam_scale_se_500, 2))),
+                        Shape = c(paste0(signif(null_shape_500, 4), " \u00b1 ", signif(null_shape_se_500, 2)),
+                                  paste0(signif(indiv_shape_500, 4), " \u00b1 ", signif(indiv_shape_se_500, 2)),
+                                  paste0(signif(fam_shape_500, 4), " \u00b1 ", signif(fam_shape_se_500, 2))))
+evd_table_500
+evd_table
+# rbind(null_ci,
+#       indiv_ci,
+#       fam_ci)
+#
+# rbind(null_ci_500,
+#       indiv_ci_500,
+#       fam_ci_500)
 
 
 save.image("paper/fevd.RData")
