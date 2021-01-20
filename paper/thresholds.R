@@ -54,7 +54,7 @@ as.data.frame(fam_mrl) %>%
          slope = `Mean Excess` - lag(`Mean Excess`)) -> fam_mrl
 
 
-save.image("paper/thresholds.RData")
+
 # Plots
 
 threshplot_fx <- function(thresh_data, th, title = NULL){
@@ -157,3 +157,5 @@ threshplot_fx(fam_threshplot, fam_thresh, title = "Family model threshold plots"
 aligned_plots(null_mrl, null_threshplot, null_thresh, title = "Null model")
 aligned_plots(indiv_mrl, indiv_threshplot, indiv_thresh, title = "Individual model")
 aligned_plots(fam_mrl, fam_threshplot, fam_thresh, title = "Family model")
+
+save.image("paper/thresholds.RData")
