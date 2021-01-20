@@ -57,3 +57,45 @@ as.data.frame(fam_mrl) %>%
          slope = `Mean Excess` - lag(`Mean Excess`)) -> fam_mrl
 
 # fam_thresh <- orig_thresh
+
+
+# Plots
+
+threshplot_fx <- function(thresh_data){
+
+  thresh_data %>%
+    ggplot(., aes(y = t.scale, x = u.i)) +
+    geom_point(shape = 1, size = 2) +
+    # geom_line(linetype = "dashed") +
+    geom_linerange(aes(x = u.i, ymin = low.t.scale, ymax = up.t.scale)) +
+    labs(x = "Threshold", y = "Reparameterized \n scale") +
+    theme_bw() +
+    geom_vline(xintercept = th, color = "red", linetype = "dashed") +
+    # coord_cartesian(xlim = c(200, 550)) +
+    NULL -> thresh_scale
+
+  thresh_data %>%
+    ggplot(., aes(y = shape, x = u.i)) +
+    geom_point(shape = 1, size = 2) +
+    geom_linerange(aes(x = u.i, ymin = low.shape, ymax = up.shape)) +
+    labs(x = "Threshold", y = "Reparameterized \n shape") +
+    theme_bw() +
+    geom_vline(xintercept = th, color = "red", linetype = "dashed") +
+    # coord_cartesian(xlim = c(200, 550)) +
+    NULL -> thresh_shape
+
+  plot_grid(thresh_scale, thresh_shape, nrow = 2)
+
+}
+
+mrl_plot <- function(mrl_data){
+  mrl_data %>%
+    ggplot(., aes(x = u.i_mrl, y = `Mean Excess`)) +
+    geom_line() +
+    geom_line(aes(y = `95% lower`), linetype = "dashed", color = "grey") +
+    geom_line(aes(y = `95% upper`), linetype = "dashed", color = "grey") +
+    theme_bw() +
+    #coord_cartesian(xlim = c(200, 700)) +
+    NULL
+}
+
