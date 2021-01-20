@@ -58,7 +58,7 @@ as.data.frame(fam_mrl) %>%
 
 # fam_thresh <- orig_thresh
 
-
+save.image("paper/thresholds.RData")
 # Plots
 
 threshplot_fx <- function(thresh_data, th){
