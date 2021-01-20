@@ -11,14 +11,14 @@ library(extRemes)
 #################################################################################################################
 # Just testing
 
-null_sample <- sample(null_dispersal$dispersal, 1000)
+null_sample <- decluster(null_dispersal$dispersal, 500)
 hist(null_sample)
 #hist(log(null_sample))
 #qqnorm(log(null_sample))
 qqnorm(null_sample)
 # Qq plots don't show straight lines, not consistent with a normal distribution of the data,
 
-a <- threshrange.plot(null_sample, r = c(300, 700), nint = 200)
+a <- threshrange.plot(null_sample, r = c(0, 700), nint = 100)
 b <- mrlplot(null_sample, xlim = c(300, 700), nint = 100)
 
 c <- decluster(null_sample, threshold = 500)
