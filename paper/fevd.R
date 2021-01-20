@@ -1,7 +1,7 @@
 
 # Fit extreme value distributions to the dispersal kernel data
 
-load("paper/dispersal_kernels.RData")
+load("paper/thresholds.RData")
 
 library(dplyr)
 library(ggplot2)
@@ -58,24 +58,12 @@ p + lines +
 ################################################################################################################################
 
 orig_thres <- 500
-nint <- 100
-r <- c(0, 700)
+
 #*****************************************************************************************
 # NULL MODEL
 
-# 1. Determine threshold
-null_threshplot <- threshrange.plot(null_dispersal$dispersal, r = r, type = "GP", nint = nint)
-as.data.frame(null_threshplot) %>%
-  mutate(u.i = seq(r[1], r[2], length.out = nint)) -> null_threshplot
-
-
-null_mrl <- mrlplot(null_dispersal$dispersal, nint = nint)
-r_mrl <- range(null_dispersal$dispersal, finite=TRUE)
-as.data.frame(null_mrl) %>%
-  mutate(u.i_mrl = seq(r_mrl[1], r_mrl[2], length.out = nint),
-         slope = `Mean Excess` - lag(`Mean Excess`)) -> null_mrl
-
-null_thresh <- orig_thres
+# 1. Determine threshold : done in threshold.R script
+null_thresh
 # 2. Fit Generalized Pareto Distribution
 
 null_fit <- fevd(null_dispersal$dispersal, threshold = null_thresh, type = "GP")
@@ -96,22 +84,11 @@ null_shape - 1.96 * null_summ$cov.theta[2,2]
 null_shape + null_shape_se
 null_shape - null_shape_se
 
-ci(null_fit, type = parameter)
+null_ci <- ci(null_fit, type = "parameter")
 
 # INDIVIDUAL MODEL
 # 1. Determine threshold
-
-indiv_threshplot <- threshrange.plot(indiv_dispersal$dispersal, r = r, type = "GP", nint = nint)
-as.data.frame(indiv_threshplot) %>%
-  mutate(u.i = seq(r[1], r[2], length.out = nint)) -> indiv_threshplot
-
-indiv_mrl <- mrlplot(indiv_dispersal$dispersal, nint = nint)
-r_mrl <- range(indiv_dispersal$dispersal, finite=TRUE)
-as.data.frame(indiv_mrl) %>%
-  mutate(u.i_mrl = seq(r_mrl[1], r_mrl[2], length.out = nint),
-         slope = `Mean Excess` - lag(`Mean Excess`)) -> indiv_mrl
-
-indiv_thresh <- orig_thres
+indiv_thresh
 # 2. Fit Generalized Pareto Distribution
 
 indiv_fit <- fevd(indiv_dispersal$dispersal, threshold = indiv_thresh, type = "GP")
@@ -132,22 +109,11 @@ indiv_shape - 1.96 * indiv_summ$cov.theta[2,2]
 indiv_shape + indiv_shape_se
 indiv_shape - indiv_shape_se
 
+indiv_ci <- ci(indiv_fit, type = "parameter")
 
 # FAMILY MODEL
 # 1. Determine threshold
-
-fam_threshplot <- threshrange.plot(fam_dispersal$dispersal, r = r, type = "GP", nint = nint)
-as.data.frame(fam_threshplot) %>%
-  mutate(u.i = seq(r[1], r[2], length.out = nint)) -> fam_threshplot
-
-
-fam_mrl <- mrlplot(fam_dispersal$dispersal, nint = nint)
-r_mrl <- range(fam_dispersal$dispersal, finite=TRUE)
-as.data.frame(fam_mrl) %>%
-  mutate(u.i_mrl = seq(r_mrl[1], r_mrl[2], length.out = nint),
-         slope = `Mean Excess` - lag(`Mean Excess`)) -> fam_mrl
-
-fam_thresh <- orig_thres
+fam_thresh
 # 2. Fit Generalized Pareto Distribution
 
 fam_fit <- fevd(fam_dispersal$dispersal, threshold = fam_thresh, type = "GP")
@@ -168,6 +134,7 @@ fam_shape - 1.96 * fam_summ$cov.theta[2,2]
 fam_shape + fam_shape_se
 fam_shape - fam_shape_se
 
+fam_ci <- ci(fam_fit, type = "parameter")
 
 # Make the table
 evd_table <- data.frame(Model = c("Null", "Individual", "Family"),
@@ -178,6 +145,34 @@ evd_table <- data.frame(Model = c("Null", "Individual", "Family"),
                                   paste0(signif(indiv_shape, 4), " \u00b1 ", signif(indiv_shape_se, 3)),
                                   paste0(signif(fam_shape, 4), " \u00b1 ", signif(fam_shape_se, 3))))
 evd_table
+
+
+# Comparisson with classic threshold of 500
+
+# NULL MODEL
+null_fit_500 <- fevd(null_dispersal$dispersal, threshold = orig_thres, type = "GP")
+null_qq_500 <- plot(null_fit, type = "qq")
+null_ci_500 <- ci(null_fit, type = "parameter")
+
+# INDIVIDUAL MODEL
+indiv_fit_500 <- fevd(indiv_dispersal$dispersal, threshold = orig_thres, type = "GP")
+indiv_qq_500 <- plot(indiv_fit, type = "qq")
+indiv_ci_500 <- ci(indiv_fit, type = "parameter")
+
+# FAMILY MODEL
+# NULL MODEL
+fam_fit_500 <- fevd(fam_dispersal$dispersal, threshold = orig_thres, type = "GP")
+fam_qq_500 <- plot(fam_fit, type = "qq")
+fam_ci_500 <- ci(fam_fit, type = "parameter")
+
+rbind(null_ci,
+      indiv_ci,
+      fam_ci)
+
+rbind(null_ci_500,
+      indiv_ci_500,
+      fam_ci_500)
+
 
 save.image("paper/fevd.RData")
 
