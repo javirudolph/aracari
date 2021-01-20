@@ -99,5 +99,11 @@ mrl_plot <- function(mrl_data){
     NULL
 }
 
+threshplot_fx(null_threshplot, 500)
+mrl_plot(null_mrl)
 
+threshplot_fx(indiv_threshplot, 500)
+mrl_plot(indiv_mrl)
 
+threshplot_fx(fam_threshplot, 500)
+mrl_plot(fam_mrl)
