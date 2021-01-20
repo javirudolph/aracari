@@ -65,7 +65,15 @@ r <- c(0, 700)
 
 # 1. Determine threshold
 null_threshplot <- threshrange.plot(null_dispersal$dispersal, r = r, type = "GP", nint = nint)
+as.data.frame(null_threshplot) %>%
+  mutate(u.i = seq(r[1], r[2], length.out = nint)) -> null_threshplot
+
+
 null_mrl <- mrlplot(null_dispersal$dispersal, nint = nint)
+r_mrl <- range(null_dispersal$dispersal, finite=TRUE)
+as.data.frame(null_mrl) %>%
+  mutate(u.i_mrl = seq(r_mrl[1], r_mrl[2], length.out = nint),
+         slope = `Mean Excess` - lag(`Mean Excess`)) -> null_mrl
 
 null_thresh <- orig_thres
 # 2. Fit Generalized Pareto Distribution
@@ -94,7 +102,14 @@ ci(null_fit, type = parameter)
 # 1. Determine threshold
 
 indiv_threshplot <- threshrange.plot(indiv_dispersal$dispersal, r = r, type = "GP", nint = nint)
+as.data.frame(indiv_threshplot) %>%
+  mutate(u.i = seq(r[1], r[2], length.out = nint)) -> indiv_threshplot
+
 indiv_mrl <- mrlplot(indiv_dispersal$dispersal, nint = nint)
+r_mrl <- range(indiv_dispersal$dispersal, finite=TRUE)
+as.data.frame(indiv_mrl) %>%
+  mutate(u.i_mrl = seq(r_mrl[1], r_mrl[2], length.out = nint),
+         slope = `Mean Excess` - lag(`Mean Excess`)) -> indiv_mrl
 
 indiv_thresh <- orig_thres
 # 2. Fit Generalized Pareto Distribution
@@ -122,7 +137,15 @@ indiv_shape - indiv_shape_se
 # 1. Determine threshold
 
 fam_threshplot <- threshrange.plot(fam_dispersal$dispersal, r = r, type = "GP", nint = nint)
+as.data.frame(fam_threshplot) %>%
+  mutate(u.i = seq(r[1], r[2], length.out = nint)) -> fam_threshplot
+
+
 fam_mrl <- mrlplot(fam_dispersal$dispersal, nint = nint)
+r_mrl <- range(fam_dispersal$dispersal, finite=TRUE)
+as.data.frame(fam_mrl) %>%
+  mutate(u.i_mrl = seq(r_mrl[1], r_mrl[2], length.out = nint),
+         slope = `Mean Excess` - lag(`Mean Excess`)) -> fam_mrl
 
 fam_thresh <- orig_thres
 # 2. Fit Generalized Pareto Distribution
