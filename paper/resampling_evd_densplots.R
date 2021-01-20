@@ -63,24 +63,24 @@ as.data.frame(null_threshplot) %>%
 par(mfrow=c(1,1))
 out <- null_mrl
 r_mrl <- range(null_dispersal$dispersal, finite=TRUE)
-u.i <- matrix(seq(r_mrl[1], r_mrl[2] - 1,, nint), ncol=1)
+u.i_mrl <- matrix(seq(r_mrl[1], r_mrl[2] - 1,, nint), ncol=1)
 xlab <- "Threshold values"
 yl <- range(c(out), finite=TRUE)
-plot(u.i, out[,2], type="l", xlab=xlab, ylab="Mean Excess", ylim=yl)
-lines(u.i, out[,1], lty=2, col="gray", lwd=1.5)
-lines(u.i, out[,3], lty=2, col="gray", lwd=1.5)
+plot(u.i_mrl, out[,2], type="l", xlab=xlab, ylab="Mean Excess", ylim=yl)
+lines(u.i_mrl, out[,1], lty=2, col="gray", lwd=1.5)
+lines(u.i_mrl, out[,3], lty=2, col="gray", lwd=1.5)
 
 as.data.frame(null_mrl) %>%
-  mutate(u.i = seq(r_mrl[1], r_mrl[2], length.out = nint),
+  mutate(u.i_mrl = seq(r_mrl[1], r_mrl[2], length.out = nint),
          slope = `Mean Excess` - lag(`Mean Excess`)) -> null_mrl
 
 null_mrl %>%
-  ggplot(., aes(x = u.i, y = `Mean Excess`)) +
+  ggplot(., aes(x = u.i_mrl, y = `Mean Excess`)) +
   geom_line() +
   geom_line(aes(y = `95% lower`), linetype = "dashed", color = "grey") +
   geom_line(aes(y = `95% upper`), linetype = "dashed", color = "grey") +
   theme_bw() +
-  coord_cartesian(xlim = c(200, 700)) +
+  #coord_cartesian(xlim = c(200, 700)) +
   NULL
 
 # slope <- out[1:nint-1,2]-out[2:nint,2]
@@ -88,29 +88,32 @@ null_mrl %>%
 # plot(u.i[1:length(yslope)], yslope, ylim = c(-1, 1))
 # abline(h = 0, col = "red")
 
-# From the plots, and the mrl data, the slope starts to be zero, or close to zero for threshold 300
+# From the plots, and the mrl data, the slope starts to be zero, or close to zero for threshold 250-300
 
 
 # ggplot threshold
 as.data.frame(null_threshplot) %>%
-  mutate(u.i = seq(r[1], r[2], length.out = nint)) %>%
+  mutate(u.i = seq(r[1], r[2], length.out = nint)) -> null_threshplot
+th <- null_threshplot$u.i[42]
+
+null_threshplot %>%
   ggplot(., aes(y = t.scale, x = u.i)) +
   geom_point(shape = 1, size = 2) +
-  #geom_line(linetype = "dashed") +
+  # geom_line(linetype = "dashed") +
   geom_linerange(aes(x = u.i, ymin = low.t.scale, ymax = up.t.scale)) +
   labs(x = "Threshold", y = "Reparameterized \n scale") +
   theme_bw() +
+  geom_vline(xintercept = th, color = "red", linetype = "dashed") +
   # coord_cartesian(xlim = c(200, 550)) +
   NULL -> thresh_null_scale
 
-as.data.frame(null_threshplot) %>%
-  mutate(u.i = seq(r[1], r[2], length.out = nint)) %>%
+null_threshplot %>%
   ggplot(., aes(y = shape, x = u.i)) +
   geom_point(shape = 1, size = 2) +
   geom_linerange(aes(x = u.i, ymin = low.shape, ymax = up.shape)) +
   labs(x = "Threshold", y = "Reparameterized \n shape") +
   theme_bw() +
-  geom_hline(yintercept = 0, color = "red") + # check where the shape is >0
+  geom_vline(xintercept = th, color = "red", linetype = "dashed") +
   # coord_cartesian(xlim = c(200, 550)) +
   NULL -> thresh_null_shape
 
