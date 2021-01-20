@@ -61,7 +61,7 @@ as.data.frame(fam_mrl) %>%
 
 # Plots
 
-threshplot_fx <- function(thresh_data){
+threshplot_fx <- function(thresh_data, th){
 
   thresh_data %>%
     ggplot(., aes(y = t.scale, x = u.i)) +
@@ -98,4 +98,6 @@ mrl_plot <- function(mrl_data){
     #coord_cartesian(xlim = c(200, 700)) +
     NULL
 }
+
+
 
