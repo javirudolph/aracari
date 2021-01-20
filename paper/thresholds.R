@@ -24,8 +24,6 @@ as.data.frame(null_mrl) %>%
   mutate(u.i_mrl = seq(r_mrl[1], r_mrl[2], length.out = nint),
          slope = `Mean Excess` - lag(`Mean Excess`)) -> null_mrl
 
-# null_thresh <- orig_thresh
-
 # INDIVIDUAL MODEL
 # 1. Determine threshold
 
@@ -39,7 +37,6 @@ as.data.frame(indiv_mrl) %>%
   mutate(u.i_mrl = seq(r_mrl[1], r_mrl[2], length.out = nint),
          slope = `Mean Excess` - lag(`Mean Excess`)) -> indiv_mrl
 
-# indiv_thresh <- orig_thresh
 
 
 # FAMILY MODEL
@@ -56,21 +53,25 @@ as.data.frame(fam_mrl) %>%
   mutate(u.i_mrl = seq(r_mrl[1], r_mrl[2], length.out = nint),
          slope = `Mean Excess` - lag(`Mean Excess`)) -> fam_mrl
 
-# fam_thresh <- orig_thresh
 
 save.image("paper/thresholds.RData")
 # Plots
 
-threshplot_fx <- function(thresh_data, th){
+threshplot_fx <- function(thresh_data, th, title = NULL){
 
   thresh_data %>%
     ggplot(., aes(y = t.scale, x = u.i)) +
     geom_point(shape = 1, size = 2) +
     # geom_line(linetype = "dashed") +
     geom_linerange(aes(x = u.i, ymin = low.t.scale, ymax = up.t.scale)) +
-    labs(x = "Threshold", y = "Reparameterized \n scale") +
+    labs(title = title, x = "Threshold", y = "Reparameterized \n scale") +
     theme_bw() +
     geom_vline(xintercept = th, color = "red", linetype = "dashed") +
+    scale_x_continuous(limits = c(0, 700), n.breaks = 7 ) +
+    # scale_x_continuous(name = NULL, labels = NULL, breaks = NULL) +
+    # theme(axis.title.x = element_blank(),
+    #       axis.ticks.x = element_blank(),
+    #       axis.text.x = element_blank()) +
     # coord_cartesian(xlim = c(200, 550)) +
     NULL -> thresh_scale
 
@@ -81,6 +82,7 @@ threshplot_fx <- function(thresh_data, th){
     labs(x = "Threshold", y = "Reparameterized \n shape") +
     theme_bw() +
     geom_vline(xintercept = th, color = "red", linetype = "dashed") +
+    scale_x_continuous(limits = c(0, 700), n.breaks = 7 ) +
     # coord_cartesian(xlim = c(200, 550)) +
     NULL -> thresh_shape
 
@@ -88,22 +90,38 @@ threshplot_fx <- function(thresh_data, th){
 
 }
 
-mrl_plot <- function(mrl_data){
+mrl_plot <- function(mrl_data, title = NULL){
+
   mrl_data %>%
     ggplot(., aes(x = u.i_mrl, y = `Mean Excess`)) +
     geom_line() +
     geom_line(aes(y = `95% lower`), linetype = "dashed", color = "grey") +
     geom_line(aes(y = `95% upper`), linetype = "dashed", color = "grey") +
-    theme_bw() +
-    #coord_cartesian(xlim = c(200, 700)) +
-    NULL
+    labs(title = title, x = "Threshold values") +
+    scale_x_continuous(n.breaks = ceiling(round(max(mrl_data$u.i_mrl))/100)) +
+    theme_bw()
 }
 
-threshplot_fx(null_threshplot, 500)
-mrl_plot(null_mrl)
+# Null
+null_thresh <- round(null_mrl$u.i_mrl[20])
+mrl_plot(null_mrl, title = "Null model mean excess plot") +
+  coord_equal() +
+  geom_vline(xintercept = null_thresh, color = "red", linetype = "dotted")
+threshplot_fx(null_threshplot, null_thresh, title = "Null model threshold plots")
 
-threshplot_fx(indiv_threshplot, 500)
-mrl_plot(indiv_mrl)
+# Indiv
+indiv_thresh <- round(indiv_mrl$u.i_mrl[16])
+mrl_plot(indiv_mrl) +
+  coord_equal()+
+  geom_vline(xintercept = indiv_thresh, color = "red", linetype = "dotted")
+threshplot_fx(indiv_threshplot, indiv_thresh, title = "Individual model threshold plots")
 
-threshplot_fx(fam_threshplot, 500)
-mrl_plot(fam_mrl)
+# Fam
+fam_thresh <- round(fam_mrl$u.i_mrl[17])
+mrl_plot(fam_mrl) +
+  coord_equal()+
+  geom_vline(xintercept = fam_thresh, color = "red", linetype = "dotted")
+threshplot_fx(fam_threshplot, fam_thresh, title = "Family model threshold plots")
+
+
+
