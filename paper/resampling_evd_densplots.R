@@ -74,6 +74,8 @@ as.data.frame(null_mrl) %>%
   mutate(u.i_mrl = seq(r_mrl[1], r_mrl[2], length.out = nint),
          slope = `Mean Excess` - lag(`Mean Excess`)) -> null_mrl
 
+# Try this with plotly.
+# Find way to identify the threshold
 null_mrl %>%
   ggplot(., aes(x = u.i_mrl, y = `Mean Excess`)) +
   geom_line() +
@@ -85,7 +87,7 @@ null_mrl %>%
 
 # slope <- out[1:nint-1,2]-out[2:nint,2]
 # yslope <- slope[1:198] - slope[2:199]
-# plot(u.i[1:length(yslope)], yslope, ylim = c(-1, 1))
+# plot(u.i[1:length(yslope)], abs(yslope), ylim = c(-1, 1))
 # abline(h = 0, col = "red")
 
 # From the plots, and the mrl data, the slope starts to be zero, or close to zero for threshold 250-300
