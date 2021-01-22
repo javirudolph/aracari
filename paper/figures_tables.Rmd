@@ -23,7 +23,7 @@ library(dplyr)
 ```
 
 ```{r}
-load("paper/dispersal_kernels.RData")
+load("paper/fevd.RData")
 ```
 
 ```{r}
@@ -146,7 +146,9 @@ ggplot(data = data.frame(x = c(0.1, 4)), aes(x)) +
   ylab("") + xlab("") +
   theme_bw()
   
-```
+``` 
+
+
 ## Seed dispersal distances and aggregation
 
 ```{r fig.width=6}
@@ -209,6 +211,13 @@ knitr::kable(dispersal_kernel_table %>%
 ## Weibull seed dispersal kernel 
 ```{r}
 knitr::kable(weibull_table)
+``` 
+
+## Generalized Pareto tail distribution for seed dispersal
+
+
+```{r}
+knitr::kable(evd_table_500)
 ```
 
 
