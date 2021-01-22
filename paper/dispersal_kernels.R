@@ -4,6 +4,7 @@ load("paper/simple_exp_runs.RData")
 
 
 library(fitdistrplus)
+library(moments)
 library(ggplot2)
 library(dplyr)
 
@@ -135,7 +136,6 @@ fam_dispersal %>%
 
 
 
-
 # Table:
 
 dispersal_kernel_table <- data.frame(
@@ -146,6 +146,9 @@ dispersal_kernel_table <- data.frame(
                                " (", signif(sd(indiv_dispersal$dispersal), 2), ")"),
                         paste0(signif(mean(fam_dispersal$dispersal), 4),
                                " (", signif(sd(fam_dispersal$dispersal), 2), ")")),
+  kurtosis = c(signif(kurtosis(null_dispersal$dispersal), 3),
+               signif(kurtosis(indiv_dispersal$dispersal), 3),
+               signif(kurtosis(fam_dispersal$dispersal), 3)),
   Seed.dispersion_sd = c(paste0(signif(mean(null_dispersion$seed_dispersion), 4),
                                 " (", signif(sd(null_dispersion$seed_dispersion), 2), ")"),
                          paste0(signif(mean(indiv_dispersion$seed_dispersion), 4),
