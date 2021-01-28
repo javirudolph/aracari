@@ -1702,12 +1702,9 @@ summary {
 <div id="seed-dispersal-kernels" class="section level2">
 <h2>Seed dispersal kernels</h2>
 <p>Seed dispersal kernels are functions used to describe the probability of a seed being dispersed or deposited at a specific distance away from its parent plant <span class="citation">(Nathan and Muller-Landau 2000)</span>. The resulting data from our three simulation models provided a dispersal distance for each simulated seed, and thus we used this information to describe the seed dispersal kernels for each model (null, individual, and family). Dispersal kernels in nature tend to be leptokurtic, with a peak near the origin and long tails, therefore kernel shape can be summarized by its kurtosis <span class="citation">(Morales and Carlo 2006)</span>. We quantified the dispersal kernels produced in our models by the sample statistics of mean and kurtosis to describe the overall shape and tail of distribution of seed dispersal distances. In addition to this, we also fit a Weibull distribution via maximum likelihood to obtain estimates of the shape and scale parameters in this distribution. This probability distribution is commonly used in dispersal ecology and has been shown to be flexible enough to accommodate variability in the tails and provide informative parameters associated to the mean dispersal distance and fatness of the tail <span class="citation">(Morales and Carlo 2006)</span>. We fit the data associated to seed dispersal distances produced by each of the three models via Maximum Likelihood using the Weibull density function associated with the package ‘fitdistrplus’<span class="citation">(Delignette-Muller and Dutang 2015)</span>: <span class="math display">\[W(x) = \left(\frac{a}{b}\right) \left(\frac{x}{b}\right)^{a-1} exp[-(x/{b})^{a}]\]</span></p>
-<p>Where the shape parameter <span class="math inline">\(a\)</span> determines the tail of the distribution, and <span class="math inline">\(b\)</span> is the scale parameter. It is worth mentioning that the standard parameterization of the Weibull in ‘R’ is different from the parameterization used in Morales and Carlo <span class="citation">(2006)</span>, where the shape parameter <span class="math inline">\(a = \nu\)</span> remains the same, but the scale parameter is defined as <span class="math inline">\(\kappa = b^{-\nu}\)</span>, giving a density distribution function of <span class="math inline">\(W(r)= \kappa\nu r^{\nu-1} exp[-{\kappa r}^\nu]\)</span>. <!-- Here, we report the scale parameter following the alternative parameterization, but the original values returned after fitting the Weibull distribution using R can be found in the Supplementary Table 1.  --> Since the shape parameter remains the same, we can note that for <span class="math inline">\(a=\nu=1\)</span> the distribution shows a tail with exponential decay, with values of <span class="math inline">\(\nu &lt;1\)</span> the tail shows fast-decay, and when <span class="math inline">\(\nu&gt;1\)</span> we can see a fat-tailed distribution (Fig 3.) We visually assessed the fit of the distributions via qqplots and used the Kolmogorov-Smirnov statistic to assess goodness of fit (Supplementary information).</p>
-<p>Explain what are statistics of extremes and why they can be useful here. cite the GArcia 2017 paper, the Gaines and Denny 1993, Katz 2005. Coles 2001 for the theory or base knowledge. In our case, because we are looking at these simulated seed dispersal kernels, we use a peak over threshold (POT) approach, in which we find the threshold for the data and use an extreme value distribution to fit the tail. Describe the math probabilty density functions and the three laws that the extreme value distribution follows. For POT use a generalized pareto distribution.</p>
-<ul>
-<li>Based on Diagnostic plots, we used these values as the threshold for each of the models.</li>
-</ul>
-<p>From extRemes package: “where shape = 0 gives rise to the exponential df (light tail), shape &gt; 0 the Pareto df (heavy tail) and shape &lt; 0 the Beta df (bounded upper tail at location - scale.u/shape). Theoretical justification supports the use of the GP df family for modeling excesses over a high threshold (i.e., y = x - threshold).”</p>
+<p>Where the shape parameter <span class="math inline">\(a\)</span> determines the tail of the distribution, and <span class="math inline">\(b\)</span> is the scale parameter. It is worth mentioning that the standard parameterization of the Weibull distribution in ‘R’ is different from the parameterization used in Morales and Carlo <span class="citation">(2006)</span>, where the shape parameter <span class="math inline">\(a = \nu\)</span> remains the same, but the scale parameter is defined as <span class="math inline">\(\kappa = b^{-\nu}\)</span>, giving a density distribution function of <span class="math inline">\(W(r)= \kappa\nu r^{\nu-1} exp[-{\kappa r}^\nu]\)</span>. <!-- Here, we report the scale parameter following the alternative parameterization, but the original values returned after fitting the Weibull distribution using R can be found in the Supplementary Table 1.  --> Since the shape parameter remains the same, we can note that for <span class="math inline">\(a=\nu=1\)</span> the distribution shows a tail with exponential decay, with values of <span class="math inline">\(\nu &lt;1\)</span> the tail shows fast-decay, and when <span class="math inline">\(\nu&gt;1\)</span> we can see a fat-tailed distribution (Fig 3.) We visually assessed the fit of the distributions via qqplots and used the Kolmogorov-Smirnov statistic to assess goodness of fit.</p>
+<p>Given our interest in the tail-end of the seed dispersal kernels and our focus on the occurrence of long-distance events, we decided to use an extreme value theory approach and fit a Generalized Pareto distribution to the dispersal distances above the 500m threshold established. Statistics of extremes are useful to understand the stochastic behavior of rare extreme events <span class="citation">(Coles et al. 2001)</span> and have previously been used in ecological scenarios <span class="citation">(Gaines and Denny 1993; Katz, Brush, and Parlange 2005)</span> and evolutionary genetics <span class="citation">(Beisel et al. 2007; Joyce et al. 2008)</span>. More recently, statistics of extremes have been used to model extended dispersal kernels of seeds and pollen <span class="citation">(García and Borda-de-Água 2017)</span> and in particular have been proposed to understand long-distance dispersal events <span class="citation">(Rogers et al. 2019)</span>. In our particular case, we were interested to evaluate how an approach using statistics of extremes could help us fit the tail of the frugivore-generated seed dispersal kernels for each of the models we simulated. We used a peak over threshold (POT) approach, in which we filtered the dispersal distances above a given threshold and fit a Generalized Pareto (GP) distribution to those values. This differs from a block maxima (BM) approach, where the maximum value is selected for each sampling unit and a Generalized Extreme Value (GEV) distribution is used, therefore the choice in the approach is determined by the structure in sampling for a given study (further details can be found in <span class="citation">(Coles et al. 2001; García and Borda-de-Água 2017)</span>). Further details on these two approaches and applications to dispersal can be found <span class="citation">(García and Borda-de-Água 2017)</span>.</p>
+<p>Our study focused on long-distance dispersal events defined as any dispersal event over 500m from the parent tree in order to compare our results to previous studies in this same ecological system <span class="citation">(Holbrook and Loiselle 2009; Holbrook 2011; K. M. Holbrook and Loiselle 2007)</span>. However, when selecting a threshold for a POT approach, it is also possible to use diagnostic plots by fitting the data to a sequence of thresholds, with the goal of finding the lowest threshold that provides similar parameter values to any other higher threshold. We performed these analysis (Supplementary information), and given that parameter estimates were similar, we report our parameter estimates and expected probability of occurrence of long-distance events using our original 500m threshold. We fit Generalized Pareto distributions to the data via maximum likelihood using the package extRemes <span class="citation">(Gilleland and Katz 2016)</span> in R [Rcit].</p>
 </div>
 </div>
 <div id="results" class="section level1">
@@ -1737,6 +1734,9 @@ summary {
 <div id="ref-araujo_ecological_2011">
 <p>Araújo, Márcio S., Daniel I. Bolnick, and Craig A. Layman. 2011. “The Ecological Causes of Individual Specialisation.” <em>Ecology Letters</em> 14 (9): 948–58. <a href="https://doi.org/10.1111/j.1461-0248.2011.01662.x">https://doi.org/10.1111/j.1461-0248.2011.01662.x</a>.</p>
 </div>
+<div id="ref-beisel2007testing">
+<p>Beisel, Craig J, Darin R Rokyta, Holly A Wichman, and Paul Joyce. 2007. “Testing the Extreme Value Domain of Attraction for Distributions of Beneficial Fitness Effects.” <em>Genetics</em> 176 (4): 2441–9.</p>
+</div>
 <div id="ref-benedetti-cecchi_importance_2003">
 <p>Benedetti-Cecchi, Lisandro. 2003. “The Importance of the Variance Around the Mean Effect Size of Ecological Processes.” <em>Ecology</em> 84 (9): 2335–46. <a href="https://doi.org/10.1890/02-8011">https://doi.org/10.1890/02-8011</a>.</p>
 </div>
@@ -1752,6 +1752,9 @@ summary {
 <div id="ref-carlo2014directness">
 <p>Carlo, Tomas A, and Joshua J Tewksbury. 2014. “Directness and Tempo of Avian Seed Dispersal Increases Emergence of Wild Chiltepins in Desert Grasslands.” <em>Journal of Ecology</em> 102 (1): 248–55.</p>
 </div>
+<div id="ref-coles2001introduction">
+<p>Coles, Stuart, Joanna Bawa, Lesley Trenner, and Pat Dorazio. 2001. <em>An Introduction to Statistical Modeling of Extreme Values</em>. Vol. 208. Springer.</p>
+</div>
 <div id="ref-comita2014testing">
 <p>Comita, Liza S, Simon A Queenborough, Stephen J Murphy, Jenalle L Eck, Kaiyang Xu, Meghna Krishnadas, Noelle Beckman, and Yan Zhu. 2014. “Testing Predictions of the Janzen–Connell Hypothesis: A Meta-Analysis of Experimental Evidence for Distance-and Density-Dependent Seed and Seedling Survival.” <em>Journal of Ecology</em> 102 (4): 845–56.</p>
 </div>
@@ -1766,6 +1769,15 @@ summary {
 </div>
 <div id="ref-forsman_inter-individual_2016">
 <p>Forsman, Anders, and Lena Wennersten. 2016. “Inter-Individual Variation Promotes Ecological Success of Populations and Species: Evidence from Experimental and Comparative Studies.” <em>Ecography</em> 39 (7): 630–48. <a href="https://doi.org/10.1111/ecog.01357">https://doi.org/10.1111/ecog.01357</a>.</p>
+</div>
+<div id="ref-gaines1993largest">
+<p>Gaines, Steven D, and Mark W Denny. 1993. “The Largest, Smallest, Highest, Lowest, Longest, and Shortest: Extremes in Ecology.” <em>Ecology</em> 74 (6): 1677–92.</p>
+</div>
+<div id="ref-garcia_extended_2017">
+<p>García, Cristina, and Luís Borda-de-Água. 2017. “Extended Dispersal Kernels in a Changing World: Insights from Statistics of Extremes.” <em>Journal of Ecology</em> 105 (1): 63–74. <a href="https://doi.org/10.1111/1365-2745.12685">https://doi.org/10.1111/1365-2745.12685</a>.</p>
+</div>
+<div id="ref-extRemes2">
+<p>Gilleland, Eric, and Richard W. Katz. 2016. “extRemes 2.0: An Extreme Value Analysis Package in R.” <em>Journal of Statistical Software</em> 72 (8): 1–39. <a href="https://doi.org/10.18637/jss.v072.i08">https://doi.org/10.18637/jss.v072.i08</a>.</p>
 </div>
 <div id="ref-gonzalez-varo_labile_2016">
 <p>González-Varo, Juan P., and Anna Traveset. 2016. “The Labile Limits of Forbidden Interactions.” <em>Trends in Ecology &amp; Evolution</em> 31 (9): 700–710. <a href="https://doi.org/10.1016/j.tree.2016.06.009">https://doi.org/10.1016/j.tree.2016.06.009</a>.</p>
@@ -1800,6 +1812,12 @@ summary {
 <div id="ref-jordano2007differential">
 <p>Jordano, Pedro, Coralith Garcı́a, José A Godoy, and Juan Luis Garcı́a-Castaño. 2007. “Differential Contribution of Frugivores to Complex Seed Dispersal Patterns.” <em>Proceedings of the National Academy of Sciences</em> 104 (9): 3278–82.</p>
 </div>
+<div id="ref-joyce2008general">
+<p>Joyce, Paul, Darin R Rokyta, Craig J Beisel, and H Allen Orr. 2008. “A General Extreme Value Theory Model for the Adaptation of Dna Sequences Under Strong Selection and Weak Mutation.” <em>Genetics</em> 180 (3): 1627–43.</p>
+</div>
+<div id="ref-katz2005statistics">
+<p>Katz, Richard W, Grace S Brush, and Marc B Parlange. 2005. “Statistics of Extremes: Modeling Ecological Disturbances.” <em>Ecology</em> 86 (5): 1124–34.</p>
+</div>
 <div id="ref-levey_effects_2005">
 <p>Levey, Douglas J., Benjamin M. Bolker, Joshua J. Tewksbury, Sarah Sargent, and Nick M. Haddad. 2005. “Effects of Landscape Corridors on Seed Dispersal by Birds.” <em>Science</em> 309 (5731): 146–48. <a href="https://doi.org/10.1126/science.1111479">https://doi.org/10.1126/science.1111479</a>.</p>
 </div>
@@ -1817,6 +1835,9 @@ summary {
 </div>
 <div id="ref-post_intraspecific_2008">
 <p>Post, David M., Eric P. Palkovacs, Erika G. Schielke, and Stanley I. Dodson. 2008. “Intraspecific Variation in a Predator Affects Community Structure and Cascading Trophic Interactions.” <em>Ecology</em> 89 (7): 2019–32. <a href="https://doi.org/10.1890/07-1216.1">https://doi.org/10.1890/07-1216.1</a>.</p>
+</div>
+<div id="ref-rogers_total_2019">
+<p>Rogers, Haldre S., Noelle G. Beckman, Florian Hartig, Jeremy S. Johnson, Gesine Pufal, Katriona Shea, Damaris Zurell, et al. 2019. “The Total Dispersal Kernel: A Review and Future Directions.” <em>AoB PLANTS</em> 11 (5). <a href="https://doi.org/10.1093/aobpla/plz042">https://doi.org/10.1093/aobpla/plz042</a>.</p>
 </div>
 <div id="ref-russo_incorporating_2006">
 <p>Russo, Sabrina E., Stephen Portnoy, and Carol K. Augspurger. 2006. “Incorporating Animal Behavior into Seed Dispersal Models: Implications for Seed Shadows.” <em>Ecology</em> 87 (12): 3160–74. <a href="https://doi.org/10.1890/0012-9658(2006)87%5B3160:IABISD%5D2.0.CO;2">https://doi.org/10.1890/0012-9658(2006)87[3160:IABISD]2.0.CO;2</a>.</p>
