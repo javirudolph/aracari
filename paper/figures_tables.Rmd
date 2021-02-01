@@ -19,6 +19,7 @@ library(ggplot2)
 library(aracari)
 library(cowplot)
 library(dplyr)
+library(extRemes)
 
 ```
 
@@ -108,27 +109,27 @@ ggplot() +
 ```
 
 #### Figure 1. 
-Density distributions from which we sample gut retention time (GRT) and movement distance (MD). 
+Density distributions from which we sample **A.** gut retention time (GRT) and **B.** movement distance (MD). Red dots represent an example for one simulation run, where we sample five gut retention times. The maximum GRT for that simulation run determines the number of movement distances sampled in that simulation run, represented in the figure by the black dots.
 
 ```{r fig.width=2.5, fig.height=4}
-plot_grid(fig_GRT, fig_MD, align = "v", nrow = 2, labels = "auto", label_size = 10)
+plot_grid(fig_GRT, fig_MD, align = "v", nrow = 2, labels = "AUTO", label_size = 10)
 ```
 
 #### Figure 2.
-Simulation example where animal movement determines location for seeds dropped. Calculations for seed dispersal distance from the parent tree and seed distance to the mean seed location as a measure of aggregation. 
+Example of one simulation run and variables measured for each run. **A.** Shows the animal trajectory followed after starting at the origin (big circle at location 0,0). The animal moves every minute following the movement distances (MD) sampled from the distribution as show in example of Figure 1. Every small black dot represents the animal's location at every minute interval. Seeds get dropped every time the simulation reaches one of the sampled gut retention times (GRT), at the animal's location in that time (red dots). **B.** Seed dispersal calculations as euclidean distances from the parent plant located at the origin (black circle at 0,0) to each of the five seeds for the simulation run (red dots). **C.** Calculation of seed dispersion measures and average seed dispersal. The average seed location for the simulation run is shown by the blue circle. The distance from each seed to the average location is used to calculate seed dispersion as a measure of seed aggregation, dashed blue lines. Average seed dispersal is calculated as the distance from the parent plant to the average seed location, shown as the black line connecting the black circle to the blue dot.
 
 ```{r fig.height=2, fig.width=6}
-plot_grid(fig_traj, fig_disp, fig_agg, ncol = 3, align = "h", labels = "auto", label_size = 8)
+plot_grid(fig_traj, fig_disp, fig_agg, ncol = 3, align = "h", labels = "AUTO", label_size = 8)
 ```
 
 #### Figure 3.
-Variation in Weibull distributions determined by the value of the shape parameter. The scale parameter is defined as $b=1$, and the shape parameters are defined as follows: solid line $a=\nu=1$ shows an exponential decay tail, dashed line $a=\nu=0.2$ shows a thin tail, and $a=\nu=2$ describes a fat tail with the dotted line.
+Variation in Weibull and Generalized Pareto distributions determined by the value of the shape parameter. **A.** In the case of the Weibull distribution, the scale parameter is defined as $b=1$, and the shape parameters are defined as follows: solid line $a=\nu=0.4$ shows a heavy tail, the dashed line $a=\nu=2$ shows a thin tail, and $a=\nu=1$ describes an exponential tail with the dotted line. This follows the assumption that a shape parameter $\nu<1$ describes a fat tail, $\nu>1$ a thin tail, and $\nu=1$ a tail following an exponential distribution. *Check here these statements about the tail. Maybe parameterization has changed it, but I don't see the heavy tail of the solid line with $\beta > 1$* **B.** In the case of the Generalized Pareto distribution, a shape parameter $=0$ describes an exponential distribution function, shape $>0$ describes a heavy tail, and $<0$ a tail with Beta distribution function, bounded at an upper value as a function of the threshold, shape and scale parameters. In the second panel, the scale parameter is set to $\sigma = 1$ the solid line $\xi = 1$ shows a heavy tail, dashed line $\xi=-0.6$ shows a Beta tail, and $\xi = 0$ describes aan exponential decay with the dotted line.
 
-```{r fig.width=3, fig.height=2.5}
+```{r fig.width=6, fig.height=2.5}
 # shape
 exptail <- 1
-thintail <- 0.2
-fattail <- 2
+thintail <- 2
+fattail <- 0.4
 
 #scale
 b <- 1
@@ -144,7 +145,42 @@ ggplot(data = data.frame(x = c(0.1, 4)), aes(x)) +
   stat_function(fun = dweibull, n = 100, args = list(scale = b, shape = fattail),
                 color = "black", linetype = "solid", size = 0.8) +
   ylab("") + xlab("") +
-  theme_bw()
+  lims(y = c(0, 1)) +
+  theme_bw() -> weib_dens
+
+
+# The shape parameter determines the behavior of the tail of the Generalized Pareto
+# ?extRemes::devd
+# shape = 0 gives rise to exponential disttribution function (thin tail)
+# shape > 0 is a heavy tail
+# shape < 0 is a tail following a Beta distribution function, a bounded upper tail at location-scale.u/shape
+
+# shape
+exptail <- 0
+heavytail <- 1.2
+betatail <- -0.6
+
+# scale
+gp_scale <- 1
+
+
+ggplot(data = data.frame(x = c(0.1, 4)), aes(x)) +
+  stat_function(fun = devd, n = 100, args = list(scale = gp_scale, shape = betatail, type = "GP"),
+                color = "black", linetype = "dashed", size = 0.8) +
+  stat_function(fun = devd, n = 100, args = list(scale = gp_scale, shape = exptail, type = "GP"), 
+                color = "black", linetype = "dotted", size = 0.8) +
+  stat_function(fun = devd, n = 100, args = list(scale = gp_scale, shape = heavytail, type = "GP"),
+                color = "black", linetype = "solid", size = 0.8) +
+  ylab("") + xlab("") +
+  lims(y = c(0, 1)) +
+  theme_bw() -> gp_dens
+
+
+plot_grid(weib_dens, gp_dens, ncol = 2, labels = "AUTO", label_size = 8)
+
+
+
+
   
 ``` 
 
