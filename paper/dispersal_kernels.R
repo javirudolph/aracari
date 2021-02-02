@@ -39,12 +39,30 @@ weibull_params <- data.frame(model = c("Null", "Individual", "Family"),
 
 # Long distance dispersal calculations
 
+# Number of simulation runs for each individual
+nruns
+
+# Number of seeds for each simulation run
+nseeds
+
+# Number of individuals
+length(null_moverate$Bird_ID)
+length(indiv_moverate$Bird_ID)
+length(fam_moverate$fam_g)
+
+# Total number of seeds per model
+nrow(null_dispersal)
+nrow(indiv_dispersal)
+nrow(fam_dispersal)
+
+# Ok, so I think the reason I was doing it by "individual" is because we have a different number of total seeds for each of the models, but the same number of simulation runs per movement rates.
+
 null_dispersal %>%
   filter(., dispersal >= 500) %>%
   group_by(., id) %>%
   summarize(max_d = max(dispersal),
             n_ldd = n(),
-            prop_ldd = n_ldd/10000) %>%
+            prop_ldd = n_ldd/nruns) %>%
   ungroup() %>%
   summarise(global_max = max(max_d),
             max_mean = mean(max_d),
@@ -59,7 +77,7 @@ indiv_dispersal %>%
   group_by(., id) %>%
   summarize(max_d = max(dispersal),
             n_ldd = n(),
-            prop_ldd = n_ldd/10000) %>%
+            prop_ldd = n_ldd/nruns) %>%
   ungroup() %>%
   summarise(global_max = max(max_d),
             max_mean = mean(max_d),
@@ -74,7 +92,7 @@ fam_dispersal %>%
   group_by(., id) %>%
   summarize(max_d = max(dispersal),
             n_ldd = n(),
-            prop_ldd = n_ldd/10000)%>%
+            prop_ldd = n_ldd/nruns)%>%
   ungroup() %>%
   summarise(global_max = max(max_d),
             max_mean = mean(max_d),
@@ -146,24 +164,24 @@ dispersal_kernel_table <- data.frame(
                                " (", signif(sd(indiv_dispersal$dispersal), 2), ")"),
                         paste0(signif(mean(fam_dispersal$dispersal), 4),
                                " (", signif(sd(fam_dispersal$dispersal), 2), ")")),
-  kurtosis = c(signif(kurtosis(null_dispersal$dispersal), 3),
-               signif(kurtosis(indiv_dispersal$dispersal), 3),
-               signif(kurtosis(fam_dispersal$dispersal), 3)),
   Seed.dispersion_sd = c(paste0(signif(mean(null_dispersion$seed_dispersion), 4),
                                 " (", signif(sd(null_dispersion$seed_dispersion), 2), ")"),
                          paste0(signif(mean(indiv_dispersion$seed_dispersion), 4),
                                 " (", signif(sd(indiv_dispersion$seed_dispersion), 2), ")"),
                          paste0(signif(mean(fam_dispersion$seed_dispersion), 4),
                                 " (", signif(sd(fam_dispersion$seed_dispersion), 2), ")")),
+  kurtosis = c(signif(kurtosis(null_dispersal$dispersal), 3),
+               signif(kurtosis(indiv_dispersal$dispersal), 3),
+               signif(kurtosis(fam_dispersal$dispersal), 3)),
   Max_dispersal = c(signif(max(null_ldd$global_max), 4),
                            signif(max(indiv_ldd$global_max), 4),
                            signif(max(fam_ldd$global_max), 4)),
   # Max_dispersal = c(paste0(signif(null_ldd$max_mean, 3), " (", signif(null_ldd$max_sd, 1), ")"),
   #                   paste0(signif(indiv_ldd$max_mean, 3), " (", signif(indiv_ldd$max_sd, 1), ")"),
   #                   paste0(signif(fam_ldd$max_mean, 3), " (", signif(fam_ldd$max_sd, 1), ")")),
-  LDD = c(paste0(signif(null_ldd$prcnt_ldd, 3), " (", signif(null_ldd$sd_ldd, 1), ")", "%"),
-          paste0(signif(indiv_ldd$prcnt_ldd, 3), " (", signif(indiv_ldd$sd_ldd, 1), ")", "%"),
-          paste0(signif(fam_ldd$prcnt_ldd, 3), " (", signif(fam_ldd$sd_ldd, 1), ")", "%")))
+  LDD = c(paste0(signif(null_ldd$prcnt_ldd, 3), " (", signif(null_ldd$sd_ldd*100, 2), ")", "%"),
+          paste0(signif(indiv_ldd$prcnt_ldd, 3), " (", signif(indiv_ldd$sd_ldd*100, 2), ")", "%"),
+          paste0(signif(fam_ldd$prcnt_ldd, 3), " (", signif(fam_ldd$sd_ldd*100, 2), ")", "%")))
 
 weibull_table <- data.frame(
   Weibull_Shape = c(paste0(signif(null_weibull$estimate[1], 4), " (", signif(null_weibull$sd[1], 2), ")"),
