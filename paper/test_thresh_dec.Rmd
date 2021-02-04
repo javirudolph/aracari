@@ -1,0 +1,98 @@
+---
+title: "Untitled"
+author: "Javiera Rudolph"
+date: "2/3/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
+```
+
+```{r}
+
+load("paper/thresholds.RData")
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+library(extRemes)
+```
+
+# NULL 
+
+```{r}
+orig_thres <- 500
+
+#*****************************************************************************************
+# NULL MODEL
+
+# 1. Determine threshold : done in threshold.R script
+null_thresh
+# 2. Fit Generalized Pareto Distribution
+
+dec_null <- decluster(null_dispersal$dispersal, threshold = null_thresh)
+null_fit_dec <- fevd(dec_null, threshold = null_thresh, type = "GP")
+plot(null_fit_dec)
+summary(null_fit_dec)
+ci(null_fit_dec, type = "parameter")
+
+null_fit <- fevd(null_dispersal$dispersal, threshold = null_thresh, type = "GP")
+plot(null_fit)
+summary(null_fit)
+ci(null_fit, type = "parameter")
+
+null_fit_500 <- fevd(null_dispersal$dispersal, threshold = orig_thres, type = "GP")
+plot(null_fit_500)
+summary(null_fit_500)
+ci(null_fit_500, type = "parameter")
+```
+
+# INDIVIDUAL
+
+```{r}
+indiv_thresh
+
+dec_indiv <- decluster(indiv_dispersal$dispersal, threshold = indiv_thresh)
+indiv_fit_dec <- fevd(dec_indiv, threshold = indiv_thresh, type = "GP")
+plot(indiv_fit_dec)
+summary(indiv_fit_dec)
+ci(indiv_fit_dec, type = "parameter")
+
+indiv_fit <- fevd(indiv_dispersal$dispersal, threshold = indiv_thresh, type = "GP")
+plot(indiv_fit)
+summary(indiv_fit)
+ci(indiv_fit, type = "parameter")
+
+indiv_fit_500 <- fevd(indiv_dispersal$dispersal, threshold = orig_thres, type = "GP")
+plot(indiv_fit_500)
+summary(indiv_fit_500)
+ci(indiv_fit_500, type = "parameter")
+```
+
+# FAMILY
+
+```{r}
+fam_thresh
+
+dec_fam <- decluster(fam_dispersal$dispersal, threshold = fam_thresh)
+fam_fit_dec <- fevd(dec_fam, threshold = fam_thresh, type = "GP")
+plot(fam_fit_dec)
+summary(fam_fit_dec)
+ci(fam_fit_dec, type = "parameter")
+
+fam_fit <- fevd(fam_dispersal$dispersal, threshold = fam_thresh, type = "GP")
+plot(fam_fit)
+summary(fam_fit)
+ci(fam_fit, type = "parameter")
+
+fam_fit_500 <- fevd(fam_dispersal$dispersal, threshold = orig_thres, type = "GP")
+plot(fam_fit_500)
+summary(fam_fit_500)
+ci(fam_fit_500, type = "parameter")
+```
+
+
