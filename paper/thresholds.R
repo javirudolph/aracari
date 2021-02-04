@@ -132,14 +132,14 @@ aligned_plots <- function(mrl_data, thresh_data, threshold, title = NULL){
 }
 
 # Null
-null_thresh <- round(null_mrl$u.i_mrl[20])
+null_thresh <- round(null_mrl$u.i_mrl[15])
 mrl_plot(null_mrl, title = "Null model mean excess plot") +
   coord_equal() +
   geom_vline(xintercept = null_thresh, color = "red", linetype = "dashed")
 threshplot_fx(null_threshplot, null_thresh, title = "Null model threshold plots")
 
 # Indiv
-indiv_thresh <- round(indiv_mrl$u.i_mrl[16])
+indiv_thresh <- round(indiv_mrl$u.i_mrl[15])
 mrl_plot(indiv_mrl) +
   coord_equal()+
   geom_vline(xintercept = indiv_thresh, color = "red", linetype = "dotted")
@@ -147,7 +147,7 @@ threshplot_fx(indiv_threshplot, indiv_thresh, title = "Individual model threshol
 
 
 # Fam
-fam_thresh <- round(fam_mrl$u.i_mrl[17])
+fam_thresh <- round(fam_mrl$u.i_mrl[15])
 mrl_plot(fam_mrl) +
   coord_equal()+
   geom_vline(xintercept = fam_thresh, color = "red", linetype = "dotted")
