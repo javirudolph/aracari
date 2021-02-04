@@ -352,6 +352,17 @@ knitr::kable(bind_rows(evd_table %>%
 ```
 
 
+```{r, fig.width=6, fig.height=3}
+ggplot(data = data.frame(x = c(160, 1000)), aes(x)) +
+  stat_function(aes(linetype = "Null"), fun = devd, args = list(scale = null_ci[1,2], shape = null_ci[2,2], type = "GP")) +
+  stat_function(aes(linetype = "Individual"), fun = devd, args = list(scale = indiv_ci[1,2], shape = indiv_ci[2,2], type = "GP")) +
+  stat_function(aes(linetype = "Family"), fun = devd, args = list(scale = fam_ci[1,2], shape = fam_ci[2,2], type = "GP")) +
+  ylab("Density") + xlab("Distance (m)") +
+  theme_bw()  +
+  theme(legend.position = c(0.7, 0.7),
+        legend.title = element_blank())
+```
+
 ## Figures for seed dispersal kernels and comparison to the fit
 Now, we focus on the seed dispersal kernel as a whole for each simulated model: Null, Individual, Family. The reason for this, is that when you sample seedlings or seed dispersal distances, you don't know which animal moved which, you just get plant level information and distance to the parent tree. So, now, we visualize the seed dispersal kernels for each of the three models, without considering the variation contributed to the kernel by each individual.
 
@@ -474,14 +485,16 @@ ggdraw() +
 
 plot_grid(C, CC, CCC, nrow = 3, labels = "AUTO") -> D
 
-ggsave("paper/test.png",
-       D,
-       width = 6,
-       height = 9,
-       dpi = 300)
+# ggsave("paper/test.png",
+#        D,
+#        width = 6,
+#        height = 9,
+#        dpi = 300)
 
+D
 
 ```
+
 
 
 ## Supplementary Figures and tables
