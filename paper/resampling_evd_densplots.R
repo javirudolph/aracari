@@ -116,6 +116,15 @@ plot_grid(null_boot_plot,
           fam_boot_plot,
           nrow = 3)
 
+ggplot(data = data.frame(x = c(160, 1000)), aes(x)) +
+  stat_function(aes(linetype = "Null"), fun = devd, args = list(scale = null_ci[1,2], shape = null_ci[2,2], type = "GP")) +
+  stat_function(aes(linetype = "Individual"), fun = devd, args = list(scale = indiv_ci[1,2], shape = indiv_ci[2,2], type = "GP")) +
+  stat_function(aes(linetype = "Family"), fun = devd, args = list(scale = fam_ci[1,2], shape = fam_ci[2,2], type = "GP")) +
+  ylab("Density") + xlab("Distance (m)") +
+  theme_bw()  +
+  theme(legend.position = c(0.7, 0.7),
+        legend.title = element_blank())
+
 
 # 4. Calculate probability of getting those LDD events
 #   a. make a figure with probability on the y axis, and distance in the x.
