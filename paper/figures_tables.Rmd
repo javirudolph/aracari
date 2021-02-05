@@ -26,7 +26,7 @@ library(fitdistrplus)
 ```
 
 ```{r}
-load("paper/fevd.RData")
+load("paper/resampling_evd_densplots.RData")
 ```
 
 ## Methods 
@@ -362,6 +362,30 @@ ggplot(data = data.frame(x = c(160, 1000)), aes(x)) +
   theme(legend.position = c(0.7, 0.7),
         legend.title = element_blank())
 ```
+
+```{r eval=FALSE, fig.width=6, fig.height=9}
+
+plot_grid(null_boot_plot,
+          indiv_boot_plot,
+          fam_boot_plot,
+          nrow = 3)
+```
+
+### Probabilities
+
+```{r}
+dist_range <- c(250, 500, 1000, 1250, 1500, 1750, 2000)
+null_probs <- pextRemes(null_fit, dist_range, lower.tail = FALSE)
+indiv_probs <- pextRemes(indiv_fit, dist_range, lower.tail = FALSE)
+fam_probs <- pextRemes(fam_fit, dist_range, lower.tail = FALSE)
+
+evd_probs <- as.data.frame(rbind(null_probs, indiv_probs, fam_probs))
+names(evd_probs) <- dist_range
+row.names(evd_probs) <- c("Null", "Individual", "Family")
+
+knitr::kable(evd_probs)
+```
+
 
 ## Figures for seed dispersal kernels and comparison to the fit
 Now, we focus on the seed dispersal kernel as a whole for each simulated model: Null, Individual, Family. The reason for this, is that when you sample seedlings or seed dispersal distances, you don't know which animal moved which, you just get plant level information and distance to the parent tree. So, now, we visualize the seed dispersal kernels for each of the three models, without considering the variation contributed to the kernel by each individual.

@@ -4,7 +4,7 @@ library(dplyr)
 library(ggplot2)
 library(cowplot)
 library(extRemes)
-
+library(Rmisc)
 
 #*****************************************************************************************
 
@@ -40,6 +40,16 @@ for(i in 1:1000){
 null_lines <- purrr::map(seq(1:1000), function(y)
   stat_function(fun = devd, args = list(type = "GP",
                                         scale = null_boot$scale[y], shape = null_boot$shape[y]), color = "grey"))
+
+# ggplot(data = data.frame(x = c(null_thresh, 1000)), aes(x)) +
+#   null_lines +
+#   stat_function(aes(linetype = "CI"), fun = devd, args = list(scale = CI(null_boot$scale)[1], shape = CI(null_boot$shape)[1], type = "GP")) +
+#   stat_function(aes(linetype = "Model"), fun = devd, args = list(scale = null_scale, shape = null_shape, type = "GP")) +
+#   stat_function(aes(linetype = "CI"), fun = devd, args = list(scale = CI(null_boot$scale)[3], shape = CI(null_boot$shape)[3], type = "GP")) +
+#   ylab("Density") + xlab("Distance (m)") +
+#   theme_bw()  +
+#   theme(legend.position = c(0.7, 0.7),
+#         legend.title = element_blank()) -> null_boot_plot
 
 ggplot(data = data.frame(x = c(null_thresh, 1000)), aes(x)) +
   null_lines +
@@ -116,6 +126,11 @@ plot_grid(null_boot_plot,
           fam_boot_plot,
           nrow = 3)
 
+# The confidence intervals are for the bootstrapped data, not for the MLE estimate
+# Figure out how to do that.
+
+
+
 ggplot(data = data.frame(x = c(160, 1000)), aes(x)) +
   stat_function(aes(linetype = "Null"), fun = devd, args = list(scale = null_ci[1,2], shape = null_ci[2,2], type = "GP")) +
   stat_function(aes(linetype = "Individual"), fun = devd, args = list(scale = indiv_ci[1,2], shape = indiv_ci[2,2], type = "GP")) +
@@ -129,8 +144,13 @@ ggplot(data = data.frame(x = c(160, 1000)), aes(x)) +
 # 4. Calculate probability of getting those LDD events
 #   a. make a figure with probability on the y axis, and distance in the x.
 
-dist_range <- seq(null_thresh, 4000, by = 100)
-null_probs <- data.frame(distance = dist_range,
-                         prob = pextRemes(null_fit, dist_range, lower.tail = FALSE))
+dist_range <- c(250, 500, 1000, 1250, 1500, 1750, 2000)
+null_probs <- pextRemes(null_fit, dist_range, lower.tail = FALSE)
+indiv_probs <- pextRemes(indiv_fit, dist_range, lower.tail = FALSE)
+fam_probs <- pextRemes(fam_fit, dist_range, lower.tail = FALSE)
 
+evd_probs <- as.data.frame(rbind(null_probs, indiv_probs, fam_probs))
+names(evd_probs) <- dist_range
+row.names(evd_probs) <- c("Null", "Individual", "Family")
 
+save.image("paper/resampling_evd_densplots.RData")
