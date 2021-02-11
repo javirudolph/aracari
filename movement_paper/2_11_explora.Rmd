@@ -1,17 +1,15 @@
 ---
-title: "Appendix A"
-subtitle: "Model fitting and selection for tracking data"
+title: "Incorporating individual variation in animal movement models"
+subtitle: "Explore data and sampling sequences"
 output:
   html_document:
       toc: true
-bibliography: "../paper/mybibfile.bib"
+bibliography: "aracari_movement.bib"
 ---
 
 # Overall description 
 
-We have used the data collected by Kimberly Holbrook for her studies on toucan home ranges and movement patterns [@holbrook_home_2011]. We cleaned original data similarly, as is shown in the `raw-data/newpointlocs.R` file of this directory, by restricting the individuals to those with a minimum of 40 observations and locations collected in intervals from 15 to 90 minutes in multiples of 15 minutes. As shown in previous studies [@holbrook_using_2007], the distances traveled by toucans in 15-30 minutes represent the most probable distances for seed dispersal. Due to data collection constraints, locations could not be obtained every 15 minutes, and birds were sometimes located at greater time intervals. Our goal in this section is to use a probabilistic approach that will characterize the pattern of distances moved, and use these probability distributions to later randomly sample distances from. In order to do this, we scaled the original data in distances moved per time interval, to distances moved per minute. 
-
-Our approach involves fitting these probability distributions at three different levels: population, individual, and family. In the case of population level fittings, a probability distribution is used to fit all the data available, and a single distribution is used to describe the population's distanced moved. At the individual level, each bird is analyzed separately and a single distribution is assigned to the data of each individual bird to characterize it's distances moved. The family level analysis is restricted to the data points for which we have available information on family group. In this case, a single probability distribution is used for each individual family group to describe the distances moved. 
+We have used the data collected by Kimberly Holbrook for her studies on toucan home ranges and movement patterns [@holbrook2011home]. We are starting the original raw data here. Previous work used clean data, as is shown in the `raw-data/newpointlocs.R`, by restricting the individuals to those with a minimum of 40 observations and locations collected in intervals from 15 to 90 minutes in multiples of 15 minutes. As shown in previous studies [@holbrook2007using], the distances traveled by toucans in 15-30 minutes represent the most probable distances for seed dispersal. Due to data collection constraints, locations could not be obtained every 15 minutes, and birds were sometimes located at greater time intervals. Our goal in this section is to explore the raw data again, and use a probabilistic approach that will characterize the pattern of distances moved, and use these probability distributions to later randomly sample distances from.
 
 ```{r setup, include=FALSE}
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
@@ -25,879 +23,83 @@ library(ggplot2)
 library(tidyr)
 library(purrr)
 library(stringr)
-library(fitdistrplus)
+library(adehabitatLT)
 library(cowplot)
 library(RColorBrewer)
 library(gt)
+library(lubridate)
 
 theme_set(theme_bw())
 ```
 
 
-Due to the fact that data was collected at different tracking intervals, we scaled it to represent number of meters moved per minute. The goal of these fittings is to obtain parameters of probability distributions that can describe how fast these animals are moving, so that in simulations, we can use these distributions for random sampling of speeds when the animals are moving. 
 
 ```{r data}
-# Get the data loaded. We are removing the one value with zero since it won't allow fitting.
+# First, read in the raw tracking data
+aracari_data<- read.csv("data/raw_location_data.csv")
+# Time is presented as a time ID
+# Each time interval is equivalent to 15 minutes
+# Interval 1 == 6AM, so if we start at midnight, 6am is 24 intervals of 15 minutes each. I'm setting 6am as the start just because I don't have actual data on it, but we know they started early morning and that's what the time IDs are for in Kimberly's work.
 
-#load("data/ptpl.rda")
-data(ptpl)
 
-# Here, we are taking our tracking data and removing mpm (meters moved per minute) that are equal to zero, since these won't allow for distribution fittings. We also create a new variable for Bird ID, and modify net squared displacement. 
-df <- ptpl %>%
-  dplyr::filter(mpm != 0) %>%
-  ungroup() %>%
-  mutate(Bird_ID = paste0("B", Bird_ID)) %>% 
-  group_by_("id", "burst") %>% 
-  mutate(cumdt = cumsum(dt)/60) %>% 
-  ungroup()
+# create a column for number of minutes equivalent to the intervals
 
-# These are the distributions I am considering for characterizing the meters moved per minute in the data
-dist.used <- c( "exp", "gamma", "weibull", "lnorm")
+seconds <- (24*15 + aracari_data$Time_ID * 15) * 60
+td <- seconds_to_period(seconds)
+aracari_data$time <- sprintf("%02d:%02d:%02d", td@hour, minute(td), second(td))
 
-# These are the parameters and associated distributions that will be needed later to build a dataframe of parameters
-param <- c("rate", "shape", "rate", "shape", "scale", "meanlog", "sdlog")
-dist <- c("exp", "gamma", "gamma", "weibull", "weibull", "lnorm", "lnorm")
+date <- paste(aracari_data$DATE, aracari_data$time)
+aracari_data$date <- parse_date_time(date, "dmyHMS")
+aracari_data$burst <- paste(aracari_data$Bird_ID, aracari_data$DATE, sep="_")
 
+# Only keep the columns we need for adehabitat
+
+aracari_data <- dplyr::select(aracari_data, Bird_ID, burst,
+                           date, X_Estimate, Y_Estimate)
+names(aracari_data) <- c("animal_id","burst_id", "date_time", "x", "y")
 ```
 
-Density plots showing variation in biological classification levels, where the red line shows the density plot for what we consider the population (all the data together), and grey lines show individuals (left) or family groups (right).
-
-```{r fig.width=12, fig.height=4}
-
-zoom_dims <- c(110, 210, 0, 0.01)
-annot_xy <- c(50, 250, 0.025, 0.045)
+We can visualize the locations for each of the individuals tagged. The two separate groups represent the two locations considered: Yasuni Biosphere Reserve (upper left) and Tiputini Biodiversity Station (lower right).
+```{r}
+plot(aracari_data$y~aracari_data$x, 
+     col = as.factor(aracari_data$animal_id), 
+     pch = 16)
+```
   
-ind_dens_plot <- df %>%
-  ggplot(., aes(x = mpm)) +
-  geom_line(stat = "density", color = "red", lwd = 1) +
-  geom_line(aes(x = mpm, group = id), stat = "density", alpha = 0.4) +
-  geom_vline(xintercept = 0, color = "grey") +
-  geom_hline(yintercept = 0, color = "grey") +
-  geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[2], y = zoom_dims[3], yend = zoom_dims[3]), color = "blue") +
-  geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[2], y = zoom_dims[4], yend = zoom_dims[4]), color = "blue") +
-  geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[1], y = zoom_dims[3], yend = zoom_dims[4]), color = "blue") +
-  geom_segment(aes(x = zoom_dims[2], xend = zoom_dims[2], y = zoom_dims[3], yend = zoom_dims[4]), color = "blue") +
-  ylim(0, 0.055) +
-  xlim(0, 250) +
-  labs(title = "Individual") +
-  theme_classic()
+And the individual trajectories for each animal
+```{r}
+# we set the spatial coordinates for our data frame
+aracari_spatial <- aracari_data
+coordinates(aracari_spatial) <- c("x", "y")
 
-ind_dens_plot +
-  coord_cartesian(
-    xlim = zoom_dims[1:2],
-    ylim = zoom_dims[3:4]) +
-  theme(title = element_blank()) -> ind_zoom
+#Assign a projection, I know it is UTM zone 18 because it is Ecuadorian Amazon
+proj4string(aracari_spatial) <- CRS("+proj=utm +zone=18 +datum=WGS84")
 
-ind_dens_plot +
-  annotation_custom(grob = ggplotGrob(ind_zoom), xmin = annot_xy[1] , xmax = annot_xy[2] , ymin = annot_xy[3] , ymax = annot_xy[4]) -> a
+# Create ltraj object for work with adehabitat
+# We set typeII = TRUE because we have variable time frames, although locations were attempted every 15 minutes, this didn't always happen.
+aracari_ltraj <- as.ltraj(coordinates(aracari_spatial), 
+                          burst = aracari_spatial$burst_id,
+                          date=aracari_spatial$date_time,
+                          id=aracari_spatial$animal_id,
+                          typeII = TRUE)
 
-
-fam_dens_plot <- df %>%
-  filter(., fam_g != "unknown") %>% 
-  ggplot(., aes(x = mpm)) +
-  geom_line(stat = "density", color = "red", lwd = 1) +
-  geom_line(aes(x = mpm, group = fam_g), stat = "density", alpha = 0.4) +
-  geom_vline(xintercept = 0, color = "grey") +
-  geom_hline(yintercept = 0, color = "grey") +
-  geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[2], y = zoom_dims[3], yend = zoom_dims[3]), color = "blue") +
-  geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[2], y = zoom_dims[4], yend = zoom_dims[4]), color = "blue") +
-  geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[1], y = zoom_dims[3], yend = zoom_dims[4]), color = "blue") +
-  geom_segment(aes(x = zoom_dims[2], xend = zoom_dims[2], y = zoom_dims[3], yend = zoom_dims[4]), color = "blue") +
-  ylim(0, 0.055) +
-  xlim(0, 250) + 
-  labs(title = "Family") +
-  theme_classic()
-
-fam_dens_plot +
-  coord_cartesian(
-    xlim = zoom_dims[1:2],
-    ylim = zoom_dims[3:4]) +
-  theme(title = element_blank()) -> fam_zoom
-
-
-fam_dens_plot +
-  annotation_custom(grob = ggplotGrob(fam_zoom), xmin = annot_xy[1] , xmax = annot_xy[2] , ymin = annot_xy[3] , ymax = annot_xy[4]) -> b
-
-plot_grid(a, b)
-
+# We can see the locations for all the individuals tracked
+plot(aracari_ltraj)
 ```
-We have chosen five common probability distributions, which are readily used in animal-mediated seed dispersal simulations. These are an exponential distribution [@jones_closing_2017], a gamma distribution, Weibull distribution [@morales_effects_2006], and Log-normal distribution [@levey_effects_2005].  The goal of this project is to evaluate variation in movement and how that translates to differences in seed dispersal estimates. Our first comparison is made between population level and individual level estimates. Not all individual birds had information on family group, therefore, for our second comparison between population level and family level fits, we used a reduced dataset with only data from individuals for which we had family group information. We assessed fits visually through QQ plots.
 
-# Population and Individual level comparisons 
+The trajectory for each animal measures [source](https://jamesepaterson.github.io/jamespatersonblog/02_trackingworkshop_trajectories):
 
-At the population level analysis, we observe that the lognormal distribution has considerable overestimation of distances towards the tail. Although this is also worth noting in the QQ plots for individuals, not all of the individuals have an overestimation, and for some individuals, other distributions seem to do a better job at characterizing the pattern. 
+* distance,
+* dt (the difference in seconds between relocations),
+* R2n (the squared distance between the first relocation of the trajectory and the current relocation), and
+* two angle measurements (absolute and relative).
+
+We can see the **bursts**, which describe continuous relocations during the same tracking session, which in this case is one day for four hours. Tracking periods are 4-6 daylight hours, with individual bird locations recorded every 15 minutes. Although, not always possible to get a reading every 15 minutes, some have other intervals. Tracking alternates between morning and afternoon to capture daily variation in movement.  
+
+  -   So, there is sampling error. A success/failure of capturing a signal every 15 minutes in those 4-6hours.
 
 ```{r}
-
-# Fit the four models for the population level data
-
-pop <- lapply(dist.used, function(x){fitdist(df$mpm, distr = x)})
-
-# Get data for qqplot at population level
-qqpop <- qqcomp(pop, plotstyle = "ggplot")$data
-names(qqpop) <- c("theoretical", "fdist", "empirical")
-
-# Save the population level parameters
-prms.df <- aracari::build_fits_df(pop) %>% 
-  mutate(param = param,
-         dist = dist,
-         data = "pop")
-
-# Repeating the process for data at the individual level
-inds <- unique(as.character(df$Bird_ID))
-
-# Fitting the four distributions for each individual and saving the parameters in a dataframe
-for(i in 1:length(inds)){
-  fit.df <- df %>% 
-    dplyr::filter(., Bird_ID == inds[i])
-  
-  fit <- lapply(dist.used, function(x){fitdist(fit.df$mpm, distr = x)})
-  
-  assign(paste(inds[i]), fit)
-  
-  fit.prms <- build_fits_df(fit) %>% 
-  mutate(param = param,
-         dist = dist,
-         data = inds[i])
-  
-  prms.df <- bind_rows(prms.df, fit.prms)
-}
-
-
-# Getting qqplot data for each individual
-inds.models.data <- NULL
-ind.models <- list(B1, B13, B19, B22, B28, B29, B3, B30, B49, B5, B7, B84)
-chr.models <- c("B1", "B13", "B19", "B22", "B28", "B29", "B3", "B30", "B49", "B5", "B7", "B84")
-for(i in 1:12){
-  x <- ind.models[[i]]
-  
-  qqdata <- qqcomp(x, plotstyle = "ggplot")$data %>% 
-    mutate(data = chr.models[i])
-  names(qqdata) <- c("theoretical", "fdist", "empirical", "individual")
-  inds.models.data <- bind_rows(inds.models.data, qqdata)
-}
+aracari_ltraj
 ```
 
-```{r ind_QQplots, fig.width=12, fig.height=5}
-
-qqpop %>% 
-  mutate(individual = "POPULATION") %>% 
-  ggplot(., aes(x = theoretical, y = empirical, color = fdist)) +
-  facet_wrap(~individual) +
-  #coord_equal() +
-  geom_point(shape = 16, alpha = 0.8, size = 4) +
-  geom_abline(intercept = 0, slope = 1) +
-  labs(x = "Model Quantiles",
-         y = "Empirical Quantiles") +
-  #scale_color_viridis_d() +
-  scale_color_brewer(palette = "Spectral", name = "Distribution", labels = c("Exponential", "Gamma", "Weibull", "Lognormal")) +
-  theme(legend.position = c(0.8, 0.2)) +
-  NULL -> a
-
-inds.models.data%>% 
-  ggplot(., aes(x = theoretical, y = empirical, color = fdist)) +
-  #facet_grid(individual~fdist) +
-  facet_wrap(~individual)+
-    geom_point(shape = 16, alpha = 0.8, size = 3) +
-    geom_abline(intercept = 0, slope = 1) +
-    labs(x = "Model Quantiles",
-         y = "Empirical Quantiles") +
-  #scale_color_viridis_d() +
-  scale_color_brewer(palette = "Spectral") +
-  theme(legend.position = "none") +
-  guides(color = guide_legend(title = "Distribution")) +
-  #coord_equal() +
-  NULL -> b
-
-plot_grid(a,b, rel_widths = c(1,2), labels = "AUTO")
-
-```
-
-## Information criteria comparisons
-
-At the population level, we compared the fit between the four distribution models using different information criteria (AIC, AICc, and BIC). At the individual level we considered five different models, four of these models corresponded to each of the four probability distributions, were we essentially allowed for individuals to change parameters, but the overall shape of the distribution was the same. For the first four models, we assumed that one probability distribution could accurately describe the movement rates for each individual by changing the distribution's parameters. A fifth alternative model considered instead the best fitting model for each individual and calculated the overall information criteria as a combination of the best fitting model for each individual. For each of these individual level models, information criteria were calculated based on the number of parameters, sample size and negative log likelihood in the following way
-
-$$AIC{_{indlevel}} = 2\cdot \sum \left ( number parameters \right ) + 2\cdot \sum \left ( -\ln\mathcal{L}() \right )$$
-
-$$ AICc{_{indlevel}} =  AIC{_{indlevel}} + (2 \cdot \sum{nparams}  \cdot \left(\sum{nparams}+1\right)/\left(\sum{observations} - \left(\sum{nparams} - 1\right)\right)$$  
-
-
-$$BIC_{indlevel} = \ln{\sum observations(samplesize)} \cdot \sum{number parameters} + 2\cdot \sum {negative log likelihood}$$ 
-
-```{r}
-prms.df %>% 
-  mutate(param = str_to_upper(param), 
-         dist = str_replace(dist, "exp", "Exponential"),
-         dist = str_replace(dist, "gamma", "Gamma"),
-         dist = str_replace(dist, "weibull", "Weibull"),
-         dist = str_replace(dist, "lnorm", "Lognormal"),
-         data = str_replace(data, "pop", "POP"),
-         dist = factor(dist, levels = c("Exponential", "Gamma", "Weibull", "Lognormal"))) %>% 
-  mutate(kpars = ifelse(dist == "Exponential", 1, 2),
-         BIC = log(n)*kpars - 2*loglik,
-         AIC = 2*kpars - 2*loglik,
-         AICc = AIC + (2* kpars * (kpars+1)/(n-kpars-1))) %>% 
-  group_by(data) %>% 
-  mutate(deltaBIC = signif(BIC - min(BIC), 3),
-         deltaAIC = signif(AIC - min(AIC), 3),
-         deltaAICc = signif(AICc - min(AICc), 3)) %>% 
-  mutate(best_bic = ifelse(deltaBIC == 0, "#ffaa00", "black"),
-         best_aic = ifelse(deltaAIC == 0, "#fc0362", "black"))-> nice_prms
-```
-
-The three information criteria differ in their model choices, with AIC and corrected AIC (AICc) selecting the same models, and BIC selecting different ones. 
-
-```{r fig.width=12, fig.height=4}
-# To visualize the differences in the information criteria at the individual level
-
-nice_prms %>% 
-  dplyr::select(dist, data, deltaAIC, deltaAICc, deltaBIC) %>% 
-  distinct() %>% 
-  pivot_longer(., cols = starts_with("delta"), names_to = "ic", values_to = "value") %>% 
-  mutate(plot_alpha = ifelse(value == "0", 1, 0.8)) %>% 
-  ggplot(., aes(x = data, y = value, color = dist 
-                #alpha = plot_alpha
-                )) +
-  facet_wrap(~ic) +
-  geom_point(size = 3) +
-  scale_color_brewer(palette = "Spectral") + 
-  #scale_alpha_continuous(range = c(0.5, 1)) +
-  labs(x = "") +
-  theme(legend.position = "bottom",
-        axis.text.x = element_text(color = c(rep("black", 12), "red"))) +
-  guides(color = guide_legend(title = "Distribution"))
-  
-```
-
-
-```{r}
-
-# Create the dataframe that compares the models by information criteria
-nice_prms %>% 
-  filter(., data != "POP") %>%
-  dplyr::select(., loglik, n, dist) %>% 
-  distinct() %>%
-  mutate(kpars = ifelse(dist == "Exponential", 1, 2)) %>% 
-  group_by(dist) %>% 
-  summarise(BIC = log(sum(n))*sum(kpars) - 2 * sum(loglik), 
-            AIC = 2*(sum(kpars)) - 2*(sum(loglik)),
-            AICc = 2*(sum(kpars)) - 2*(sum(loglik)) + (2* sum(kpars) * (sum(kpars)+1)/(sum(n)-sum(kpars)-1))) %>%
-    mutate(deltaAIC = signif(AIC - min(AIC), 3),
-         deltaAICc = signif(AICc - min(AICc), 3),
-         deltaBIC = signif(BIC - min(BIC), 3),
-         data = "Individual") %>% 
-  full_join(., nice_prms %>%
-              filter(., data == "POP") %>% 
-              dplyr::select(dist, BIC, AIC, AICc, deltaAIC, deltaAICc, deltaBIC) %>% 
-              distinct() %>% 
-              mutate(data = "Population")) -> popind.IC.comp
-
-
-# Get the multi-distribution model fit
-nice_prms %>% 
-  dplyr::select(., dist, data, loglik, n, kpars, deltaBIC) %>% 
-  dplyr::filter(., data != "POP" & deltaBIC == 0) %>% 
-  distinct() %>% 
-  ungroup() %>% 
-  summarise(BIC = log(sum(n))*sum(kpars) - 2 * sum(loglik)) %>% 
-  as.numeric() -> multi.BIC
-
-nice_prms %>% 
-  dplyr::select(., dist, data, loglik, n, kpars, deltaAIC) %>% 
-  dplyr::filter(., data != "POP" & deltaAIC == 0) %>% 
-  distinct() %>%
-  ungroup() %>% 
-  summarise(AIC = 2*(sum(kpars)) - 2*(sum(loglik))) %>% 
-  as.numeric() -> multi.AIC
-
-nice_prms %>% 
-  dplyr::select(., dist, data, loglik, n, kpars, deltaAICc) %>% 
-  dplyr::filter(., data != "POP" & deltaAICc == 0) %>% 
-  distinct() %>%
-  ungroup() %>% 
-  summarise(AICc = 2*(sum(kpars)) - 2*(sum(loglik)) + (2* sum(kpars) * (sum(kpars)+1)/(sum(n)-sum(kpars)-1))) %>% 
-  as.numeric()-> multi.AICc
-
-popind.IC.comp %>% 
-  dplyr::select(., dist, BIC, AIC, AICc, data) %>% 
-  bind_rows(., data.frame(dist = "Multidist", BIC = multi.BIC, AIC = multi.AIC, AICc = multi.AICc, data = "Multidist")) -> model_comp_IC
-
-```
-
-```{r}
-# Table for BIC only
-
-model_comp_IC %>% 
-  dplyr::select(data, dist, BIC, AIC) %>% 
-  group_by(data) %>% 
-  mutate(delta_BIC_within = signif(BIC - min(BIC), digits = 2),
-         delta_AIC_within = signif(AIC - min(AIC), digits = 2)) %>% 
-  ungroup() %>% 
-  mutate(delta_BIC_across = signif(BIC - min(BIC), digits = 2),
-         delta_AIC_across = signif(AIC - min(AIC), digits = 2)) %>% 
-  dplyr::select(., -data) %>% 
-  dplyr::select(dist, BIC, delta_BIC_within, delta_BIC_across, AIC, delta_AIC_within, delta_AIC_across)-> data_gt
-
-data_gt$delta_BIC_within[which(data_gt$dist == "Multidist")] <- NA
-data_gt$delta_AIC_within[which(data_gt$dist == "Multidist")] <- NA
-
-
-
-gt_tbl <- gt(data_gt, rowname_col = "dist")
-
-gt_tbl %>% 
-  tab_header(
-    title = md("**Model comparisons across levels**")
-  ) %>% 
-  tab_stubhead(label = "Model") %>% 
-  tab_row_group(
-    group = "Multidist",
-    rows = 9
-  ) %>% 
-  tab_row_group(
-    group = "Individual",
-    rows = 1:4
-  ) %>% 
-  tab_row_group(
-    group = "Population", 
-    rows = 5:8
-  ) %>% 
-  tab_spanner(
-    label = md("**BIC**"),
-    columns = vars(BIC, delta_BIC_within, delta_BIC_across)
-  ) %>% 
-  tab_spanner(
-    label = md("**AIC**"),
-    columns = vars(AIC, delta_AIC_within, delta_AIC_across)
-  ) %>% 
-  cols_label(
-    delta_BIC_within = html("&Delta; BIC<sub>within</sub>"),
-    delta_BIC_across = html("&Delta; BIC<sub>across</sub>"),
-    delta_AIC_within = html("&Delta; AIC<sub>within</sub>"),
-    delta_AIC_across = html("&Delta; AIC<sub>across</sub>")
-  )
-  
-  
-```
-
-
-## Probability distribution parameters
-We can compare the different parameter values estimated for each distribution and their standard deviations. These parameters can give us some insight into some of the characteristics of each set of distances moved per minute, such as which individuals have higher means or longer tails in the distribution of their distances moved per minute. The x axis in the following plots highlights which individuals have the lowest BIC (yellow) or AIC(magenta) with that model. The blue lines show the value of that parameter for the population level model, and dashed blue lines show the upper and lower limits of that parameter estimate. Overall, at the population level, the lognormal model had the lowest AIC and BIC values.
-
-```{r}
-
-plot_params <- function(prm_data, best_col){
-  
-  prm_data%>% 
-  filter(., data == "POP") %>% 
-  dplyr::select(., estimate, sd) -> pop_est
-  
-  title <- paste(prm_data$dist, prm_data$param)
-  
-  if(best_col == "BIC"){
-    prm_data %>% 
-    filter(data != "POP") %>% 
-    ggplot(., aes(x = data, y = estimate)) +
-    #facet_grid(dist~param, switch = "y", scales = "free") +
-    # geom_point() +
-    # geom_errorbar(aes(ymin = estimate - sd, ymax = estimate + sd))+
-    geom_pointrange(aes(ymin = estimate - sd, ymax = estimate + sd)) +
-    geom_hline(aes(yintercept = pop_est$estimate), color = "blue") +
-    geom_hline(aes(yintercept = pop_est$estimate + pop_est$sd), color = "blue", linetype = "dashed") +
-    geom_hline(aes(yintercept = pop_est$estimate - pop_est$sd), color = "blue", linetype = "dashed") +
-    labs(x = "", y = "", subtitle = title) +
-    theme(legend.position = "none",
-          axis.text.x = element_text(angle = 45, color = prm_data$best_bic)) -> plot
-  }
-  
-  if(best_col == "AIC"){
-    prm_data %>% 
-    filter(data != "POP") %>% 
-    ggplot(., aes(x = data, y = estimate)) +
-    #facet_grid(dist~param, switch = "y", scales = "free") +
-    # geom_point() +
-    # geom_errorbar(aes(ymin = estimate - sd, ymax = estimate + sd))+
-    geom_pointrange(aes(ymin = estimate - sd, ymax = estimate + sd)) +
-    geom_hline(aes(yintercept = pop_est$estimate), color = "blue") +
-    geom_hline(aes(yintercept = pop_est$estimate + pop_est$sd), color = "blue", linetype = "dashed") +
-    geom_hline(aes(yintercept = pop_est$estimate - pop_est$sd), color = "blue", linetype = "dashed") +
-    labs(x = "", y = "", subtitle = title) +
-    theme(legend.position = "none",
-          axis.text.x = element_text(angle = 45, color = prm_data$best_aic)) -> plot
-  }
-  return(plot)
-  
-          
-}
-
-```
-
-```{r fig.height=10, fig.width=12}
-
-nice_prms %>% 
-  filter(., dist == "Exponential") %>% 
-  plot_params(., best_col = "BIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL-> p1
-
-nice_prms %>% 
-  filter(., dist == "Gamma" & param == "SHAPE") %>% 
-  plot_params(., best_col = "BIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL -> p2
-
-nice_prms %>% 
-  filter(., dist == "Gamma" & param == "RATE") %>% 
-  plot_params(., best_col = "BIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL -> p3
-
-nice_prms %>% 
-  filter(., dist == "Weibull" & param == "SHAPE") %>% 
-  plot_params(., best_col = "BIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL-> p4
-
-nice_prms %>% 
-  filter(., dist == "Weibull" & param == "SCALE") %>% 
-  plot_params(., best_col = "BIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL-> p5
-
-nice_prms %>% 
-  filter(., dist == "Lognormal" & param == "MEANLOG") %>% 
-  plot_params(., best_col = "BIC") -> p6
-
-nice_prms %>% 
-  filter(., dist == "Lognormal" & param == "SDLOG") %>% 
-  plot_params(., best_col = "BIC") ->p7
-
-
-plot_grid(p1, NULL, p2, p3, p4, p5, p6, p7, ncol = 2, align = "v") -> bic_grid
-
-nice_prms %>% 
-  filter(., dist == "Exponential") %>% 
-  plot_params(., best_col = "AIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL-> p1
-
-nice_prms %>% 
-  filter(., dist == "Gamma" & param == "SHAPE") %>% 
-  plot_params(., best_col = "AIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL -> p2
-
-nice_prms %>% 
-  filter(., dist == "Gamma" & param == "RATE") %>% 
-  plot_params(., best_col = "AIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL -> p3
-
-nice_prms %>% 
-  filter(., dist == "Weibull" & param == "SHAPE") %>% 
-  plot_params(., best_col = "AIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL-> p4
-
-nice_prms %>% 
-  filter(., dist == "Weibull" & param == "SCALE") %>% 
-  plot_params(., best_col = "AIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL-> p5
-
-nice_prms %>% 
-  filter(., dist == "Lognormal" & param == "MEANLOG") %>% 
-  plot_params(., best_col = "AIC") -> p6
-
-nice_prms %>% 
-  filter(., dist == "Lognormal" & param == "SDLOG") %>% 
-  plot_params(., best_col = "AIC") ->p7
-
-
-plot_grid(p1, NULL, p2, p3, p4, p5, p6, p7, ncol = 2, align = "v") -> aic_grid
-
-plot_grid(bic_grid, aic_grid, ncol = 2)
-
-```
-
-
-Summary: When comparing population vs individual level fits, at the population level, the lognormal distribution fits the data better, and at the individual level it is the exponential distribution. This is shown by both AIC and BIC levels. When we focus only on the individual level fits, which distribution fits best depends on the information criteria considered, although most of the individuals are properly characterized by an exponential or lognormal distribution. What we consider as the multi distribution, it is a multi-distribution probability fit to the data in which we have allowed not only the parameters but also the shape of the distribution to vary between individuals. This means that each individual can be characterized by a different distribution and different parameters. In the case of AIC and AICc, this probability approach works best for the data, however when considering BIC, the lognormal fit is best, and the mixed distribution approach ties with a Weibull distribution at population level.
-
-# Population vs Family
-
-## Population level - restricted
-Keep in mind that the family level data is reduced because some individuals had unknown family groups and therefore are not included in this analysis.This means that we cannot directly compare distribution fits from family level aggregation with that of individuals. To make a comparison with the population, we need to keep only data points for which we have family information
-
-```{r}
-# Filter the data to include only ones with family information
-fams.df <- df %>% 
-  dplyr::filter(., fam_g != "unknown")
-
-# Family descriptors
-fams <- paste0("f", 1:6)
-
-# Fit the distributions to family level
-pop.fams <- lapply(dist.used, function(x){fitdist(fams.df$mpm, distr = x)})
-
-# Get data for qqplot at population level
-qqpop.fams <- qqcomp(pop.fams, plotstyle = "ggplot")$data
-names(qqpop.fams) <- c("theoretical", "fdist", "empirical")
-
-# Build parameters data frame
-prms.fams.df <- build_fits_df(pop.fams) %>% 
-  mutate(param = param,
-         dist = dist,
-         data = "POP")
-
-# Make the fits at the family level
-for(i in 1:length(fams)){
-  fit.df <- fams.df %>% 
-    dplyr::filter(., fam_g == fams[i])
-  
-  fit <- lapply(dist.used, function(x){fitdist(fit.df$mpm, distr = x)})
-  
-  assign(paste(fams[i]), fit)
-  
-  fit.prms <- build_fits_df(fit) %>% 
-  mutate(param = param,
-         dist = dist,
-         data = fams[i])
-  
-  prms.fams.df <- bind_rows(prms.fams.df, fit.prms)
-  
-}
-
-fams.models.data <- NULL
-fams.models <- list(f1, f2, f3, f4, f5, f6)
-
-for(i in 1:6){
-  x <- fams.models[[i]]
-  
-  qqdata <- qqcomp(x, plotstyle = "ggplot")$data %>% 
-    mutate(data = fams[i])
-  names(qqdata) <- c("theoretical", "fdist", "empirical", "fam.group")
-  fams.models.data <- bind_rows(fams.models.data, qqdata)
-}
-
-# Some formatting
-prms.fams.df %>% 
-  mutate(data = str_to_upper(data),
-         param = str_to_upper(param)) -> prms.fams.df
-
-
-```
-
-
-```{r fam_QQplots, fig.width=12, fig.height=5}
-qqpop.fams %>% 
-  mutate(fam.group = "POPULATION") %>% 
-  ggplot(., aes(x = theoretical, y = empirical, color = fdist)) +
-  facet_wrap(~fam.group) +
-  #coord_equal() +
-  geom_point(shape = 16, alpha = 0.8, size = 4) +
-  geom_abline(intercept = 0, slope = 1) +
-  labs(x = "Model Quantiles",
-         y = "Empirical Quantiles") +
-  #scale_color_viridis_d() +
-  scale_color_brewer(palette = "Dark2", name = "Distribution", labels = c("Exponential", "Gamma", "Weibull", "Lognormal")) +
-  theme(legend.position = c(0.8, 0.2)) +
-  NULL -> a
-
-
-fams.models.data %>% 
-  mutate(fam.group = str_to_upper(fam.group)) %>% 
-  ggplot(., aes(x = theoretical, y = empirical, color = fdist)) +
-  #facet_grid(individual~fdist) +
-  facet_wrap(~fam.group)+
-    geom_point(shape = 16, alpha = 0.8, size = 3) +
-    geom_abline(intercept = 0, slope = 1) +
-    labs(x = "Model Quantiles",
-         y = "Empirical Quantiles") +
-  #scale_color_viridis_d() +
-  scale_color_brewer(palette = "Dark2") +
-  theme(legend.position = "none") +
-  guides(color = guide_legend(title = "Distribution")) +
-  #coord_equal() +
-  NULL -> b
-plot_grid(a,b, rel_widths = c(1,2), labels = "AUTO")
-``` 
-
-
-
-```{r}
-prms.fams.df %>% 
-  mutate(param = str_to_upper(param), 
-         dist = str_replace(dist, "exp", "Exponential"),
-         dist = str_replace(dist, "gamma", "Gamma"),
-         dist = str_replace(dist, "weibull", "Weibull"),
-         dist = str_replace(dist, "lnorm", "Lognormal"),
-         data = str_replace(data, "pop", "POP"),
-         dist = factor(dist, levels = c("Exponential", "Gamma", "Weibull", "Lognormal"))) %>% 
-  mutate(kpars = ifelse(dist == "Exponential", 1, 2),
-         BIC = log(n)*kpars - 2*loglik,
-         AIC = 2*kpars - 2*loglik,
-         AICc = AIC + (2* kpars * (kpars+1)/(n-kpars-1))) %>% 
-  group_by(data) %>% 
-  mutate(deltaBIC = signif(BIC - min(BIC), 3),
-         deltaAIC = signif(AIC - min(AIC), 3),
-         deltaAICc = signif(AICc - min(AICc), 3)) %>% 
-  mutate(best_bic = ifelse(deltaBIC == 0, "#ffaa00", "black"),
-         best_aic = ifelse(deltaAIC == 0, "#fc0362", "black"))-> nice_fams_prms
-```
-
-The three information criteria differ in their model choices, with AIC and corrected AIC (AICc) selecting the same models, and BIC selecting different ones. 
-
-```{r fig.width=12, fig.height=4}
-# To visualize the differences in the information criteria at the individual level
-nice_fams_prms %>% 
-  dplyr::select(dist, data, deltaAIC, deltaAICc, deltaBIC) %>% 
-  distinct() %>% 
-  pivot_longer(., cols = starts_with("delta"), names_to = "ic", values_to = "value") %>% 
-  mutate(plot_alpha = ifelse(value == "0", 1, 0.8)) %>% 
-  ggplot(., aes(x = data, y = value, color = dist 
-                #alpha = plot_alpha
-                )) +
-  facet_wrap(~ic) +
-  geom_point(size = 3) +
-  scale_color_brewer(palette = "Dark2") + 
-  #scale_alpha_continuous(range = c(0.5, 1)) +
-  labs(x = "") +
-  theme(legend.position = "bottom",
-        axis.text.x = element_text(color = c(rep("black", 6), "red"))) +
-  guides(color = guide_legend(title = "Distribution"))
-  
-```
-
-
-```{r}
-# Create the dataframe that compares the models by information criteria
-nice_fams_prms %>% 
-  filter(., data != "POP") %>%
-  dplyr::select(., loglik, n, dist) %>% 
-  distinct() %>%
-  mutate(kpars = ifelse(dist == "Exponential", 1, 2)) %>% 
-  group_by(dist) %>% 
-  summarise(BIC = log(sum(n))*sum(kpars) - 2 * sum(loglik), 
-            AIC = 2*(sum(kpars)) - 2*(sum(loglik)),
-            AICc = 2*(sum(kpars)) - 2*(sum(loglik)) + (2* sum(kpars) * (sum(kpars)+1)/(sum(n)-sum(kpars)-1))) %>%
-    mutate(deltaAIC = signif(AIC - min(AIC), 3),
-         deltaAICc = signif(AICc - min(AICc), 3),
-         deltaBIC = signif(BIC - min(BIC), 3),
-         data = "Family") %>% 
-  full_join(., nice_fams_prms %>%
-              filter(., data == "POP") %>% 
-              dplyr::select(dist, BIC, AIC, AICc, deltaAIC, deltaAICc, deltaBIC) %>% 
-              distinct() %>% 
-              mutate(data = "Population")) -> popfam.IC.comp
-
-# Get the multi-distribution model fit
-nice_fams_prms %>% 
-  dplyr::select(., dist, data, loglik, n, kpars, deltaBIC) %>% 
-  dplyr::filter(., data != "POP" & deltaBIC == 0) %>% 
-  distinct() %>% 
-  ungroup() %>% 
-  summarise(BIC = log(sum(n))*sum(kpars) - 2 * sum(loglik)) %>% 
-  as.numeric() -> multi.BIC
-nice_fams_prms %>% 
-  dplyr::select(., dist, data, loglik, n, kpars, deltaAIC) %>% 
-  dplyr::filter(., data != "POP" & deltaAIC == 0) %>% 
-  distinct() %>%
-  ungroup() %>% 
-  summarise(AIC = 2*(sum(kpars)) - 2*(sum(loglik))) %>% 
-  as.numeric() -> multi.AIC
-nice_fams_prms %>% 
-  dplyr::select(., dist, data, loglik, n, kpars, deltaAICc) %>% 
-  dplyr::filter(., data != "POP" & deltaAICc == 0) %>% 
-  distinct() %>%
-  ungroup() %>% 
-  summarise(AICc = 2*(sum(kpars)) - 2*(sum(loglik)) + (2* sum(kpars) * (sum(kpars)+1)/(sum(n)-sum(kpars)-1))) %>% 
-  as.numeric()-> multi.AICc
-popfam.IC.comp %>% 
-  dplyr::select(., dist, BIC, AIC, AICc, data) %>% 
-  bind_rows(., data.frame(dist = "Multidist", BIC = multi.BIC, AIC = multi.AIC, AICc = multi.AICc, data = "Multidist")) -> model_comp_fams_IC
-```
-
-```{r}
-# Table for BIC only
-model_comp_fams_IC %>% 
-  dplyr::select(data, dist, BIC, AIC) %>% 
-  group_by(data) %>% 
-  mutate(delta_BIC_within = signif(BIC - min(BIC), digits = 2),
-         delta_AIC_within = signif(AIC - min(AIC), digits = 2)) %>% 
-  ungroup() %>% 
-  mutate(delta_BIC_across = signif(BIC - min(BIC), digits = 2),
-         delta_AIC_across = signif(AIC - min(AIC), digits = 2)) %>% 
-  dplyr::select(., -data) %>% 
-  dplyr::select(dist, BIC, delta_BIC_within, delta_BIC_across, AIC, delta_AIC_within, delta_AIC_across)-> data_gt
-data_gt$delta_BIC_within[which(data_gt$dist == "Multidist")] <- NA
-data_gt$delta_AIC_within[which(data_gt$dist == "Multidist")] <- NA
-gt_tbl <- gt(data_gt, rowname_col = "dist")
-gt_tbl %>% 
-  tab_header(
-    title = md("**Model comparisons across levels**")
-  ) %>% 
-  tab_stubhead(label = "Model") %>% 
-  tab_row_group(
-    group = "Multidist",
-    rows = 9
-  ) %>% 
-  tab_row_group(
-    group = "Family Group",
-    rows = 1:4
-  ) %>% 
-  tab_row_group(
-    group = "Population", 
-    rows = 5:8
-  ) %>% 
-  tab_spanner(
-    label = md("**BIC**"),
-    columns = vars(BIC, delta_BIC_within, delta_BIC_across)
-  ) %>% 
-  tab_spanner(
-    label = md("**AIC**"),
-    columns = vars(AIC, delta_AIC_within, delta_AIC_across)
-  ) %>% 
-  cols_label(
-    delta_BIC_within = html("&Delta; BIC<sub>within</sub>"),
-    delta_BIC_across = html("&Delta; BIC<sub>across</sub>"),
-    delta_AIC_within = html("&Delta; AIC<sub>within</sub>"),
-    delta_AIC_across = html("&Delta; AIC<sub>across</sub>")
-  )
-  
-  
-```
-
-
-## Probability distribution parameters
-We can compare the different parameter values estimated for each distribution and their standard deviations. These parameters can give us some insight into some of the characteristics of each set of distances moved per minute, such as which individuals have higher means or longer tails in the distribution of their distances moved per minute. The x axis in the following plots highlights which individuals have the lowest BIC (yellow) or AIC(magenta) with that model. The blue lines show the value of that parameter for the population level model, and dashed blue lines show the upper and lower limits of that parameter estimate. Overall, at the population level, the lognormal model had the lowest AIC and BIC values.
-
-```{r}
-plot_params <- function(prm_data, best_col){
-  
-  prm_data%>% 
-  filter(., data == "POP") %>% 
-  dplyr::select(., estimate, sd) -> pop_est
-  
-  title <- paste(prm_data$dist, prm_data$param)
-  
-  if(best_col == "BIC"){
-    prm_data %>% 
-    filter(data != "POP") %>% 
-    ggplot(., aes(x = data, y = estimate)) +
-    #facet_grid(dist~param, switch = "y", scales = "free") +
-    # geom_point() +
-    # geom_errorbar(aes(ymin = estimate - sd, ymax = estimate + sd))+
-    geom_pointrange(aes(ymin = estimate - sd, ymax = estimate + sd)) +
-    geom_hline(aes(yintercept = pop_est$estimate), color = "blue") +
-    geom_hline(aes(yintercept = pop_est$estimate + pop_est$sd), color = "blue", linetype = "dashed") +
-    geom_hline(aes(yintercept = pop_est$estimate - pop_est$sd), color = "blue", linetype = "dashed") +
-    labs(x = "", y = "", subtitle = title) +
-    theme(legend.position = "none",
-          axis.text.x = element_text(angle = 45, color = prm_data$best_bic)) -> plot
-  }
-  
-  if(best_col == "AIC"){
-    prm_data %>% 
-    filter(data != "POP") %>% 
-    ggplot(., aes(x = data, y = estimate)) +
-    #facet_grid(dist~param, switch = "y", scales = "free") +
-    # geom_point() +
-    # geom_errorbar(aes(ymin = estimate - sd, ymax = estimate + sd))+
-    geom_pointrange(aes(ymin = estimate - sd, ymax = estimate + sd)) +
-    geom_hline(aes(yintercept = pop_est$estimate), color = "blue") +
-    geom_hline(aes(yintercept = pop_est$estimate + pop_est$sd), color = "blue", linetype = "dashed") +
-    geom_hline(aes(yintercept = pop_est$estimate - pop_est$sd), color = "blue", linetype = "dashed") +
-    labs(x = "", y = "", subtitle = title) +
-    theme(legend.position = "none",
-          axis.text.x = element_text(angle = 45, color = prm_data$best_aic)) -> plot
-  }
-  return(plot)
-  
-          
-}
-```
-
-```{r fig.height=10, fig.width=12}
-nice_fams_prms %>% 
-  filter(., dist == "Exponential") %>% 
-  plot_params(., best_col = "BIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL-> p1
-nice_fams_prms %>% 
-  filter(., dist == "Gamma" & param == "SHAPE") %>% 
-  plot_params(., best_col = "BIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL -> p2
-nice_fams_prms %>% 
-  filter(., dist == "Gamma" & param == "RATE") %>% 
-  plot_params(., best_col = "BIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL -> p3
-nice_fams_prms %>% 
-  filter(., dist == "Weibull" & param == "SHAPE") %>% 
-  plot_params(., best_col = "BIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL-> p4
-nice_fams_prms %>% 
-  filter(., dist == "Weibull" & param == "SCALE") %>% 
-  plot_params(., best_col = "BIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL-> p5
-nice_fams_prms %>% 
-  filter(., dist == "Lognormal" & param == "MEANLOG") %>% 
-  plot_params(., best_col = "BIC") -> p6
-nice_fams_prms %>% 
-  filter(., dist == "Lognormal" & param == "SDLOG") %>% 
-  plot_params(., best_col = "BIC") ->p7
-plot_grid(p1, NULL, p2, p3, p4, p5, p6, p7, ncol = 2, align = "v") -> bic_grid
-
-nice_fams_prms %>% 
-  filter(., dist == "Exponential") %>% 
-  plot_params(., best_col = "AIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL-> p1
-nice_fams_prms %>% 
-  filter(., dist == "Gamma" & param == "SHAPE") %>% 
-  plot_params(., best_col = "AIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL -> p2
-nice_fams_prms %>% 
-  filter(., dist == "Gamma" & param == "RATE") %>% 
-  plot_params(., best_col = "AIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL -> p3
-nice_fams_prms %>% 
-  filter(., dist == "Weibull" & param == "SHAPE") %>% 
-  plot_params(., best_col = "AIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL-> p4
-nice_fams_prms %>% 
-  filter(., dist == "Weibull" & param == "SCALE") %>% 
-  plot_params(., best_col = "AIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL-> p5
-nice_fams_prms %>% 
-  filter(., dist == "Lognormal" & param == "MEANLOG") %>% 
-  plot_params(., best_col = "AIC") -> p6
-nice_fams_prms %>% 
-  filter(., dist == "Lognormal" & param == "SDLOG") %>% 
-  plot_params(., best_col = "AIC") ->p7
-plot_grid(p1, NULL, p2, p3, p4, p5, p6, p7, ncol = 2, align = "v") -> aic_grid
-plot_grid(bic_grid, aic_grid, ncol = 2)
-```
-
-
-
-Summary. As with individuals, the information criteria actually changes things a lot. With AIC and AICc, family level aggregation is a better descriptor of the data, no matter the distribution used, whereas in BIC it is the opposite and population level data is best for all distributions. However, the multidistribution approach, where each family is characterized by its own independent distribution and parameters, no matter the information criteria, this one comes with the lowest value, making the multidistribution approach the best for characterizing the data. 
-
-```{r}
-# Save parameters
-
-saveRDS(nice_prms, file = "appendixA/popindprms.RDS")
-saveRDS(nice_fams_prms, file = "appendixA/popfamprms.RDS")
-
-```
-
-
-
-# References 
+### References
