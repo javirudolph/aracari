@@ -2,9 +2,9 @@
 title: "Figures and Tables"
 subtitle: ' '
 output:
-  html_document:
-    toc: yes
   word_document:
+    toc: yes
+  html_document:
     toc: yes
 bibliography: ../paper/mybibfile.bib
 ---
@@ -79,7 +79,7 @@ mean_seed_loc <- data.frame(x = mean(seed_loc$xloc), y = mean(seed_loc$yloc))
 
 ggplot() +
   geom_path(data = animalTraj, aes(x = xloc, y = yloc), size = 1, color = "darkgrey") +
-  geom_point(data = animalTraj, aes(x = xloc, y = yloc), color = "black", size = 1) +
+  geom_point(data = animalTraj, aes(x = xloc, y = yloc), color = "black") +
   geom_point(data = seed_loc, aes(x = xloc, y = yloc), color = "red", size = 3) +
   geom_point(aes(x = 0, y = 0), color = "black", size = 5)+
   geom_vline(aes(xintercept=0), linetype = "dotted") + geom_hline(aes(yintercept = 0), linetype = "dotted") +
@@ -117,6 +117,12 @@ Density distributions from which we sample **A.** gut retention time (GRT) and *
 
 ```{r fig.width=2.5, fig.height=4}
 plot_grid(fig_GRT, fig_MD, align = "v", nrow = 2, labels = "AUTO", label_size = 10)
+
+# ggsave("paper/figures/Figure1.png",
+#        width = 2.5,
+#        height = 4,
+#        units = "in",
+#        dpi = 300)
 ```
 
 #### Figure 2.
@@ -124,6 +130,12 @@ Example of one simulation run and variables measured for each run. **A.** Shows 
 
 ```{r fig.height=2, fig.width=6}
 plot_grid(fig_traj, fig_disp, fig_agg, ncol = 3, align = "h", labels = "AUTO", label_size = 8)
+
+# ggsave("paper/figures/Figure2.png",
+#        width = 6,
+#        height = 2,
+#        units = "in",
+#        dpi = 300)
 ```
 
 #### Figure 3.
@@ -206,6 +218,12 @@ ggplot(data = data.frame(x = c(0.1, 4)), aes(x)) +
 
 
 plot_grid(weib_dens, gp_dens, ncol = 2, labels = "AUTO", label_size = 8)
+
+# ggsave("paper/figures/Figure3.png",
+#        width = 6,
+#        height = 2.5,
+#        units = "in",
+#        dpi = 300)
 
 
 
