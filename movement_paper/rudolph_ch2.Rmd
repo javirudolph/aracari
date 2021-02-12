@@ -1,0 +1,25 @@
+---
+title: "Individual Variation in Animal Movement"
+abstract: |
+  This should be the abstract
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+bibliography: aracari_movement.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
+```
+
+<!-- For YAML -->
+<!--   word_document: -->
+<!--     reference_docx: paper_ref.docx -->
+
+\newpage
+# Introduction
+
+
+
