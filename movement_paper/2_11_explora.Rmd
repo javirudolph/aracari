@@ -64,6 +64,7 @@ We can visualize the locations for each of the individuals tagged. The two separ
 plot(aracari_data$y~aracari_data$x, 
      col = as.factor(aracari_data$animal_id), 
      pch = 16)
+
 ```
   
 And the individual trajectories for each animal
@@ -97,9 +98,87 @@ The trajectory for each animal measures [source](https://jamesepaterson.github.i
 We can see the **bursts**, which describe continuous relocations during the same tracking session, which in this case is one day for four hours. Tracking periods are 4-6 daylight hours, with individual bird locations recorded every 15 minutes. Although, not always possible to get a reading every 15 minutes, some have other intervals. Tracking alternates between morning and afternoon to capture daily variation in movement.  
 
   -   So, there is sampling error. A success/failure of capturing a signal every 15 minutes in those 4-6hours.
+  -   And, there are multiple tracking periods, each tracking period represented by a "burst"
 
 ```{r}
-aracari_ltraj
+head(aracari_ltraj)
+
+# Transform to a dataframe
+aracari_df <- ld(aracari_ltraj)
+
+aracari_df %>% drop_na(dt) %>% group_by(id) %>% distinct(burst) %>% tally()
+```
+
+```{r}
+
+
+# I want to include family groups in that data set, just in case we want to use that later
+# The social groups are as follows: (1, 3, 5), (7), (13, 19), (22), (28), and (49, 84).
+# I've added another group for birds (29,30) which are Yasuni birds, with overlapping territories and I would assume they are a social group.
+# All others are left as unknown.
+aracari_df$id <- factor(aracari_df$id, levels = c(1, 3, 5, 7, 13, 19, 22, 28, 49, 84, 10, 17, 20, 21, 24, 29, 30, 9))
+aracari_df %>%
+  mutate(fam_g = ifelse(id %in% c(1,3,5), "f1",
+                        ifelse(id == 7, "f2",
+                               ifelse(id %in% c(13, 19), "f3",
+                                      ifelse(id == 22, "f4",
+                                             ifelse(id == 28, "f5",
+                                                    ifelse(id %in% c(49,84),
+                                                           "f6", 
+                                                           ifelse(id %in% c(29, 30), "f7", "unknown")
+                                             ))))))) -> aracari_df
+```
+
+
+```{r}
+aracari_df %>% 
+  group_by(id) %>% 
+  distinct(burst) %>% 
+  tally()
+
+
+test <- aracari_df %>% 
+   mutate(T_minutes = dt/60,
+         #Bird_ID = id,
+         mpm = dist/T_minutes,
+         #R2n = lead(R2n)
+         ) 
+# %>%
+#   filter(T_minutes != 0 & T_minutes %in% c(15, 30, 45, 60, 75, 90)) %>%
+#   group_by(Bird_ID) %>%
+#   add_tally()
+
+path <- data.frame(aracari_ltraj[[1]], id = attr(aracari_ltraj[[1]], "id"))
+for(i in 2:length(aracari_ltraj)){
+  path <- rbind(path,
+                data.frame(aracari_ltraj[[i]], id = attr(aracari_ltraj[[i]], "id")))
+}
+
+path$distperday <- path$dist/(path$dt/60/60/24)
+
+# Aggregate to show mean distance per day for each turtle
+path.summary <- aggregate(distperday~id, data = path, FUN = mean)
+path.summary$sd <- aggregate(distperday~id, data = path, FUN = sd)$distperday
+
+# Look at summmary dataframe
+path.summary  
+
+# Make a graph to visualize data using ggplot
+
+# Create limits used for error bars in graph
+limits <- aes(ymax = path.summary$distperday + path.summary$sd, 
+              ymin = path.summary$distperday - path.summary$sd)
+
+# Make plot. Choose the dataframe (data) and aesthetics (aes; for the x and y)
+ggplot(data = path.summary, aes(x = id, y = distperday, colour = id)) + 
+  geom_point(size = 3) + # add points
+  geom_errorbar(limits, width = 0.2) + # adds error bars
+  labs(x = "Animal number", 
+       y = "Mean distance travelled per day (m)" ) + # Axis labels
+  theme_classic() + # Make plot black and white with no background grid
+  theme(legend.position = "none")
+
+
 ```
 
 ### References
