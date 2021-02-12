@@ -21,5 +21,11 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
 \newpage
 # Introduction
 
+## Animal movement models overview
+## Individual variation in animal movement
+## Statistical approaches to model movement
+## Incorporating individual variation
+## Markov Models overview
+## Statistics of extremes overview
 
 
