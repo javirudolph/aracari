@@ -8,6 +8,7 @@ output:
   word_document:
     reference_docx: paper_ref.docx
 bibliography: mybibfile.bib
+csl: ecology-letters.csl
 ---
 
 ```{r setup, include=FALSE}
