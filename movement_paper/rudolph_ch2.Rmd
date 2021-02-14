@@ -52,8 +52,9 @@ Since I'm also interested in bees and pollination, it's like the two sides of th
 
 
 
+Providing a general framework for movement ecology that allows to link movement patterns and processes, starting with a focus on movement itself and the individual's internal state,navigation capacity, motion capacity, and responses to external factors [@nathan2008movement]. Although it increases the complexity and requires more fine scale data, the framework recognizes how variation at the level of individuals can have consequences at larger ecological scales.
 
-
+# References
 
 
 
