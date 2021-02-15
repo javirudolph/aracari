@@ -1689,6 +1689,7 @@ summary {
 <div id="overview-of-state-space-models-for-movement" class="section level2">
 <h2>Overview of state-space models for movement</h2>
 <p>State-space models provide a probabilistic framework that allow for prediction of future states of a system based from previous states, by coupling an observation model with an underlying mechanistic model. When extending this framework to movement ecology, we understand that the process model provides the mechanism for movement across space and time, and the observation model is related to the sampling process. In movement data, a state-space process allows us to couple a statistical model for the observation method, accounting for errors in sampling or detection, with a separate model for the movement dynamics which are determined by the effects of behavior or responses to the environment <span class="citation">(Patterson <em>et al.</em> 2008)</span>.</p>
+<p>The moveHMM package allows for fitting hmm models to different time series, which can come from different individuals, assuming that all individuals share the same movement models, meaning the same distributions and parameters for step length and angle. This is referred to as ‘complete pooling’ <span class="citation">(Michelot <em>et al.</em> 2016a)</span></p>
 </div>
 </div>
 <div id="references" class="section level1 unnumbered">
@@ -1696,6 +1697,15 @@ summary {
 <div id="refs" class="references hanging-indent">
 <div id="ref-holbrook2011home">
 <p>Holbrook, K.M. (2011). Home range and movement patterns of toucans: Implications for seed dispersal. <em>Biotropica</em>, 43, 357–364.</p>
+</div>
+<div id="ref-langrock2012flexible">
+<p>Langrock, R., King, R., Matthiopoulos, J., Thomas, L., Fortin, D. &amp; Morales, J.M. (2012). Flexible and practical modeling of animal telemetry data: Hidden markov models and extensions. <em>Ecology</em>, 93, 2336–2342.</p>
+</div>
+<div id="ref-moveHMM">
+<p>Michelot, T., Langrock, R. &amp; Patterson, T.A. (2016a). MoveHMM: An r package for the statistical modelling of animal movement data using hidden markov models. <em>Methods in Ecology and Evolution</em>, 7, 1308–1315.</p>
+</div>
+<div id="ref-michelot2016movehmm">
+<p>Michelot, T., Langrock, R. &amp; Patterson, T.A. (2016b). MoveHMM: An r package for the statistical modelling of animal movement data using hidden markov models. <em>Methods in Ecology and Evolution</em>, 7, 1308–1315.</p>
 </div>
 <div id="ref-nathan2008movement">
 <p>Nathan, R., Getz, W.M., Revilla, E., Holyoak, M., Kadmon, R. &amp; Saltz, D. <em>et al.</em> (2008). A movement ecology paradigm for unifying organismal movement research. <em>Proceedings of the National Academy of Sciences</em>, 105, 19052–19059.</p>
