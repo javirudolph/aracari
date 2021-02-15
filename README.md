@@ -10,9 +10,8 @@
 The goal of aracari is to …
 
 Access the
-[paper](https://javirudolph.github.io/aracari/paper/paper.html), and
-[appendixA](https://javirudolph.github.io/aracari/appendixA/appendixA.html), [appendixB](https://javirudolph.github.io/aracari/appendixB/appendixB.html)
-
+* [seed dispersal paper](https://javirudolph.github.io/aracari/paper/paper.html) and the [figures](https://javirudolph.github.io/aracari/paper/figures_tables.html)
+* [animal movement paper](https://javirudolph.github.io/aracari/movement_paper/rudolph_ch2.html)
 -----
 
 ## Installation
