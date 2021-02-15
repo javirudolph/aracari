@@ -1664,41 +1664,30 @@ summary {
 </div>
 
 
-<!-- For YAML -->
-<!--   word_document: -->
-<!--     reference_docx: paper_ref.docx -->
 <div style="page-break-after: always;"></div>
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
-<div id="animal-movement-models-overview" class="section level2">
-<h2>Animal movement models overview</h2>
+<div id="why-do-we-study-animal-movement-and-what-can-it-tell-us" class="section level2">
+<h2>Why do we study animal movement and what can it tell us?</h2>
+<p>Movement is a fundamental ecological process, critical to an animal’s biology and it’s interactions with the environment. The study of animal movement tends to focus on four basic mechanistic questions: the why, when, where, and how, and these questions can be answered at the scales of individuals or populations. A general framework for movement ecology that allows to link movement patterns and processes, starts with a focus on movement itself and the individual’s internal state, navigation capacity, motion capacity, and responses to external factors <span class="citation">(Nathan <em>et al.</em> 2008)</span>. The overall goal of studying movement seeks to find the linkages between the causes and mechanisms of animal movement, that result in spatiotemporal patterns that feedback to various ecological and evolutionary processes.</p>
 </div>
-<div id="individual-variation-in-animal-movement" class="section level2">
-<h2>Individual variation in animal movement</h2>
-</div>
-<div id="consequences-of-individual-variation-in-movement" class="section level2">
-<h2>Consequences of individual variation in movement</h2>
-</div>
-<div id="statistical-approaches-to-model-movement" class="section level2">
-<h2>Statistical approaches to model movement</h2>
-</div>
-<div id="incorporating-individual-variation" class="section level2">
-<h2>Incorporating individual variation</h2>
-</div>
-<div id="markov-models-overview" class="section level2">
-<h2>Markov Models overview</h2>
-</div>
-<div id="statistics-of-extremes-overview" class="section level2">
-<h2>Statistics of extremes overview</h2>
+<div id="what-is-the-importance-of-individual-variation-in-animal-movement" class="section level2">
+<h2>What is the importance of individual variation in animal movement?</h2>
 <p>Although there is variation in animal movement at the individual scale, the general focus has been on understanding the typical movement patterns, built around average measures at population levels. This focus on generality has driven to a lack of frameworks for understanding variation, how it is maintained, and the consequences of this variation across populations, communities, and ecosystems. Although there have been recent calls for incorporating individual variation in movement <span class="citation">(Snell <em>et al.</em> 2019)</span> we still need to develop theory that explores different types of variation in movement patterns to understand its consequences across these levels. In particular, when considering species interactions, incorporating individual variation becomes essential to understand how positive or negative feedback loops play into the maintenance of variation in movement as individuals respond to external factors in their environment <span class="citation">(Shaw 2020)</span>.</p>
-<p>The specific case of seed dispersal is interesting because of the different levels and interactions happening. At the individual level, we focus on an individual bird consuming fruit and dispersing the seeds of the tree. How this particular individual moves across the landscape directly affects the dispersal for that specific tree and other trees from which it consumes fruit. At the same time, that individual has intra-individual variation in movement patterns associated to specific events in that individual’s lifetime, such as breeding and nesting. Interspecific interactions come at play as multiple species find themselves together feeding from the same tress, and thus competing for these resources, while at the same time intraspecific interactions due to social behavior broadly determine general movement patterns. From the plant’s perspective, the variation in movement patterns across all dispersers will determine eventual plant population spatial spread and success. Individuals will vary in their distances traveled while foraging or searching, directly influencing seed dispersal for the plant. Individuals with a tendency to travel larger distances or with higher probabilities of long-distance movements, will have a larger impact on plant population dynamics by increasing the plant’s long-distance dispersal. These long-distance movements for seed-dispersing animals, or long-distance dispersal events for plants, can lead to spatial sorting of populations and range expansions [These are sources I haven’t finished reading yet: Shine2011PNAS, Philips2008AmNat, Riotte-Lambert2019Trends.]</p>
-<p>Long-distance dispersal in plants is fundamental…..</p>
-<p>And thus providing theoretical frameworks that incorporate individual variation in animal movement can help us link that variation to seed dispersal patterns, and in particular to range expansion dynamics, having consequences at the landscape and regional scales.</p>
-<p>Shaw makes references to how interspecific interactions can contribute to individual movement variation in parasite/pathogen systems. In my case, I would consider how presence of other competitive frugivores could influence this variation (Competition between toucans for the virola fruits and space. Larger aracari kick out the little ones <span class="citation">(Holbrook 2011)</span>). Shaw brings up how worse conditions can cause increased movement for searching better habitats and escape from these areas.</p>
-<p>Traits that vary throughout an individuals lifetime can contribute to intra-individual variation. We saw this with the data from holbrook 2011 where breeding state and such would have impacts over</p>
-<p>Seems like I am mostly focused here on variation in foraging movements? Although the long-distance movements, or deviations from typical movement patterns (the rare events) might not be associated to foraging?</p>
-<p>Since I’m also interested in bees and pollination, it’s like the two sides of the same coin. Basically plant animal interactions, specifically mutualisms. How individual variation in animal movement patterns or foraging patterns will change seed dispersal or pollination patterns that scale to forest community or landscape patterns.</p>
-<p>Providing a general framework for movement ecology that allows to link movement patterns and processes, starting with a focus on movement itself and the individual’s internal state,navigation capacity, motion capacity, and responses to external factors <span class="citation">(Nathan <em>et al.</em> 2008)</span>. Although it increases the complexity and requires more fine scale data, the framework recognizes how variation at the level of individuals can have consequences at larger ecological scales. In this regard, state-space models (SSMs) have been suggested as flexible options to describe the general framework that incorporates observation error and noisy data, as it is common in the case of radiotelemetry data, and even the use of hierarchical structures or mixed-effects SSMs that can explicitly model variability across individuals <span class="citation">(Patterson <em>et al.</em> 2008)</span>.</p>
+</div>
+<div id="how-does-this-relate-to-mutualisms-and-long-distance-movements" class="section level2">
+<h2>How does this relate to mutualisms and long-distance movements?</h2>
+<p>The specific case of seed dispersal is interesting because of the different levels and interactions happening. At the individual level, we focus on an individual bird consuming fruit and dispersing the seeds of the tree. How this particular individual moves across the landscape directly affects the dispersal for that specific tree and other trees from which it consumes fruit. At the same time, that individual has intra-individual variation in movement patterns associated to specific events in that individual’s lifetime, such as breeding and nesting, or even smaller scale variation related to different states, such as foraging or resting. Interspecific interactions come at play as multiple species find themselves together feeding from the same tress, and thus competing for these resources, while at the same time intraspecific interactions due to social behavior broadly determine general movement patterns. From the plant’s perspective, the variation in movement patterns across all dispersers will determine eventual plant population spatial spread and success. Individuals will vary in their distances traveled while foraging or searching, directly influencing seed dispersal for the plant. Individuals with a tendency to travel larger distances or with higher probabilities of long-distance movements, will have a larger impact on plant population dynamics by increasing the plant’s long-distance dispersal. These long-distance movements for seed-dispersing animals, or long-distance dispersal events for plants, can lead to spatial sorting of populations and range expansions [These are sources I haven’t finished reading yet: Shine2011PNAS, Philips2008AmNat, Riotte-Lambert2019Trends.] This is also the case for pollination, where pollinator variability in movement patterns and long-distance movements has direct implications for pollination success and plant population persistence, specially in fragmented landscapes [need to find sources for this]. Shaw makes references to how interspecific interactions can contribute to individual movement variation in parasite/pathogen systems. In my case, I would consider how presence of other competitive frugivores could influence this variation (Competition between toucans for the virola fruits and space. Larger aracari kick out the little ones <span class="citation">(Holbrook 2011)</span>). Shaw brings up how worse conditions can cause increased movement for searching better habitats and escape from these areas.</p>
+</div>
+<div id="what-will-this-paper-actually-do-to-address-the-main-question" class="section level2">
+<h2>What will this paper actually do to address the main question?</h2>
+<p>In this paper we would like to present a statistical framework that incorporates variability among individuals into population level movement patterns. Providing theoretical frameworks that incorporate individual variation in animal movement can help us link that variation to seed dispersal patterns, and in particular to range expansion dynamics, having consequences at the landscape and regional scales. We will also explore how the variation in long-distance movements translates to population level estimates and how these long-distance movements or deviations from typical movement patterns can be incorporated into this framework.Although it increases the complexity and requires more fine scale data, the framework recognizes how variation at the level of individuals can have consequences at larger ecological scales. In this regard, state-space models (SSMs) have been suggested as flexible options to describe the general framework that incorporates observation error and noisy data, as it is common in the case of radiotelemetry data, and even the use of hierarchical structures or mixed-effects SSMs that can explicitly model variability across individuals <span class="citation">(Patterson <em>et al.</em> 2008)</span>. With our work, we seek to expand on the use of state-space models that incorporate variability in movement and can later be used to simulate movement patterns that affect seed dispersal or pollination patterns at the landscape scale.</p>
+</div>
+</div>
+<div id="methods" class="section level1">
+<h1>Methods</h1>
+<div id="overview-of-state-space-models-for-movement" class="section level2">
+<h2>Overview of state-space models for movement</h2>
 </div>
 </div>
 <div id="references" class="section level1 unnumbered">
