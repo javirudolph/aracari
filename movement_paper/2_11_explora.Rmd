@@ -198,4 +198,39 @@ ggplot(data = path.summary, aes(x = id, y = distperday, colour = id)) +
 
 ```
 
+## Home range
+
+```{r}
+# Use only ones with more than 40 locations
+
+aracari_data %>% 
+  group_by(animal_id) %>% 
+  tally() %>% 
+  filter(., n >= 38) %>%
+  dplyr::select(., animal_id) ->ids
+
+aracari_sp <- aracari_data %>% 
+  filter(., animal_id %in% ids$animal_id) %>% 
+  dplyr::select(., animal_id, x, y) %>% 
+  rename(id = animal_id)
+
+coordinates(aracari_sp) <- c("x", "y")
+proj4string(aracari_sp) <- CRS("+proj=utm +zone=18 +datum=WGS84")
+
+library(adehabitatHR)
+aracari_mcp <- mcp(aracari_sp, percent = 95)
+aracari_mcp
+plot(aracari_mcp)
+
+# Kernel
+kernel_ref <- kernelUD(aracari_sp)
+image(kernel_ref)
+
+aracari_kernel_poly <- getverticeshr(kernel_ref, percent = 95)
+print(aracari_kernel_poly)
+
+```
+
+
+
 ### References
