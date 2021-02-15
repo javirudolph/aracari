@@ -3,10 +3,10 @@ title: "Individual Variation in Animal Movement"
 abstract: |
   This should be the abstract
 output:
-  html_document:
-    df_print: paged
   word_document:
     reference_docx: move_ref.docx
+  html_document:
+    df_print: paged
 bibliography: aracari_movement.bib
 csl: ecology-letters.csl
 ---
@@ -38,9 +38,9 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
 # Methods  
 
 ## Overview of state-space models for movement  
-  State-space models provide a probabilistic framework that allow for prediction of future states of a system based from previous states, by coupling an observation model with an underlying mechanistic model. When extending this framework to movement ecology, we understand that the process model provides the mechanism for movement across space and time, and the observation model is related to the sampling process. In movement data, a state-space process allows us to couple a statistical model for the observation method, accounting for errors in sampling or detection, with a separate model for the movement dynamics which are determined by the effects of behavior or responses to the environment [@patterson2008state]. 
+  State-space models provide a probabilistic framework that allow for prediction of future states of a system based from previous states, by coupling an observation model with an underlying mechanistic model. When extending this framework to movement ecology, we understand that the process model provides the mechanism for movement across space and time, and the observation model is related to the sampling process. In movement data, a state-space process allows us to couple a statistical model for the observation method, accounting for errors in sampling or detection, with a separate model for the movement dynamics which are determined by the effects of behavior or responses to the environment [@patterson2008state]. In general, state-space models are used to identify different states, or behavioral states, that determine different movement patterns associated to step length and turning angle. And some of the main questions asked with this approach are related to identifying these different states, or behavioral state-switching, from time series data on location tracking.HMMs can be used to categorize this movement data into behavioral states, and link it to foraging or mating activity, as an example.
   
-  The moveHMM package allows for fitting hmm models to different time series, which can come from different individuals, assuming that all individuals share the same movement models, meaning the same distributions and parameters for step length and angle. This is referred to as 'complete pooling' [@moveHMM, @langrock2012flexible, @michelot2016movehmm]
+  The moveHMM package allows for fitting hmm models to different time series, which can come from different individuals, assuming that all individuals share the same movement models, meaning the same distributions and parameters for step length and angle. This is referred to as 'complete pooling' [@langrock2012flexible, @michelot2016movehmm], but there is no current implementation for fitting HMMs to highly irregular and noisy tracking data, that explicitly incorporates variability among individuals. In this paper, we would like to show the effects of incorporating individual variability under a HMM framework that allows for variation not only in parameter values associated to udnerlying model distributions of step length and angle, but also on overall distribution function.
 
 # References
 
