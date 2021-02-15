@@ -38,7 +38,7 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
 # Methods  
 
 ## Overview of state-space models for movement  
-  
+  State-space models provide a probabilistic framework that allow for prediction of future states of a system based from previous states, by coupling an observation model with an underlying mechanistic model. When extending this framework to movement ecology, we understand that the process model provides the mechanism for movement across space and time, and the observation model is related to the sampling process. In movement data, a state-space process allows us to couple a statistical model for the observation method, accounting for errors in sampling or detection, with a separate model for the movement dynamics which are determined by the effects of behavior or responses to the environment [@patterson2008state]. 
 
 # References
 
