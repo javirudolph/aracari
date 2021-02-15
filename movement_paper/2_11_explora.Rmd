@@ -36,7 +36,8 @@ theme_set(theme_bw())
 
 ```{r data}
 # First, read in the raw tracking data
-aracari_data<- read.csv("data/raw_location_data.csv")
+# aracari_data <- read.csv("data/raw_location_data.csv")
+aracari_data <- read.csv("movement_paper/rawdata_ptpl.csv")
 # Time is presented as a time ID
 # Each time interval is equivalent to 15 minutes
 # Interval 1 == 6AM, so if we start at midnight, 6am is 24 intervals of 15 minutes each. I'm setting 6am as the start just because I don't have actual data on it, but we know they started early morning and that's what the time IDs are for in Kimberly's work.
@@ -44,20 +45,47 @@ aracari_data<- read.csv("data/raw_location_data.csv")
 
 # create a column for number of minutes equivalent to the intervals
 
-seconds <- (24*15 + aracari_data$Time_ID * 15) * 60
-td <- seconds_to_period(seconds)
-aracari_data$time <- sprintf("%02d:%02d:%02d", td@hour, minute(td), second(td))
+dt <- paste(aracari_data$DATE, aracari_data$TIME) %>% 
+  parse_date_time(., "dmy IMS p")
 
-date <- paste(aracari_data$DATE, aracari_data$time)
-aracari_data$date <- parse_date_time(date, "dmyHMS")
-aracari_data$burst <- paste(aracari_data$Bird_ID, aracari_data$DATE, sep="_")
+aracari_data$dt <- dt
+
+names(aracari_data)[1] <- "TRANS"
+
+
+# seconds <- (24*15 + aracari_data$Time_ID * 15) * 60
+# td <- seconds_to_period(seconds)
+# aracari_data$time <- sprintf("%02d:%02d:%02d", td@hour, minute(td), second(td))
+# 
+# date <- paste(aracari_data$DATE, aracari_data$time)
+# aracari_data$date <- parse_date_time(date, "dmyHMS")
+# aracari_data$burst <- paste(aracari_data$Bird_ID, aracari_data$DATE, sep="_")
+
+aracari_data$burst <- paste(aracari_data$TRANS, aracari_data$DATE)
 
 # Only keep the columns we need for adehabitat
 
-aracari_data <- dplyr::select(aracari_data, Bird_ID, burst,
-                           date, X_Estimate, Y_Estimate)
+# aracari_data <- dplyr::select(aracari_data, Bird_ID, burst,
+#                            date, X_Estimate, Y_Estimate)
+
+
+
+
+aracari_data %>% 
+  dplyr::select(., TRANS, burst, dt, X_Estimate, Y_Estimate) -> aracari_data
+
 names(aracari_data) <- c("animal_id","burst_id", "date_time", "x", "y")
+
 ```
+
+
+```{r eval=FALSE}
+# Just checking some summary information:
+aracari_data %>% 
+  group_by(animal_id) %>% 
+  summarise(nlocs = n())
+```
+
 
 We can visualize the locations for each of the individuals tagged. The two separate groups represent the two locations considered: Yasuni Biosphere Reserve (upper left) and Tiputini Biodiversity Station (lower right).
 ```{r}
@@ -106,7 +134,12 @@ head(aracari_ltraj)
 # Transform to a dataframe
 aracari_df <- ld(aracari_ltraj)
 
-aracari_df %>% drop_na(dt) %>% group_by(id) %>% distinct(burst) %>% tally()
+nbursts <- aracari_df %>% drop_na(dt) %>% group_by(id) %>% distinct(burst) %>% tally() %>% arrange(id) %>% rename(nbursts = n)
+nlocs <- aracari_df %>% group_by(id) %>% tally() %>% arrange(id) %>% rename(nlocs = n)
+
+merge(nbursts, nlocs, by = "id", all=TRUE) %>% arrange(nlocs)
+
+
 ```
 
 ```{r}
@@ -116,7 +149,8 @@ aracari_df %>% drop_na(dt) %>% group_by(id) %>% distinct(burst) %>% tally()
 # The social groups are as follows: (1, 3, 5), (7), (13, 19), (22), (28), and (49, 84).
 # I've added another group for birds (29,30) which are Yasuni birds, with overlapping territories and I would assume they are a social group.
 # All others are left as unknown.
-aracari_df$id <- factor(aracari_df$id, levels = c(1, 3, 5, 7, 13, 19, 22, 28, 49, 84, 10, 17, 20, 21, 24, 29, 30, 9))
+aracari_df$id <- factor(aracari_df$id, levels = unique(aracari_df$id))
+unique(aracari_df$id)
 aracari_df %>%
   mutate(fam_g = ifelse(id %in% c(1,3,5), "f1",
                         ifelse(id == 7, "f2",
@@ -131,23 +165,6 @@ aracari_df %>%
 
 
 ```{r}
-aracari_df %>% 
-  group_by(id) %>% 
-  distinct(burst) %>% 
-  tally()
-
-
-test <- aracari_df %>% 
-   mutate(T_minutes = dt/60,
-         #Bird_ID = id,
-         mpm = dist/T_minutes,
-         #R2n = lead(R2n)
-         ) 
-# %>%
-#   filter(T_minutes != 0 & T_minutes %in% c(15, 30, 45, 60, 75, 90)) %>%
-#   group_by(Bird_ID) %>%
-#   add_tally()
-
 path <- data.frame(aracari_ltraj[[1]], id = attr(aracari_ltraj[[1]], "id"))
 for(i in 2:length(aracari_ltraj)){
   path <- rbind(path,
@@ -156,7 +173,7 @@ for(i in 2:length(aracari_ltraj)){
 
 path$distperday <- path$dist/(path$dt/60/60/24)
 
-# Aggregate to show mean distance per day for each turtle
+# Aggregate to show mean distance per day for each
 path.summary <- aggregate(distperday~id, data = path, FUN = mean)
 path.summary$sd <- aggregate(distperday~id, data = path, FUN = sd)$distperday
 
