@@ -78,7 +78,9 @@ seed_loc <- merge(animalTraj, grt_data, by = "time")
 mean_seed_loc <- data.frame(x = mean(seed_loc$xloc), y = mean(seed_loc$yloc))
 
 ggplot() +
-  geom_path(data = animalTraj, aes(x = xloc, y = yloc), size = 1, color = "darkgrey") +
+  geom_path(data = animalTraj, aes(x = xloc, y = yloc), 
+            #size = 1,
+            color = "darkgrey") +
   geom_point(data = animalTraj, aes(x = xloc, y = yloc), color = "black") +
   geom_point(data = seed_loc, aes(x = xloc, y = yloc), color = "red", size = 3) +
   geom_point(aes(x = 0, y = 0), color = "black", size = 5)+
@@ -116,9 +118,10 @@ ggplot() +
 Density distributions from which we sample **A.** gut retention time (GRT) and **B.** movement distance (MD). Red dots represent an example for one simulation run, where we sample five gut retention times. The maximum GRT for that simulation run determines the number of movement distances sampled in that simulation run, represented in the figure by the black dots.
 
 ```{r fig.width=2.5, fig.height=4}
-plot_grid(fig_GRT, fig_MD, align = "v", nrow = 2, labels = "AUTO", label_size = 10)
+plot_grid(fig_GRT, fig_MD, align = "v", nrow = 2, labels = "auto", label_size = 10)
 
-# ggsave("paper/figures/Figure1.png",
+# ggsave(filename = "figures/Figure1.tiff",
+#        device = "tiff",
 #        width = 2.5,
 #        height = 4,
 #        units = "in",
@@ -129,9 +132,9 @@ plot_grid(fig_GRT, fig_MD, align = "v", nrow = 2, labels = "AUTO", label_size = 
 Example of one simulation run and variables measured for each run. **A.** Shows the animal trajectory followed after starting at the origin (big circle at location 0,0). The animal moves every minute following the movement distances (MD) sampled from the distribution as show in example of Figure 1. Every small black dot represents the animal's location at every minute interval. Seeds get dropped every time the simulation reaches one of the sampled gut retention times (GRT), at the animal's location in that time (red dots). **B.** Seed dispersal calculations as euclidean distances from the parent plant located at the origin (black circle at 0,0) to each of the five seeds for the simulation run (red dots). **C.** Calculation of seed dispersion measures and average seed dispersal. The average seed location for the simulation run is shown by the blue circle. The distance from each seed to the average location is used to calculate seed dispersion as a measure of seed aggregation, dashed blue lines. Average seed dispersal is calculated as the distance from the parent plant to the average seed location, shown as the black line connecting the black circle to the blue dot.
 
 ```{r fig.height=2, fig.width=6}
-plot_grid(fig_traj, fig_disp, fig_agg, ncol = 3, align = "h", labels = "AUTO", label_size = 8)
+plot_grid(fig_traj, fig_disp, fig_agg, ncol = 3, align = "h", labels = "auto", label_size = 8)
 
-# ggsave("paper/figures/Figure2.png",
+# ggsave("figures/Figure2.tiff",
 #        width = 6,
 #        height = 2,
 #        units = "in",
@@ -217,9 +220,9 @@ ggplot(data = data.frame(x = c(0.1, 4)), aes(x)) +
         legend.title = element_blank()) -> gp_dens
 
 
-plot_grid(weib_dens, gp_dens, ncol = 2, labels = "AUTO", label_size = 8)
+plot_grid(weib_dens, gp_dens, ncol = 2, labels = "auto", label_size = 8)
 
-# ggsave("paper/figures/Figure3.png",
+# ggsave("figures/Figure3.tiff",
 #        width = 6,
 #        height = 2.5,
 #        units = "in",
@@ -293,12 +296,17 @@ all_disp_data %>%
   theme(axis.title.x = element_blank()) -> b
 
 
-boxplots <- plot_grid(a,b, ncol = 2, align = "h", labels = c("B", "C"))
+boxplots <- plot_grid(a,b, ncol = 2, align = "h", labels = c("b", "c"))
 
-plot_grid(dens_by_id, boxplots, nrow=2, labels = c("A", ""))
+plot_grid(dens_by_id, boxplots, nrow=2, labels = c("a", ""))
 
-# Edit redundant labels
-# Fix names for axes
+
+# ggsave(filename = "figures/Figure4.tiff",
+#        device = "tiff",
+#        width = 6,
+#        height = 6,
+#        units = "in",
+#        dpi = 300)
 
 
 
