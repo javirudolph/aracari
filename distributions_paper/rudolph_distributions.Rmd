@@ -63,6 +63,7 @@ if(focus == "dist"){
   dist.used <- c("lnorm", "weibull", "cauchy")
   param <- c("meanlog", "sdlog", "shape", "scale", "location", "scale")
   dist <- c("lnorm", "lnorm", "weibull", "weibull", "cauchy", "cauchy")
+  kpars <- c(2, 2, 2, 2, 2, 2)
 }
 
 if(focus == "R2n"){
@@ -91,8 +92,27 @@ if(focus == "mpm"){
   dist.used <- c( "exp", "gamma", "weibull", "lnorm")
   param <- c("rate", "shape", "rate", "shape", "scale", "meanlog", "sdlog")
   dist <- c("exp", "gamma", "gamma", "weibull", "weibull", "lnorm", "lnorm")
+  kpars <- c(1, 2, 2, 2, 2, 2, 2)
 }
 
+if(focus == "m15"){
+  df <- aracari_df %>% 
+  dplyr::filter(dist != 0) %>% 
+  group_by(id) %>%
+  filter(., n() >= 30) %>%
+  ungroup() %>%
+  mutate(tmin = dt/60,
+         mpm = dist/tmin,
+         m15 = mpm*15,
+         Bird_ID = paste0("B", id),
+         focus = m15) %>% 
+  dplyr::filter(., m15 != 0)
+  
+  dist.used <- c( "exp", "gamma", "weibull", "lnorm")
+  param <- c("rate", "shape", "rate", "shape", "scale", "meanlog", "sdlog")
+  dist <- c("exp", "gamma", "gamma", "weibull", "weibull", "lnorm", "lnorm")
+  kpars <- c(1, 2, 2, 2, 2, 2, 2)
+}
 
 
 ```
@@ -135,20 +155,6 @@ df %>%
 # Fit distribution  
 Useful resource to use the package [fitdistrplus](https://cran.r-project.org/web/packages/fitdistrplus/vignettes/FAQ.html)
 
-```{r eval=FALSE}
-descdist(df$dist, boot = 1000)
-hist(df$dist)
-
-# problem
-fitdist(df$dist, distr = "exp")
-fitdist(df$dist, distr = "gamma")
-#no issue
-fitdist(df$dist, distr = "lnorm")
-fitdist(df$dist, distr = "weibull")
-fitdist(df$dist, distr = "cauchy")
-
-```
-
 ```{r}
 
 # Fit the four models for the population level data
@@ -174,23 +180,28 @@ build_fits_df <- function(x){
 prms.df <- build_fits_df(pop) %>% 
   mutate(param = param,
          dist = dist,
+         kpars = kpars,
          data = "pop")
 
 # Repeating the process for data at the individual level
 inds <- unique(as.character(df$Bird_ID))
 
 # Fitting the four distributions for each individual and saving the parameters in a dataframe
+ind.models <- NULL
 for(i in 1:length(inds)){
   fit.df <- df %>% 
     dplyr::filter(., Bird_ID == inds[i])
   
   fit <- lapply(dist.used, function(x){fitdist(fit.df$focus, distr = x)})
   
+  ind.models[[i]] <- fit
+  
   assign(paste(inds[i]), fit)
   
   fit.prms <- build_fits_df(fit) %>% 
   mutate(param = param,
          dist = dist,
+         kpars = kpars,
          data = inds[i])
   
   prms.df <- bind_rows(prms.df, fit.prms)
@@ -199,14 +210,11 @@ for(i in 1:length(inds)){
 
 # Getting qqplot data for each individual
 inds.models.data <- NULL
-ind.models <- list(B1, B13, B19, B22, B28, B29, B3, B30, B49, B5, B7, B84)
-# ind.models <- list(B1, B13, B17, B19, B20, B22, B24, B28, B29, B3, B30, B49, B5, B7, B84)
-chr.models <- inds
-for(i in 1:length(chr.models)){
+for(i in 1:length(inds)){
   x <- ind.models[[i]]
   
   qqdata <- qqcomp(x, plotstyle = "ggplot")$data %>% 
-    mutate(data = chr.models[i])
+    mutate(data = inds[i])
   names(qqdata) <- c("theoretical", "fdist", "empirical", "individual")
   inds.models.data <- bind_rows(inds.models.data, qqdata)
 }
@@ -247,6 +255,71 @@ inds.models.data%>%
 plot_grid(a,b, rel_widths = c(1,2), labels = "AUTO")
 
 ```
+
+## Information criteria
+
+```{r}
+
+ic_calc <- function(n, kpars, loglik){
+  
+  BIC <- log(n)*kpars - 2*loglik
+  AIC <- 2*kpars - 2*loglik
+  AICc <- AIC + (2* kpars * (kpars+1)/(n-kpars-1))
+}
+
+
+prms.df %>% 
+  mutate(BIC = log(n)*kpars - 2*loglik,
+         AIC = 2*kpars - 2*loglik,
+         AICc = AIC + (2* kpars * (kpars+1)/(n-kpars-1))) %>% 
+  group_by(data) %>% 
+  mutate(deltaBIC = signif(BIC - min(BIC), 3),
+         deltaAIC = signif(AIC - min(AIC), 3),
+         deltaAICc = signif(AICc - min(AICc), 3)) -> prms_ic
+```
+
+So, for each individual, which is the best fitting distribution, based on AIC or BIC? Here we are just focusing on the model fits for each individual. 
+
+```{r}
+prms_ic %>% 
+  filter(., data != "pop") %>% 
+  dplyr::select(dist, data, deltaAIC,
+                #deltaAICc,
+                deltaBIC) %>% 
+  distinct() %>% 
+  pivot_longer(., cols = starts_with("delta"), names_to = "ic", values_to = "value") %>% 
+  filter(value == 0) %>% 
+  dplyr::select(-value) %>% 
+  pivot_wider(., names_from = ic, values_from = dist) %>% 
+  mutate(agree = ifelse(deltaAIC == deltaBIC, "yes", "no"))
+```
+
+```{r fig.width=12, fig.height=4}
+# To visualize the differences in the information criteria at the individual level
+
+prms_ic %>% 
+  filter(., data != "pop") %>% 
+  dplyr::select(dist, data, deltaAIC, 
+                deltaAICc,
+                deltaBIC) %>% 
+  distinct() %>% 
+  pivot_longer(., cols = starts_with("delta"), names_to = "ic", values_to = "value") %>% 
+  mutate(plot_alpha = ifelse(value == "0", 1, 0.8)) %>% 
+  ggplot(., aes(x = data, y = value, color = dist 
+                #alpha = plot_alpha
+                )) +
+  facet_wrap(~ic) +
+  geom_point(size = 3) +
+  scale_color_brewer(palette = "Spectral") + 
+  #scale_alpha_continuous(range = c(0.5, 1)) +
+  labs(x = "") +
+  theme(legend.position = "bottom") +
+  guides(color = guide_legend(title = "Distribution"))
+  
+```
+Now we can compare what we call *models*, in which we compare a model that does complete pooling and considers all the data together, and the other model that considers individual variation. 
+So, the complete pooling, takes all the data and fits a distribution to it. 
+The individual variation models will fit a distribution to each individual. At one level we will use the same distribution for all individuals and only consider variation in parameters. At the next level, we will consider a change in parameters and distributions, where individuals can have different distributions, and this is what we call the mixed distribution model for individual variation. 
 
 # References
 
