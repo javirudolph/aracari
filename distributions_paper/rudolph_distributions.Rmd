@@ -291,7 +291,7 @@ prms.df %>%
          deltaAICc = signif(AICc - min(AICc), 3)) -> nice_prms
 ```
 
-So, for each individual, which is the best fitting distribution, based on AIC or BIC? This is the distribution with the lowest AIC or BIC score for each individual. 
+So, for each individual, which is the best fitting distribution, based on AIC or BIC? This is the distribution with the lowest AIC or BIC score for each individual. These are basically the distributions that will be used for the mixed distribution model later on. 
 
 ```{r}
 nice_prms %>% 
