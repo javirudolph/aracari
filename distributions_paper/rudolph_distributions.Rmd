@@ -1,0 +1,39 @@
+---
+title: "Variation in distance between consecutive animal locations"
+abstract: |
+  This should be the abstract
+output:
+  word_document:
+    reference_docx: docx_ref.docx
+  html_document:
+    df_print: paged
+bibliography: aracari_refs.bib
+csl: ecology-letters.csl
+---
+
+```{r setup, include=FALSE}
+# knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
+```
+
+```{r}
+library(data)
+```
+
+
+\newpage
+# Questions  
+* What is the distribution of distances between consecutive recorded locations? 
+* Are there differences between individuals or can we use the same distribution to describe these distances between two locations?
+
+The reasoning behind this, is that distances between locations can be used later on to describe variation in step length when simulating animal movement under simple models such as random walk.
+
+
+
+# References
+
+
+
+
+
+
