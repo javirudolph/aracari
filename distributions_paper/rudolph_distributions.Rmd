@@ -48,7 +48,8 @@ aracari_df %>%
 
 # focus <- "dist"
 # focus <- "R2n"
-focus <- "mpm"
+ focus <- "mpm"
+# focus <- "m15"
 
 if(focus == "dist"){
   df <- aracari_df %>%
@@ -74,7 +75,12 @@ if(focus == "R2n"){
   ungroup() %>%
   dplyr::filter(R2n != 0) %>% 
     mutate(Bird_ID = paste0("B", id),
-           focus = R2n)
+           focus = sqrt(R2n))
+  
+  dist.used <- c( "exp", "gamma", "weibull", "lnorm")
+  param <- c("rate", "shape", "rate", "shape", "scale", "meanlog", "sdlog")
+  dist <- c("exp", "gamma", "gamma", "weibull", "weibull", "lnorm", "lnorm")
+  kpars <- c(1, 2, 2, 2, 2, 2, 2)
 }
 
 if(focus == "mpm"){
@@ -154,6 +160,7 @@ df %>%
 
 # Fit distribution  
 Useful resource to use the package [fitdistrplus](https://cran.r-project.org/web/packages/fitdistrplus/vignettes/FAQ.html)
+Also check [this](https://stackoverflow.com/questions/37152482/power-law-fitted-by-fitdistr-function-in-package-fitdistrplus). Should I do the opimization by hand?
 
 ```{r}
 
@@ -278,7 +285,7 @@ prms.df %>%
          deltaAICc = signif(AICc - min(AICc), 3)) -> prms_ic
 ```
 
-So, for each individual, which is the best fitting distribution, based on AIC or BIC? Here we are just focusing on the model fits for each individual. 
+So, for each individual, which is the best fitting distribution, based on AIC or BIC? Here we are just focusing on the model fits for each individual. Best model is that with the lowest AIC or BIC, but other competitive models would be those that are within 2 units of those. 
 
 ```{r}
 prms_ic %>% 
@@ -288,10 +295,28 @@ prms_ic %>%
                 deltaBIC) %>% 
   distinct() %>% 
   pivot_longer(., cols = starts_with("delta"), names_to = "ic", values_to = "value") %>% 
-  filter(value == 0) %>% 
-  dplyr::select(-value) %>% 
+  filter(value == 0) %>%  
   pivot_wider(., names_from = ic, values_from = dist) %>% 
-  mutate(agree = ifelse(deltaAIC == deltaBIC, "yes", "no"))
+  mutate(agree = ifelse(deltaAIC == deltaBIC, paste(deltaBIC), paste(deltaBIC, "(BIC),", deltaAIC, "(AIC)"))) %>% 
+  dplyr::select(., data, agree) %>% 
+  rename(Individual = data,
+            `Best model` = agree)
+
+
+prms_ic %>% 
+  filter(., data != "pop") %>% 
+  dplyr::select(dist, data, deltaAIC,
+                #deltaAICc,
+                deltaBIC) %>% 
+  distinct() %>% 
+  pivot_longer(., cols = starts_with("delta"), names_to = "ic", values_to = "value") %>% 
+  filter(value > 0 & value <= 2) %>%  
+  pivot_wider(., names_from = ic, values_from = dist) %>% 
+  mutate(agree = ifelse(deltaAIC == deltaBIC, paste(deltaBIC), paste(deltaBIC, "(BIC),", deltaAIC, "(AIC)"))) %>% 
+  dplyr::select(., data, agree) %>% 
+  rename(Individual = data,
+            `Best model` = agree)
+
 ```
 
 ```{r fig.width=12, fig.height=4}
