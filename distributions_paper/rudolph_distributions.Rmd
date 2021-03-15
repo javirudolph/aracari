@@ -32,7 +32,7 @@ theme_set(theme_bw())
 aracari_df <- readRDS("aracari_df.RDS")
 ```
 
-```{r}
+```{r eval=FALSE}
 # Which individuals will we conside? Need at least a certain number of data points to fit distributions
 # Don't remove any yet, just make sure you make it clear how many data points you have for each
 
@@ -41,11 +41,60 @@ aracari_df %>%
   group_by(id) %>% 
   tally()
 
-aracari_df %>% 
+```
+
+```{r}
+# Create my focus variable and only for individuals with 30+ observations
+
+# focus <- "dist"
+# focus <- "R2n"
+focus <- "mpm"
+
+if(focus == "dist"){
+  df <- aracari_df %>%
+  dplyr::filter(dist != 0) %>%
+  group_by(id) %>%
+  filter(., n() >= 30) %>%
+  ungroup() %>%
   dplyr::filter(dist != 0) %>% 
-  group_by(id) %>% 
-  filter(., n() >= 10) %>% 
-  ungroup()
+    mutate(Bird_ID = paste0("B", id),
+           focus = dist)
+  
+  dist.used <- c("lnorm", "weibull", "cauchy")
+  param <- c("meanlog", "sdlog", "shape", "scale", "location", "scale")
+  dist <- c("lnorm", "lnorm", "weibull", "weibull", "cauchy", "cauchy")
+}
+
+if(focus == "R2n"){
+  df <- aracari_df %>%
+  dplyr::filter(R2n != 0) %>%
+  group_by(id) %>%
+  filter(., n() >= 30) %>%
+  ungroup() %>%
+  dplyr::filter(R2n != 0) %>% 
+    mutate(Bird_ID = paste0("B", id),
+           focus = R2n)
+}
+
+if(focus == "mpm"){
+  df <- aracari_df %>% 
+  dplyr::filter(dist != 0) %>% 
+  group_by(id) %>%
+  filter(., n() >= 30) %>%
+  ungroup() %>%
+  mutate(tmin = dt/60,
+         mpm = dist/tmin,
+         Bird_ID = paste0("B", id),
+         focus = mpm) %>% 
+  dplyr::filter(., mpm != 0)
+  
+  dist.used <- c( "exp", "gamma", "weibull", "lnorm")
+  param <- c("rate", "shape", "rate", "shape", "scale", "meanlog", "sdlog")
+  dist <- c("exp", "gamma", "gamma", "weibull", "weibull", "lnorm", "lnorm")
+}
+
+
+
 ```
 
 \newpage
@@ -59,125 +108,32 @@ The reasoning behind this, is that distances between locations can be used later
 **Visualize the variation and distribution of these distances between locations**  
 
 ```{r}
-aracari_df %>%
-  dplyr::filter(dist != 0) %>%
-  group_by(id) %>%
-  filter(., n() >= 30) %>%
-  ungroup() %>%
-  dplyr::filter(dist != 0) %>%
-  ggplot(., aes((x = dist))) +
-  geom_line(aes(x = dist, group = id), stat = "density", alpha = 0.4) +
+ df %>%
+  ggplot(., aes((x = focus))) +
+  geom_line(aes(x = focus, group = id), stat = "density", alpha = 0.4) +
   geom_line(stat = "density", color = "#1191d1", lwd = 1) +
   geom_vline(xintercept = 0, color = "grey") +
   geom_hline(yintercept = 0, color = "grey") +
-  labs(y = "Density", x = "Distance in meters") +
+  labs(y = "Density", x = paste(focus)) +
   theme_classic()
 
 
 ```
 
 ```{r}
-aracari_df %>% 
-  dplyr::filter(dist != 0) %>% 
-  group_by(id) %>%
-  filter(., n() >= 30) %>%
-  ungroup() %>%
-  ggplot(., aes(x = dist)) +
+df %>%
+  ggplot(., aes(x = focus)) +
   facet_wrap(~id) +
   geom_line(stat = "density") +
   geom_vline(xintercept = 0, color = "grey") +
   geom_hline(yintercept = 0, color = "grey") +
-  labs(y = "Density", x = "Distance in meters") +
+  labs(y = "Density", x = paste(focus)) +
   theme_classic()
-```
-
-
-
-```{r eval = FALSE, fig.width=12, fig.height=4}
-
-
-
-zoom_dims <- c(110, 210, 0, 0.01)
-annot_xy <- c(50, 250, 0.025, 0.045)
-  
-ind_dens_plot <- df %>%
-  ggplot(., aes(x = mpm)) +
-  geom_line(stat = "density", color = "red", lwd = 1) +
-  geom_line(aes(x = mpm, group = id), stat = "density", alpha = 0.4) +
-  geom_vline(xintercept = 0, color = "grey") +
-  geom_hline(yintercept = 0, color = "grey") +
-  geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[2], y = zoom_dims[3], yend = zoom_dims[3]), color = "blue") +
-  geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[2], y = zoom_dims[4], yend = zoom_dims[4]), color = "blue") +
-  geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[1], y = zoom_dims[3], yend = zoom_dims[4]), color = "blue") +
-  geom_segment(aes(x = zoom_dims[2], xend = zoom_dims[2], y = zoom_dims[3], yend = zoom_dims[4]), color = "blue") +
-  ylim(0, 0.055) +
-  xlim(0, 250) +
-  labs(title = "Individual") +
-  theme_classic()
-
-ind_dens_plot +
-  coord_cartesian(
-    xlim = zoom_dims[1:2],
-    ylim = zoom_dims[3:4]) +
-  theme(title = element_blank()) -> ind_zoom
-
-ind_dens_plot +
-  annotation_custom(grob = ggplotGrob(ind_zoom), xmin = annot_xy[1] , xmax = annot_xy[2] , ymin = annot_xy[3] , ymax = annot_xy[4]) -> a
-
-
-fam_dens_plot <- df %>%
-  filter(., fam_g != "unknown") %>% 
-  ggplot(., aes(x = mpm)) +
-  geom_line(stat = "density", color = "red", lwd = 1) +
-  geom_line(aes(x = mpm, group = fam_g), stat = "density", alpha = 0.4) +
-  geom_vline(xintercept = 0, color = "grey") +
-  geom_hline(yintercept = 0, color = "grey") +
-  geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[2], y = zoom_dims[3], yend = zoom_dims[3]), color = "blue") +
-  geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[2], y = zoom_dims[4], yend = zoom_dims[4]), color = "blue") +
-  geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[1], y = zoom_dims[3], yend = zoom_dims[4]), color = "blue") +
-  geom_segment(aes(x = zoom_dims[2], xend = zoom_dims[2], y = zoom_dims[3], yend = zoom_dims[4]), color = "blue") +
-  ylim(0, 0.055) +
-  xlim(0, 250) + 
-  labs(title = "Family") +
-  theme_classic()
-
-fam_dens_plot +
-  coord_cartesian(
-    xlim = zoom_dims[1:2],
-    ylim = zoom_dims[3:4]) +
-  theme(title = element_blank()) -> fam_zoom
-
-
-fam_dens_plot +
-  annotation_custom(grob = ggplotGrob(fam_zoom), xmin = annot_xy[1] , xmax = annot_xy[2] , ymin = annot_xy[3] , ymax = annot_xy[4]) -> b
-
-plot_grid(a, b)
-
 ```
 
 
 # Fit distribution  
 Useful resource to use the package [fitdistrplus](https://cran.r-project.org/web/packages/fitdistrplus/vignettes/FAQ.html)
-```{r}
-# These are the distributions I am considering for characterizing the meters moved per minute in the data
-dist.used <- c( "exp", "gamma", "weibull", "lnorm")
-
-# These are the parameters and associated distributions that will be needed later to build a dataframe of parameters
-param <- c("rate", "shape", "rate", "shape", "scale", "meanlog", "sdlog")
-dist <- c("exp", "gamma", "gamma", "weibull", "weibull", "lnorm", "lnorm")
-
-df <- aracari_df %>% 
-  dplyr::filter(dist != 0) %>% 
-  group_by(id) %>%
-  filter(., n() >= 30) %>%
-  ungroup() %>%
-  mutate(tmin = dt/60,
-         mpm = dist/tmin,
-         Bird_ID = paste0("B", id)) %>% 
-  filter(., mpm != 0) %>% 
-  {.}
-
-```
 
 ```{r eval=FALSE}
 descdist(df$dist, boot = 1000)
@@ -190,15 +146,6 @@ fitdist(df$dist, distr = "gamma")
 fitdist(df$dist, distr = "lnorm")
 fitdist(df$dist, distr = "weibull")
 fitdist(df$dist, distr = "cauchy")
-```
-
-```{r}
-# These are the distributions I am considering for characterizing the meters moved per minute in the data
-dist.used <- c("lnorm", "weibull", "cauchy")
-
-# These are the parameters and associated distributions that will be needed later to build a dataframe of parameters
-param <- c("meanlog", "sdlog", "shape", "scale", "location", "scale")
-dist <- c("lnorm", "lnorm", "weibull", "weibull", "cauchy", "cauchy")
 
 ```
 
@@ -206,14 +153,25 @@ dist <- c("lnorm", "lnorm", "weibull", "weibull", "cauchy", "cauchy")
 
 # Fit the four models for the population level data
   
-pop <- lapply(dist.used, function(x){fitdist(df$dist, distr = x)})
+pop <- lapply(dist.used, function(x){fitdist(df$focus, distr = x)})
 
 # Get data for qqplot at population level
 qqpop <- qqcomp(pop, plotstyle = "ggplot")$data
 names(qqpop) <- c("theoretical", "fdist", "empirical")
 
 # Save the population level parameters
-prms.df <- aracari::build_fits_df(pop) %>% 
+
+build_fits_df <- function(x){
+
+  nm <- deparse(substitute(x))
+
+  x %>%
+    map(., `[`, c("estimate", "sd", "loglik", "n")) %>%
+    map(as_tibble) %>%
+    bind_rows()
+}
+
+prms.df <- build_fits_df(pop) %>% 
   mutate(param = param,
          dist = dist,
          data = "pop")
@@ -226,7 +184,7 @@ for(i in 1:length(inds)){
   fit.df <- df %>% 
     dplyr::filter(., Bird_ID == inds[i])
   
-  fit <- lapply(dist.used, function(x){fitdist(fit.df$dist, distr = x)})
+  fit <- lapply(dist.used, function(x){fitdist(fit.df$focus, distr = x)})
   
   assign(paste(inds[i]), fit)
   
@@ -254,57 +212,6 @@ for(i in 1:length(chr.models)){
 }
 ```
 
-```{r eval=FALSE}
-# OLD MPM
-# Fit the four models for the population level data
-  
-pop <- lapply(dist.used, function(x){fitdist(df$mpm, distr = x)})
-
-# Get data for qqplot at population level
-qqpop <- qqcomp(pop, plotstyle = "ggplot")$data
-names(qqpop) <- c("theoretical", "fdist", "empirical")
-
-# Save the population level parameters
-prms.df <- aracari::build_fits_df(pop) %>% 
-  mutate(param = param,
-         dist = dist,
-         data = "pop")
-
-# Repeating the process for data at the individual level
-inds <- unique(as.character(df$Bird_ID))
-
-# Fitting the four distributions for each individual and saving the parameters in a dataframe
-for(i in 1:length(inds)){
-  fit.df <- df %>% 
-    dplyr::filter(., Bird_ID == inds[i])
-  
-  fit <- lapply(dist.used, function(x){fitdist(fit.df$mpm, distr = x)})
-  
-  assign(paste(inds[i]), fit)
-  
-  fit.prms <- build_fits_df(fit) %>% 
-  mutate(param = param,
-         dist = dist,
-         data = inds[i])
-  
-  prms.df <- bind_rows(prms.df, fit.prms)
-}
-
-
-# Getting qqplot data for each individual
-inds.models.data <- NULL
-ind.models <- list(B1, B13, B19, B22, B28, B29, B3, B30, B49, B5, B7, B84)
-# ind.models <- list(B1, B13, B17, B19, B20, B22, B24, B28, B29, B3, B30, B49, B5, B7, B84)
-chr.models <- inds
-for(i in 1:length(chr.models)){
-  x <- ind.models[[i]]
-  
-  qqdata <- qqcomp(x, plotstyle = "ggplot")$data %>% 
-    mutate(data = chr.models[i])
-  names(qqdata) <- c("theoretical", "fdist", "empirical", "individual")
-  inds.models.data <- bind_rows(inds.models.data, qqdata)
-}
-```
 
 ```{r ind_QQplots, fig.width=12, fig.height=5}
 
