@@ -231,6 +231,24 @@ print(aracari_kernel_poly)
 
 ```
 
+## moveHMM
+
+```{r}
+library(moveHMM)
+
+aracari_df %>% 
+  dplyr::select(., id, dist, abs.angle) %>% 
+  drop_na(dist) %>% 
+  rename(ID = id,
+         step = dist,
+         angle = abs.angle) -> d
+
+
+fithmm <- fitHMM(d)
+
+# I don't think I can use the package because my data is different. It is not continuous time series, and it doesn't take into account irregular sampling intervals.
+```
+
 
 
 ### References
