@@ -17,7 +17,22 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
 ```
 
 ```{r}
-library(data)
+library(aracari)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(purrr)
+library(stringr)
+library(fitdistrplus)
+library(cowplot)
+library(RColorBrewer)
+library(gt)
+
+theme_set(theme_bw())
+```
+
+```{r}
+aracari_df <- readRDS("aracari_df.RDS")
 ```
 
 
