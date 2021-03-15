@@ -276,20 +276,26 @@ ic_calc <- function(n, kpars, loglik){
 
 
 prms.df %>% 
+  mutate(param = str_to_upper(param), 
+         dist = str_replace(dist, "exp", "Exponential"),
+         dist = str_replace(dist, "gamma", "Gamma"),
+         dist = str_replace(dist, "weibull", "Weibull"),
+         dist = str_replace(dist, "lnorm", "Lognormal"),
+         data = str_replace(data, "pop", "POP")) %>% 
   mutate(BIC = log(n)*kpars - 2*loglik,
          AIC = 2*kpars - 2*loglik,
          AICc = AIC + (2* kpars * (kpars+1)/(n-kpars-1))) %>% 
   group_by(data) %>% 
   mutate(deltaBIC = signif(BIC - min(BIC), 3),
          deltaAIC = signif(AIC - min(AIC), 3),
-         deltaAICc = signif(AICc - min(AICc), 3)) -> prms_ic
+         deltaAICc = signif(AICc - min(AICc), 3)) -> nice_prms
 ```
 
-So, for each individual, which is the best fitting distribution, based on AIC or BIC? Here we are just focusing on the model fits for each individual. Best model is that with the lowest AIC or BIC, but other competitive models would be those that are within 2 units of those. 
+So, for each individual, which is the best fitting distribution, based on AIC or BIC? This is the distribution with the lowest AIC or BIC score for each individual. 
 
 ```{r}
-prms_ic %>% 
-  filter(., data != "pop") %>% 
+nice_prms %>% 
+  filter(., str_detect(data, "B")) %>% 
   dplyr::select(dist, data, deltaAIC,
                 #deltaAICc,
                 deltaBIC) %>% 
@@ -301,34 +307,36 @@ prms_ic %>%
   dplyr::select(., data, agree) %>% 
   rename(Individual = data,
             `Best model` = agree)
-
-
-prms_ic %>% 
-  filter(., data != "pop") %>% 
-  dplyr::select(dist, data, deltaAIC,
-                #deltaAICc,
-                deltaBIC) %>% 
-  distinct() %>% 
-  pivot_longer(., cols = starts_with("delta"), names_to = "ic", values_to = "value") %>% 
-  filter(value > 0 & value <= 2) %>%  
-  pivot_wider(., names_from = ic, values_from = dist) %>% 
-  mutate(agree = ifelse(deltaAIC == deltaBIC, paste(deltaBIC), paste(deltaBIC, "(BIC),", deltaAIC, "(AIC)"))) %>% 
-  dplyr::select(., data, agree) %>% 
-  rename(Individual = data,
-            `Best model` = agree)
+# 
+# 
+# nice_prms %>% 
+#   filter(., data != "pop") %>% 
+#   dplyr::select(dist, data, deltaAIC,
+#                 #deltaAICc,
+#                 deltaBIC) %>% 
+#   distinct() %>% 
+#   pivot_longer(., cols = starts_with("delta"), names_to = "ic", values_to = "value") %>% 
+#   filter(value > 0 & value <= 2) %>%  
+#   pivot_wider(., names_from = ic, values_from = dist) %>% 
+#   mutate(agree = ifelse(deltaAIC == deltaBIC, paste(deltaBIC), paste(deltaBIC, "(BIC),", deltaAIC, "(AIC)"))) %>% 
+#   dplyr::select(., data, agree) %>% 
+#   rename(Individual = data,
+#             `Best model` = agree)
 
 ```
 
+However, it is not as straight-forward since there are multiple competing models for certain individuals, which we consider as those within less than 2 units of the delta AIC or BIC. When using AIC, there are competing models for almost every individual, whereas with BIC, only 4 of the individuals have competing models. 
 ```{r fig.width=12, fig.height=4}
 # To visualize the differences in the information criteria at the individual level
 
-prms_ic %>% 
-  filter(., data != "pop") %>% 
+nice_prms %>% 
+  filter(., str_detect(data, "B")) %>% 
   dplyr::select(dist, data, deltaAIC, 
                 deltaAICc,
                 deltaBIC) %>% 
   distinct() %>% 
   pivot_longer(., cols = starts_with("delta"), names_to = "ic", values_to = "value") %>% 
+  filter(value >= 0 & value <= 2) %>%  
   mutate(plot_alpha = ifelse(value == "0", 1, 0.8)) %>% 
   ggplot(., aes(x = data, y = value, color = dist 
                 #alpha = plot_alpha
@@ -342,9 +350,63 @@ prms_ic %>%
   guides(color = guide_legend(title = "Distribution"))
   
 ```
-Now we can compare what we call *models*, in which we compare a model that does complete pooling and considers all the data together, and the other model that considers individual variation. 
-So, the complete pooling, takes all the data and fits a distribution to it. 
+Now we can compare what we call *models*, in which we compare a model that does complete pooling and considers all the data together, and the other model that considers individual variation, and so it fits a separate distribution to the data from each individual.
+
 The individual variation models will fit a distribution to each individual. At one level we will use the same distribution for all individuals and only consider variation in parameters. At the next level, we will consider a change in parameters and distributions, where individuals can have different distributions, and this is what we call the mixed distribution model for individual variation. 
+
+
+```{r}
+
+# Create the dataframe that compares the models by information criteria
+nice_prms %>% 
+  filter(., str_detect(data, "B")) %>%
+  dplyr::select(., loglik, n, dist, kpars) %>% 
+  distinct() %>%
+  group_by(dist) %>% 
+  summarise(BIC = log(sum(n))*sum(kpars) - 2 * sum(loglik), 
+            AIC = 2*(sum(kpars)) - 2*(sum(loglik)),
+            AICc = 2*(sum(kpars)) - 2*(sum(loglik)) + (2* sum(kpars) * (sum(kpars)+1)/(sum(n)-sum(kpars)-1))) %>%
+    mutate(deltaAIC = signif(AIC - min(AIC), 3),
+         deltaAICc = signif(AICc - min(AICc), 3),
+         deltaBIC = signif(BIC - min(BIC), 3),
+         data = "Individual") %>% 
+  full_join(., nice_prms %>%
+              filter(., str_detect(data, "B", negate = TRUE)) %>% 
+              dplyr::select(dist, BIC, AIC, AICc, deltaAIC, deltaAICc, deltaBIC) %>% 
+              distinct() %>% 
+              mutate(data = "Population")) -> popind.IC.comp
+
+
+# Get the multi-distribution model fit
+nice_prms %>% 
+  dplyr::select(., dist, data, loglik, n, kpars, deltaBIC) %>% 
+  dplyr::filter(., data != "POP" & deltaBIC == 0) %>% 
+  distinct() %>% 
+  ungroup() %>% 
+  summarise(BIC = log(sum(n))*sum(kpars) - 2 * sum(loglik)) %>% 
+  as.numeric() -> multi.BIC
+
+nice_prms %>% 
+  dplyr::select(., dist, data, loglik, n, kpars, deltaAIC) %>% 
+  dplyr::filter(., data != "POP" & deltaAIC == 0) %>% 
+  distinct() %>%
+  ungroup() %>% 
+  summarise(AIC = 2*(sum(kpars)) - 2*(sum(loglik))) %>% 
+  as.numeric() -> multi.AIC
+
+nice_prms %>% 
+  dplyr::select(., dist, data, loglik, n, kpars, deltaAICc) %>% 
+  dplyr::filter(., data != "POP" & deltaAICc == 0) %>% 
+  distinct() %>%
+  ungroup() %>% 
+  summarise(AICc = 2*(sum(kpars)) - 2*(sum(loglik)) + (2* sum(kpars) * (sum(kpars)+1)/(sum(n)-sum(kpars)-1))) %>% 
+  as.numeric()-> multi.AICc
+
+popind.IC.comp %>% 
+  dplyr::select(., dist, BIC, AIC, AICc, data) %>% 
+  bind_rows(., data.frame(dist = "Multidist", BIC = multi.BIC, AIC = multi.AIC, AICc = multi.AICc, data = "Multidist")) -> model_comp_IC
+
+```
 
 # References
 
