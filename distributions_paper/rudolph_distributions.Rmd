@@ -288,7 +288,9 @@ prms.df %>%
   group_by(data) %>% 
   mutate(deltaBIC = signif(BIC - min(BIC), 3),
          deltaAIC = signif(AIC - min(AIC), 3),
-         deltaAICc = signif(AICc - min(AICc), 3)) -> nice_prms
+         deltaAICc = signif(AICc - min(AICc), 3)) %>% 
+  mutate(best_bic = ifelse(deltaBIC == 0, "#ffaa00", "black"),
+         best_aic = ifelse(deltaAIC == 0, "#fc0362", "black")) -> nice_prms
 ```
 
 So, for each individual, which is the best fitting distribution, based on AIC or BIC? This is the distribution with the lowest AIC or BIC score for each individual. These are basically the distributions that will be used for the mixed distribution model later on. 
@@ -379,24 +381,27 @@ nice_prms %>%
 
 # Get the multi-distribution model fit
 nice_prms %>% 
+  filter(., str_detect(data, "B")) %>% 
   dplyr::select(., dist, data, loglik, n, kpars, deltaBIC) %>% 
-  dplyr::filter(., data != "POP" & deltaBIC == 0) %>% 
+  dplyr::filter(., deltaBIC == 0) %>% 
   distinct() %>% 
   ungroup() %>% 
   summarise(BIC = log(sum(n))*sum(kpars) - 2 * sum(loglik)) %>% 
   as.numeric() -> multi.BIC
 
 nice_prms %>% 
+  filter(., str_detect(data, "B")) %>% 
   dplyr::select(., dist, data, loglik, n, kpars, deltaAIC) %>% 
-  dplyr::filter(., data != "POP" & deltaAIC == 0) %>% 
+  dplyr::filter(., deltaAIC == 0) %>% 
   distinct() %>%
   ungroup() %>% 
   summarise(AIC = 2*(sum(kpars)) - 2*(sum(loglik))) %>% 
   as.numeric() -> multi.AIC
 
 nice_prms %>% 
+  filter(., str_detect(data, "B")) %>% 
   dplyr::select(., dist, data, loglik, n, kpars, deltaAICc) %>% 
-  dplyr::filter(., data != "POP" & deltaAICc == 0) %>% 
+  dplyr::filter(., deltaAICc == 0) %>% 
   distinct() %>%
   ungroup() %>% 
   summarise(AICc = 2*(sum(kpars)) - 2*(sum(loglik)) + (2* sum(kpars) * (sum(kpars)+1)/(sum(n)-sum(kpars)-1))) %>% 
@@ -408,6 +413,201 @@ popind.IC.comp %>%
 
 ```
 
+Considering just focusing on BIC because of JMP's paper, and also in this specific case, it provides less competing models for each individual
+```{r}
+# Table for BIC and AIC only
+
+model_comp_IC %>% 
+  dplyr::select(data, dist, BIC, AIC) %>% 
+  group_by(data) %>% 
+  mutate(delta_BIC_within = signif(BIC - min(BIC), digits = 2),
+         delta_AIC_within = signif(AIC - min(AIC), digits = 2)) %>% 
+  ungroup() %>% 
+  mutate(delta_BIC_across = signif(BIC - min(BIC), digits = 2),
+         delta_AIC_across = signif(AIC - min(AIC), digits = 2)) %>% 
+  dplyr::select(., -data) %>% 
+  dplyr::select(dist, BIC, delta_BIC_within, delta_BIC_across, AIC, delta_AIC_within, delta_AIC_across)-> data_gt
+
+data_gt$delta_BIC_within[which(data_gt$dist == "Multidist")] <- NA
+data_gt$delta_AIC_within[which(data_gt$dist == "Multidist")] <- NA
+
+
+
+gt_tbl <- gt(data_gt, rowname_col = "dist")
+
+gt_tbl %>% 
+  tab_header(
+    title = md("**Model comparisons across levels**")
+  ) %>% 
+  tab_stubhead(label = "Model") %>% 
+  tab_row_group(
+    group = "Multidist",
+    rows = 9
+  ) %>% 
+  tab_row_group(
+    group = "Individual",
+    rows = 1:4
+  ) %>% 
+  tab_row_group(
+    group = "Population", 
+    rows = 5:8
+  ) %>% 
+  tab_spanner(
+    label = md("**BIC**"),
+    columns = vars(BIC, delta_BIC_within, delta_BIC_across)
+  ) %>% 
+  tab_spanner(
+    label = md("**AIC**"),
+    columns = vars(AIC, delta_AIC_within, delta_AIC_across)
+  ) %>% 
+  cols_label(
+    delta_BIC_within = html("&Delta; BIC<sub>within</sub>"),
+    delta_BIC_across = html("&Delta; BIC<sub>across</sub>"),
+    delta_AIC_within = html("&Delta; AIC<sub>within</sub>"),
+    delta_AIC_across = html("&Delta; AIC<sub>across</sub>")
+  )
+  
+  
+```
+
+## Probability distribution parameters
+We can compare the different parameter values estimated for each distribution and their standard deviations. These parameters can give us some insight into some of the characteristics of each set of distances moved per minute, such as which individuals have higher means or longer tails in the distribution of their distances moved per minute. The x axis in the following plots highlights which individuals have the lowest BIC (yellow) or AIC(magenta) with that model. The blue lines show the value of that parameter for the population level model, and dashed blue lines show the upper and lower limits of that parameter estimate. Overall, at the population level, the lognormal model had the lowest AIC and BIC values.
+
+```{r}
+
+plot_params <- function(prm_data, best_col){
+  
+  prm_data%>% 
+  filter(., data == "POP") %>% 
+  dplyr::select(., estimate, sd) -> pop_est
+  
+  title <- paste(prm_data$dist, prm_data$param)
+  
+  if(best_col == "BIC"){
+    prm_data %>% 
+    filter(data != "POP") %>% 
+    ggplot(., aes(x = data, y = estimate)) +
+    #facet_grid(dist~param, switch = "y", scales = "free") +
+    # geom_point() +
+    # geom_errorbar(aes(ymin = estimate - sd, ymax = estimate + sd))+
+    geom_pointrange(aes(ymin = estimate - sd, ymax = estimate + sd)) +
+    geom_hline(aes(yintercept = pop_est$estimate), color = "blue") +
+    geom_hline(aes(yintercept = pop_est$estimate + pop_est$sd), color = "blue", linetype = "dashed") +
+    geom_hline(aes(yintercept = pop_est$estimate - pop_est$sd), color = "blue", linetype = "dashed") +
+    labs(x = "", y = "", subtitle = title) +
+    theme(legend.position = "none",
+          axis.text.x = element_text(angle = 45, color = prm_data$best_bic)) -> plot
+  }
+  
+  if(best_col == "AIC"){
+    prm_data %>% 
+    filter(data != "POP") %>% 
+    ggplot(., aes(x = data, y = estimate)) +
+    #facet_grid(dist~param, switch = "y", scales = "free") +
+    # geom_point() +
+    # geom_errorbar(aes(ymin = estimate - sd, ymax = estimate + sd))+
+    geom_pointrange(aes(ymin = estimate - sd, ymax = estimate + sd)) +
+    geom_hline(aes(yintercept = pop_est$estimate), color = "blue") +
+    geom_hline(aes(yintercept = pop_est$estimate + pop_est$sd), color = "blue", linetype = "dashed") +
+    geom_hline(aes(yintercept = pop_est$estimate - pop_est$sd), color = "blue", linetype = "dashed") +
+    labs(x = "", y = "", subtitle = title) +
+    theme(legend.position = "none",
+          axis.text.x = element_text(angle = 45, color = prm_data$best_aic)) -> plot
+  }
+  return(plot)
+  
+          
+}
+
+```
+
+```{r fig.height=10, fig.width=12}
+
+nice_prms %>% 
+  filter(., dist == "Exponential") %>% 
+  plot_params(., best_col = "BIC") +
+  #theme(axis.text.x = element_blank()) +
+  NULL-> p1
+
+nice_prms %>% 
+  filter(., dist == "Gamma" & param == "SHAPE") %>% 
+  plot_params(., best_col = "BIC") +
+  #theme(axis.text.x = element_blank()) +
+  NULL -> p2
+
+nice_prms %>% 
+  filter(., dist == "Gamma" & param == "RATE") %>% 
+  plot_params(., best_col = "BIC") +
+  #theme(axis.text.x = element_blank()) +
+  NULL -> p3
+
+nice_prms %>% 
+  filter(., dist == "Weibull" & param == "SHAPE") %>% 
+  plot_params(., best_col = "BIC") +
+  #theme(axis.text.x = element_blank()) +
+  NULL-> p4
+
+nice_prms %>% 
+  filter(., dist == "Weibull" & param == "SCALE") %>% 
+  plot_params(., best_col = "BIC") +
+  #theme(axis.text.x = element_blank()) +
+  NULL-> p5
+
+nice_prms %>% 
+  filter(., dist == "Lognormal" & param == "MEANLOG") %>% 
+  plot_params(., best_col = "BIC") -> p6
+
+nice_prms %>% 
+  filter(., dist == "Lognormal" & param == "SDLOG") %>% 
+  plot_params(., best_col = "BIC") ->p7
+
+
+plot_grid(p1, NULL, p2, p3, p4, p5, p6, p7, ncol = 2, align = "v") -> bic_grid
+
+nice_prms %>% 
+  filter(., dist == "Exponential") %>% 
+  plot_params(., best_col = "AIC") +
+  #theme(axis.text.x = element_blank()) +
+  NULL-> p1
+
+nice_prms %>% 
+  filter(., dist == "Gamma" & param == "SHAPE") %>% 
+  plot_params(., best_col = "AIC") +
+  #theme(axis.text.x = element_blank()) +
+  NULL -> p2
+
+nice_prms %>% 
+  filter(., dist == "Gamma" & param == "RATE") %>% 
+  plot_params(., best_col = "AIC") +
+  #theme(axis.text.x = element_blank()) +
+  NULL -> p3
+
+nice_prms %>% 
+  filter(., dist == "Weibull" & param == "SHAPE") %>% 
+  plot_params(., best_col = "AIC") +
+  #theme(axis.text.x = element_blank()) +
+  NULL-> p4
+
+nice_prms %>% 
+  filter(., dist == "Weibull" & param == "SCALE") %>% 
+  plot_params(., best_col = "AIC") +
+  #theme(axis.text.x = element_blank()) +
+  NULL-> p5
+
+nice_prms %>% 
+  filter(., dist == "Lognormal" & param == "MEANLOG") %>% 
+  plot_params(., best_col = "AIC") -> p6
+
+nice_prms %>% 
+  filter(., dist == "Lognormal" & param == "SDLOG") %>% 
+  plot_params(., best_col = "AIC") ->p7
+
+
+plot_grid(p1, NULL, p2, p3, p4, p5, p6, p7, ncol = 2, align = "v") -> aic_grid
+
+plot_grid(bic_grid, aic_grid, ncol = 2)
+
+```
 # References
 
 
