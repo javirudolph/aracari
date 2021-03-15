@@ -161,6 +161,8 @@ aracari_df %>%
                                                            "f6", 
                                                            ifelse(id %in% c(29, 30), "f7", "unknown")
                                              ))))))) -> aracari_df
+
+saveRDS(aracari_df, "aracari_df.RDS")
 ```
 
 
