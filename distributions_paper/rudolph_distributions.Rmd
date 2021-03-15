@@ -17,11 +17,8 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
 ```
 
 ```{r}
+library(tidyverse)
 library(aracari)
-library(dplyr)
-library(ggplot2)
-library(tidyr)
-library(purrr)
 library(stringr)
 library(fitdistrplus)
 library(cowplot)
@@ -35,6 +32,15 @@ theme_set(theme_bw())
 aracari_df <- readRDS("aracari_df.RDS")
 ```
 
+```{r}
+# Which individuals will we conside? Need at least a certain number of data points to fit distributions
+# Don't remove any yet, just make sure you make it clear how many data points you have for each
+
+aracari_df %>% 
+  dplyr::filter(dist != 0) %>% 
+  group_by(id) %>% 
+  tally()
+```
 
 \newpage
 # Questions  
@@ -43,7 +49,112 @@ aracari_df <- readRDS("aracari_df.RDS")
 
 The reasoning behind this, is that distances between locations can be used later on to describe variation in step length when simulating animal movement under simple models such as random walk.
 
+### I'll go first with just the distances between locations, might switch to net displacement or net squared displacement later. 
+**Visualize the variation and distribution of these distances between locations**  
 
+```{r}
+
+aracari_df %>% 
+  dplyr::filter(dist != 0) %>% 
+  ggplot(., aes((x = dist))) +
+  geom_line(aes(x = dist, group = id), stat = "density", alpha = 0.4) +
+  geom_line(stat = "density", color = "#1191d1", lwd = 1) +
+  geom_vline(xintercept = 0, color = "grey") +
+  geom_hline(yintercept = 0, color = "grey") +
+  labs(y = "Density", x = "Distance in meters") +
+  theme_classic()
+  
+```
+
+```{r}
+aracari_df %>% 
+  dplyr::filter(dist != 0,
+                fam_g != "unknown") %>%
+  ggplot(., aes((x = dist))) +
+  facet_wrap(~fam_g) +
+  geom_line(aes(x = dist, group = id), stat = "density", alpha = 0.4) +
+  # geom_line(stat = "density", color = "#1191d1", lwd = 1) +
+  geom_vline(xintercept = 0, color = "grey") +
+  geom_hline(yintercept = 0, color = "grey") +
+  labs(y = "Density", x = "Distance in meters") +
+  #theme_classic() +
+  NULL
+
+
+aracari_df %>% 
+  dplyr::filter(dist != 0) %>% 
+  ggplot(., aes((x = dist))) +
+  geom_line(aes(x = dist, group = id), stat = "density", alpha = 0.4) +
+  geom_line(stat = "density", color = "#1191d1", lwd = 1) +
+  geom_vline(xintercept = 0, color = "grey") +
+  geom_hline(yintercept = 0, color = "grey") +
+  labs(y = "Density", x = "Distance in meters") +
+  theme_classic()
+```
+
+
+
+```{r eval = FALSE, fig.width=12, fig.height=4}
+
+
+
+zoom_dims <- c(110, 210, 0, 0.01)
+annot_xy <- c(50, 250, 0.025, 0.045)
+  
+ind_dens_plot <- df %>%
+  ggplot(., aes(x = mpm)) +
+  geom_line(stat = "density", color = "red", lwd = 1) +
+  geom_line(aes(x = mpm, group = id), stat = "density", alpha = 0.4) +
+  geom_vline(xintercept = 0, color = "grey") +
+  geom_hline(yintercept = 0, color = "grey") +
+  geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[2], y = zoom_dims[3], yend = zoom_dims[3]), color = "blue") +
+  geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[2], y = zoom_dims[4], yend = zoom_dims[4]), color = "blue") +
+  geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[1], y = zoom_dims[3], yend = zoom_dims[4]), color = "blue") +
+  geom_segment(aes(x = zoom_dims[2], xend = zoom_dims[2], y = zoom_dims[3], yend = zoom_dims[4]), color = "blue") +
+  ylim(0, 0.055) +
+  xlim(0, 250) +
+  labs(title = "Individual") +
+  theme_classic()
+
+ind_dens_plot +
+  coord_cartesian(
+    xlim = zoom_dims[1:2],
+    ylim = zoom_dims[3:4]) +
+  theme(title = element_blank()) -> ind_zoom
+
+ind_dens_plot +
+  annotation_custom(grob = ggplotGrob(ind_zoom), xmin = annot_xy[1] , xmax = annot_xy[2] , ymin = annot_xy[3] , ymax = annot_xy[4]) -> a
+
+
+fam_dens_plot <- df %>%
+  filter(., fam_g != "unknown") %>% 
+  ggplot(., aes(x = mpm)) +
+  geom_line(stat = "density", color = "red", lwd = 1) +
+  geom_line(aes(x = mpm, group = fam_g), stat = "density", alpha = 0.4) +
+  geom_vline(xintercept = 0, color = "grey") +
+  geom_hline(yintercept = 0, color = "grey") +
+  geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[2], y = zoom_dims[3], yend = zoom_dims[3]), color = "blue") +
+  geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[2], y = zoom_dims[4], yend = zoom_dims[4]), color = "blue") +
+  geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[1], y = zoom_dims[3], yend = zoom_dims[4]), color = "blue") +
+  geom_segment(aes(x = zoom_dims[2], xend = zoom_dims[2], y = zoom_dims[3], yend = zoom_dims[4]), color = "blue") +
+  ylim(0, 0.055) +
+  xlim(0, 250) + 
+  labs(title = "Family") +
+  theme_classic()
+
+fam_dens_plot +
+  coord_cartesian(
+    xlim = zoom_dims[1:2],
+    ylim = zoom_dims[3:4]) +
+  theme(title = element_blank()) -> fam_zoom
+
+
+fam_dens_plot +
+  annotation_custom(grob = ggplotGrob(fam_zoom), xmin = annot_xy[1] , xmax = annot_xy[2] , ymin = annot_xy[3] , ymax = annot_xy[4]) -> b
+
+plot_grid(a, b)
+
+```
 
 # References
 
