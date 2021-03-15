@@ -3,10 +3,10 @@ title: "Variation in distance between consecutive animal locations"
 abstract: |
   This should be the abstract
 output:
-  word_document:
-    reference_docx: docx_ref.docx
   html_document:
     df_print: paged
+  word_document:
+    reference_docx: docx_ref.docx
 bibliography: aracari_refs.bib
 csl: ecology-letters.csl
 ---
@@ -40,6 +40,12 @@ aracari_df %>%
   dplyr::filter(dist != 0) %>% 
   group_by(id) %>% 
   tally()
+
+aracari_df %>% 
+  dplyr::filter(dist != 0) %>% 
+  group_by(id) %>% 
+  filter(., n() >= 10) %>% 
+  ungroup()
 ```
 
 \newpage
@@ -53,9 +59,12 @@ The reasoning behind this, is that distances between locations can be used later
 **Visualize the variation and distribution of these distances between locations**  
 
 ```{r}
-
-aracari_df %>% 
-  dplyr::filter(dist != 0) %>% 
+aracari_df %>%
+  dplyr::filter(dist != 0) %>%
+  group_by(id) %>%
+  filter(., n() >= 30) %>%
+  ungroup() %>%
+  dplyr::filter(dist != 0) %>%
   ggplot(., aes((x = dist))) +
   geom_line(aes(x = dist, group = id), stat = "density", alpha = 0.4) +
   geom_line(stat = "density", color = "#1191d1", lwd = 1) +
@@ -63,29 +72,19 @@ aracari_df %>%
   geom_hline(yintercept = 0, color = "grey") +
   labs(y = "Density", x = "Distance in meters") +
   theme_classic()
-  
+
+
 ```
 
 ```{r}
 aracari_df %>% 
-  dplyr::filter(dist != 0,
-                fam_g != "unknown") %>%
-  ggplot(., aes((x = dist))) +
-  facet_wrap(~fam_g) +
-  geom_line(aes(x = dist, group = id), stat = "density", alpha = 0.4) +
-  # geom_line(stat = "density", color = "#1191d1", lwd = 1) +
-  geom_vline(xintercept = 0, color = "grey") +
-  geom_hline(yintercept = 0, color = "grey") +
-  labs(y = "Density", x = "Distance in meters") +
-  #theme_classic() +
-  NULL
-
-
-aracari_df %>% 
   dplyr::filter(dist != 0) %>% 
-  ggplot(., aes((x = dist))) +
-  geom_line(aes(x = dist, group = id), stat = "density", alpha = 0.4) +
-  geom_line(stat = "density", color = "#1191d1", lwd = 1) +
+  group_by(id) %>%
+  filter(., n() >= 30) %>%
+  ungroup() %>%
+  ggplot(., aes(x = dist)) +
+  facet_wrap(~id) +
+  geom_line(stat = "density") +
   geom_vline(xintercept = 0, color = "grey") +
   geom_hline(yintercept = 0, color = "grey") +
   labs(y = "Density", x = "Distance in meters") +
@@ -153,6 +152,192 @@ fam_dens_plot +
   annotation_custom(grob = ggplotGrob(fam_zoom), xmin = annot_xy[1] , xmax = annot_xy[2] , ymin = annot_xy[3] , ymax = annot_xy[4]) -> b
 
 plot_grid(a, b)
+
+```
+
+
+# Fit distribution  
+Useful resource to use the package [fitdistrplus](https://cran.r-project.org/web/packages/fitdistrplus/vignettes/FAQ.html)
+```{r}
+# These are the distributions I am considering for characterizing the meters moved per minute in the data
+dist.used <- c( "exp", "gamma", "weibull", "lnorm")
+
+# These are the parameters and associated distributions that will be needed later to build a dataframe of parameters
+param <- c("rate", "shape", "rate", "shape", "scale", "meanlog", "sdlog")
+dist <- c("exp", "gamma", "gamma", "weibull", "weibull", "lnorm", "lnorm")
+
+df <- aracari_df %>% 
+  dplyr::filter(dist != 0) %>% 
+  group_by(id) %>%
+  filter(., n() >= 30) %>%
+  ungroup() %>%
+  mutate(tmin = dt/60,
+         mpm = dist/tmin,
+         Bird_ID = paste0("B", id)) %>% 
+  filter(., mpm != 0) %>% 
+  {.}
+
+```
+
+```{r eval=FALSE}
+descdist(df$dist, boot = 1000)
+hist(df$dist)
+
+# problem
+fitdist(df$dist, distr = "exp")
+fitdist(df$dist, distr = "gamma")
+#no issue
+fitdist(df$dist, distr = "lnorm")
+fitdist(df$dist, distr = "weibull")
+fitdist(df$dist, distr = "cauchy")
+```
+
+```{r}
+# These are the distributions I am considering for characterizing the meters moved per minute in the data
+dist.used <- c("lnorm", "weibull", "cauchy")
+
+# These are the parameters and associated distributions that will be needed later to build a dataframe of parameters
+param <- c("meanlog", "sdlog", "shape", "scale", "location", "scale")
+dist <- c("lnorm", "lnorm", "weibull", "weibull", "cauchy", "cauchy")
+
+```
+
+```{r}
+
+# Fit the four models for the population level data
+  
+pop <- lapply(dist.used, function(x){fitdist(df$dist, distr = x)})
+
+# Get data for qqplot at population level
+qqpop <- qqcomp(pop, plotstyle = "ggplot")$data
+names(qqpop) <- c("theoretical", "fdist", "empirical")
+
+# Save the population level parameters
+prms.df <- aracari::build_fits_df(pop) %>% 
+  mutate(param = param,
+         dist = dist,
+         data = "pop")
+
+# Repeating the process for data at the individual level
+inds <- unique(as.character(df$Bird_ID))
+
+# Fitting the four distributions for each individual and saving the parameters in a dataframe
+for(i in 1:length(inds)){
+  fit.df <- df %>% 
+    dplyr::filter(., Bird_ID == inds[i])
+  
+  fit <- lapply(dist.used, function(x){fitdist(fit.df$dist, distr = x)})
+  
+  assign(paste(inds[i]), fit)
+  
+  fit.prms <- build_fits_df(fit) %>% 
+  mutate(param = param,
+         dist = dist,
+         data = inds[i])
+  
+  prms.df <- bind_rows(prms.df, fit.prms)
+}
+
+
+# Getting qqplot data for each individual
+inds.models.data <- NULL
+ind.models <- list(B1, B13, B19, B22, B28, B29, B3, B30, B49, B5, B7, B84)
+# ind.models <- list(B1, B13, B17, B19, B20, B22, B24, B28, B29, B3, B30, B49, B5, B7, B84)
+chr.models <- inds
+for(i in 1:length(chr.models)){
+  x <- ind.models[[i]]
+  
+  qqdata <- qqcomp(x, plotstyle = "ggplot")$data %>% 
+    mutate(data = chr.models[i])
+  names(qqdata) <- c("theoretical", "fdist", "empirical", "individual")
+  inds.models.data <- bind_rows(inds.models.data, qqdata)
+}
+```
+
+```{r eval=FALSE}
+# OLD MPM
+# Fit the four models for the population level data
+  
+pop <- lapply(dist.used, function(x){fitdist(df$mpm, distr = x)})
+
+# Get data for qqplot at population level
+qqpop <- qqcomp(pop, plotstyle = "ggplot")$data
+names(qqpop) <- c("theoretical", "fdist", "empirical")
+
+# Save the population level parameters
+prms.df <- aracari::build_fits_df(pop) %>% 
+  mutate(param = param,
+         dist = dist,
+         data = "pop")
+
+# Repeating the process for data at the individual level
+inds <- unique(as.character(df$Bird_ID))
+
+# Fitting the four distributions for each individual and saving the parameters in a dataframe
+for(i in 1:length(inds)){
+  fit.df <- df %>% 
+    dplyr::filter(., Bird_ID == inds[i])
+  
+  fit <- lapply(dist.used, function(x){fitdist(fit.df$mpm, distr = x)})
+  
+  assign(paste(inds[i]), fit)
+  
+  fit.prms <- build_fits_df(fit) %>% 
+  mutate(param = param,
+         dist = dist,
+         data = inds[i])
+  
+  prms.df <- bind_rows(prms.df, fit.prms)
+}
+
+
+# Getting qqplot data for each individual
+inds.models.data <- NULL
+ind.models <- list(B1, B13, B19, B22, B28, B29, B3, B30, B49, B5, B7, B84)
+# ind.models <- list(B1, B13, B17, B19, B20, B22, B24, B28, B29, B3, B30, B49, B5, B7, B84)
+chr.models <- inds
+for(i in 1:length(chr.models)){
+  x <- ind.models[[i]]
+  
+  qqdata <- qqcomp(x, plotstyle = "ggplot")$data %>% 
+    mutate(data = chr.models[i])
+  names(qqdata) <- c("theoretical", "fdist", "empirical", "individual")
+  inds.models.data <- bind_rows(inds.models.data, qqdata)
+}
+```
+
+```{r ind_QQplots, fig.width=12, fig.height=5}
+
+qqpop %>% 
+  mutate(individual = "POPULATION") %>% 
+  ggplot(., aes(x = theoretical, y = empirical, color = fdist)) +
+  facet_wrap(~individual) +
+  #coord_equal() +
+  geom_point(shape = 16, alpha = 0.8, size = 4) +
+  geom_abline(intercept = 0, slope = 1) +
+  labs(x = "Model Quantiles",
+         y = "Empirical Quantiles") +
+  #scale_color_viridis_d() +
+  scale_color_brewer(palette = "Spectral", name = "Distribution") +
+  theme(legend.position = c(0.8, 0.2)) +
+  NULL -> a
+
+inds.models.data%>% 
+  ggplot(., aes(x = theoretical, y = empirical, color = fdist)) +
+  #facet_grid(individual~fdist) +
+  facet_wrap(~individual)+
+    geom_point(shape = 16, alpha = 0.8, size = 3) +
+    geom_abline(intercept = 0, slope = 1) +
+    labs(x = "Model Quantiles",
+         y = "Empirical Quantiles") +
+  #scale_color_viridis_d() +
+  scale_color_brewer(palette = "Spectral") +
+  theme(legend.position = "none") +
+  guides(color = guide_legend(title = "Distribution")) +
+  #coord_equal() +
+  NULL -> b
+
+plot_grid(a,b, rel_widths = c(1,2), labels = "AUTO")
 
 ```
 
