@@ -42,6 +42,12 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
   
   The moveHMM package allows for fitting hmm models to different time series, which can come from different individuals, assuming that all individuals share the same movement models, meaning the same distributions and parameters for step length and angle. This is referred to as 'complete pooling' [@langrock2012flexible, @michelot2016movehmm], but there is no current implementation for fitting HMMs to highly irregular and noisy tracking data, that explicitly incorporates variability among individuals. In this paper, we would like to show the effects of incorporating individual variability under a HMM framework that allows for variation not only in parameter values associated to udnerlying model distributions of step length and angle, but also on overall distribution function.
 
+
+# Notes on March 17, 2021
+
+So, one of the main questions I have is that I am trying to decipher animal paths yet it seems like most animal movement ecologists are trying to figure out behavioral states out of movement data, which is not my focus. 
+Reading the [@langrock2012flexible] paper. 
+
 # References
 
 
