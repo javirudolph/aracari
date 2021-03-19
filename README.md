@@ -17,6 +17,8 @@ Access the
     paper](https://javirudolph.github.io/aracari/movement_paper/rudolph_ch2.html)  
   - [distributions
     paper](https://javirudolph.github.io/aracari/distributions_paper/rudolph_distributions.html)
+      - [info on the
+        data](https://javirudolph.github.io/aracari/distributions_paper/format_raw_dat.html)
 
 -----
 
