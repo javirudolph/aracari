@@ -130,7 +130,8 @@ if(focus == "m15"){
 
 The reasoning behind this, is that distances between locations can be used later on to describe variation in step length when simulating animal movement under simple models such as random walk.
 
-### I'll go first with just the distances between locations, might switch to net displacement or net squared displacement later. 
+### MPM: meters per minute
+Due to the variation in time between consecutive locations, we scaled the step lengths to displacement in one minute.
 **Visualize the variation and distribution of these distances between locations**  
 
 ```{r}
