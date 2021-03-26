@@ -3,13 +3,41 @@ title: "Variation in distance between consecutive animal locations"
 abstract: |
   This should be the abstract
 output:
-  html_document:
-    df_print: paged
   word_document:
     reference_docx: docx_ref.docx
+  html_document:
+    df_print: paged
 bibliography: aracari_refs.bib
 csl: ecology-letters.csl
 ---
+
+# Introduction
+   Movement is a fundamental ecological process, critical to an animal's biology and it's interactions with the environment. The study of animal movement tends to focus on four basic mechanistic questions: the why, when, where, and how an animal moves, and these questions can be answered at the scales of individuals or populations. A general framework for movement ecology that allows to link movement patterns and processes, starts with a focus on movement itself and the individual's internal state, navigation capacity, motion capacity, and responses to external factors [@nathan2008movement]. The overall goal of studying movement seeks to find the linkages between the causes and mechanisms of animal movement, that result in spatiotemporal patterns that feed back into various ecological and evolutionary processes. Some of these approaches involve separating different movement patterns into behavioral states, with each state having an associated set of parameters that determine that specific movement pattern[@langrock2012flexible]. 
+ 
+  Although there is variation in animal movement at the individual scale, the general focus has been on understanding the typical movement patterns, built around average measures at population levels, with the simplest approach assuming model parameters are the same across individuals, known as 'complete pooling' [@langrock2012flexible]. This focus on generality has driven to a lack of frameworks for understanding variation, how it is maintained, and the consequences of this variation across populations, communities, and ecosystems. Some alternatives have been considered to incorporate individual variation with 'no pooling' or 'partial pooling' approaches, where each or some individuals have their own set of parameters [@patterson2009classifying, @jonsen2006robust], however a high number of parameters quickly limits applications to high levels of individual variation. Recent calls for incorporating individual variation in movement [@snell2019consequences, @shaw2020causes] have pushed for the need to develop theory that explores different types of variation in movement patterns to understand its consequences across ecological organizational levels. In particular, when considering species interactions, incorporating individual variation becomes essential to understand how positive or negative feedback loops play into the maintenance of variation in movement as individuals respond to external factors in their environment [@shaw2020causes]. 
+  
+**Could I find anything pre HMMs of SSMs? Wondering what people could do before? And wondering this because we have broken up tracking periods, not continuous ones**  
+Seems like I need to focus more on random walks
+  
+Assume weibull distributions for step length and wrapped cauchy distributions for the turning angles [@langrock2012flexible], but they tried Gamma and von Mises, respectively, but got outperformed by AIC. Used negative binomial for the state dwell times. 
+  
+  
+  
+# Methods
+Describe the data collection from the animov outline. 
+Add a section that describes the limitations for this telemetry data. 
+From book chapter: Attached radio-transmitters at the base of the central tail feathers. Toucan locations measured by triangulation using receivers and hand-held two-element Yagi antennas. 
+Tracking periods laster 4-5 hours with individual birds located every 15 minutes. The 15 minute interval to ensure locations within the time frame of seed passage or regurgitation, which are expected to be longer than 15 minutes.
+
+"Location accuracy using radio telemetry may be reduced in tropical forests... conservative distance categories of 100-m increments to beteter represent precision. Time categories: 15, 30, 60, 90 minutes. Then calculated probability of movements made within each distance category within each time category, summed accross each time category to give a final probability for each distance category."
+
+"Distances travelled per movement bout ranged from 0 to >2000m. Strong leptokurtic distributions of movements with most being <300m. Longest recorded movement for Pluricinctus is 3665m (recorded in 30 minutes)
+
+From each of the locations for the twelve individuals, we calculated turning angles (in radians) between subsequent directions, and the associated Euclidean step lengths in meters.
+
+Evaluating models with their individual-specific counterparts, using AIC or BIC. In individual-specific models the AIC results from the joint likelihood of the individual-specific models.     
+
+Consider incorporating NAs for missed observations so we keep the regular 15 minute time interval.
 
 ```{r setup, include=FALSE}
 # knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
