@@ -23,7 +23,16 @@ Seems like I need to focus more on random walks
   
 Assume weibull distributions for step length and wrapped cauchy distributions for the turning angles [@langrock2012flexible], but they tried Gamma and von Mises, respectively, but got outperformed by AIC. Used negative binomial for the state dwell times. 
   
-Random walks used broadly in biology to characterize animal and cell movement. [@codling2008random]
+Random walks used broadly in biology to characterize animal and cell movement. Describes que commonly used distributions for angles: von Mises, wrapped normal and wrapped Cauchy distributions. [@codling2008random]
+- IDEA: so maybe use these distributions for the angles. We might see that there is not much difference in angle movement across individuals? They all tend to move forward perhaps, or something like that, and where the real differences are is in the distances. 
+- Also might be intriguing to incorporate the time as a set of multiple random walks? or repeats the velocity value for that number of minutes. Maybe just using a correlated random walk, which takes into account short-term correlations in the direction of movement?
+  - Codling describes this as a velocity jump process, since the markov process is the walker's velocity rather than the location. Details at the end of page 7. 
+  - We consider the individuals moving in space at a constant speed $\nu$, and at each time step $\tau$ each individual changes direction and moves a distance $\delta$ in a new direction (with probability $r=\lambda\tau$), or moves a distance $\delta$ in the previous direction (with probability $q=1-\lambda\tau$). Hence, turning events occur as a Poisson process with rate $\lambda$. **This is textual from paper, so modify** Their focus is also on multiple individuals at the same time, and the density of individuals at a given time and location.
+    - In my case, the distance $\delta$ would also be randomly sampled, or this are the velocities I suppose. So, perhaps it is constant speed, and the distance is actually times to account for 15, 30, etc minutes based on the data. 
+  
+
+
+As in other papers. Note that we adopt the convention of using upper case letters for random variables and lower case letters for possible numerical values of these random variables. 
   
 # Methods
 Describe the data collection from the animov outline. 
