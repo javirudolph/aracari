@@ -16,12 +16,14 @@ csl: ecology-letters.csl
  
   Although there is variation in animal movement at the individual scale, the general focus has been on understanding the typical movement patterns, built around average measures at population levels, with the simplest approach assuming model parameters are the same across individuals, known as 'complete pooling' [@langrock2012flexible]. This focus on generality has driven to a lack of frameworks for understanding variation, how it is maintained, and the consequences of this variation across populations, communities, and ecosystems. Some alternatives have been considered to incorporate individual variation with 'no pooling' or 'partial pooling' approaches, where each or some individuals have their own set of parameters [@patterson2009classifying, @jonsen2006robust], however a high number of parameters quickly limits applications to high levels of individual variation. Recent calls for incorporating individual variation in movement [@snell2019consequences, @shaw2020causes] have pushed for the need to develop theory that explores different types of variation in movement patterns to understand its consequences across ecological organizational levels. In particular, when considering species interactions, incorporating individual variation becomes essential to understand how positive or negative feedback loops play into the maintenance of variation in movement as individuals respond to external factors in their environment [@shaw2020causes]. 
   
+  
+  
 **Could I find anything pre HMMs of SSMs? Wondering what people could do before? And wondering this because we have broken up tracking periods, not continuous ones**  
 Seems like I need to focus more on random walks
   
 Assume weibull distributions for step length and wrapped cauchy distributions for the turning angles [@langrock2012flexible], but they tried Gamma and von Mises, respectively, but got outperformed by AIC. Used negative binomial for the state dwell times. 
   
-  
+Random walks used broadly in biology to characterize animal and cell movement. [@codling2008random]
   
 # Methods
 Describe the data collection from the animov outline. 
