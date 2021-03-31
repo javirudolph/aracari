@@ -38,7 +38,11 @@ Random walks used broadly in biology to characterize animal and cell movement. D
   
 # Kareiva Shigesada paper [@kareiva1983analyzing]
 
-We focus here on developing a process to analyze animal movement sequences based on movement lengths, or step lengths, and turning angle probability distributions. Following the methods of Kareiva and Shigesada [-@kareiva1983analyzing], we assume the movement is a correlated random walk and derive expected square displacements associated to a number of consecutive moves under various probability distribution models. 
+We focus here on developing a process to analyze animal movement sequences based on movement lengths, or step lengths, and turning angle probability distributions. Following the methods of Kareiva and Shigesada [-@kareiva1983analyzing], we assume the movement is a correlated random walk and derive expected square displacements associated to a number of consecutive moves under various probability distribution models. Unlike other studies which focus on deciphering the underlying behaviors from animal movement data, our focus was to uncover potential differences between individuals and how these differences can be obscured when modeling population-level animal movement.
+
+"We know these simple correlated random walks, or simple movement models might not be enough to describe net displacements under more complex processes, for which developments in higher order markov processes show to be promising. However, our goal in this study was to use a simpler model and focus on potential differences when analyzing complete pooling versus no pooling data. In the context of animal-mediated seed dispersal, understanding these indivdiual level differences can help us describe and characterize the implications that different animals may have over spatial distributions of plant populations, and thus identify potential dispersers with higher or more importance, particularly when associated to long-distance seed dispersal events."
+
+A simple correlated random walk, which involves a directional correlation between successive step movement (coddling2008)
 
 As in other papers. Note that we adopt the convention of using upper case letters for random variables and lower case letters for possible numerical values of these random variables. 
   
