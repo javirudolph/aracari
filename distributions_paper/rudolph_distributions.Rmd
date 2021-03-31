@@ -40,7 +40,12 @@ Random walks used broadly in biology to characterize animal and cell movement. D
 
 We focus here on developing a process to analyze animal movement sequences based on movement lengths, or step lengths, and turning angle probability distributions. Following the methods of Kareiva and Shigesada [-@kareiva1983analyzing], we assume the movement is a correlated random walk and derive expected square displacements associated to a number of consecutive moves under various probability distribution models. Unlike other studies which focus on deciphering the underlying behaviors from animal movement data, our focus was to uncover potential differences between individuals and how these differences can be obscured when modeling population-level animal movement.
 
+[@kareiva1983analyzing] - approximating displacements by connecting a series of straight lines, and thus summarize animal movement based on parameters for movement length and turning angle. 
+*Would be interesting to add a figure with what I am actually analyzing. So, visually show how the gps locations get turned into straight lines, and angles, with an associated time interval. Or we could just multiply everything? So have it all for 15 minute intervals, and then repeat the ones that went on longer, perhaps set a limit for 60 minutes?*
+
 "We know these simple correlated random walks, or simple movement models might not be enough to describe net displacements under more complex processes, for which developments in higher order markov processes show to be promising. However, our goal in this study was to use a simpler model and focus on potential differences when analyzing complete pooling versus no pooling data. In the context of animal-mediated seed dispersal, understanding these indivdiual level differences can help us describe and characterize the implications that different animals may have over spatial distributions of plant populations, and thus identify potential dispersers with higher or more importance, particularly when associated to long-distance seed dispersal events."
+
+probabilistic rules of movement. 
 
 A simple correlated random walk, which involves a directional correlation between successive step movement (coddling2008)
 
@@ -93,6 +98,37 @@ aracari_df %>%
   group_by(id) %>% 
   tally()
 
+aracari_df %>% 
+  mutate(tmin = dt/60,
+         mpm = dist/tmin) %>% 
+  drop_na(tmin) %>% 
+  filter(tmin == 15) %>% 
+  group_by(id) %>% 
+  tally() %>% 
+  filter(n >=20)
+
+```
+
+
+```{r}
+focus <- "dist15"
+
+df <- aracari_df %>%
+  mutate(tmin = dt/60,
+         mpm = dist/tmin,
+         Bird_ID = paste0("B", id),
+         focus = mpm) %>% 
+  drop_na(tmin) %>% 
+  filter(tmin == 15) %>% 
+  dplyr::filter(dist != 0) %>% 
+  group_by(id) %>%
+  filter(., n() >= 20) %>%
+  ungroup()
+  
+  dist.used <- c( "exp", "gamma", "weibull", "lnorm")
+  param <- c("rate", "shape", "rate", "shape", "scale", "meanlog", "sdlog")
+  dist <- c("exp", "gamma", "gamma", "weibull", "weibull", "lnorm", "lnorm")
+  kpars <- c(1, 2, 2, 2, 2, 2, 2)
 ```
 
 ```{r}
