@@ -14,7 +14,7 @@ Our main hypothesis is about the incorporation of variation in animal movement a
 
 # Parameterization
 
-We focused our study on the many-banded araçari (*Pterglossus pluricinctus*), a small toucan, and its role as a frugivore of the *Virola flexuosa* tree. A subset of animal movement data collected in a previous study [@holbrook_home_2011] was selected and used towards our models and simulations. In this previous study, araçari home ranges, average movement distances, patterns and movement rates were estimated for tracked birds over a period of four years, from 2001 to 2005, in the Ecuadorian Amazon rainforest. Further details on field methods can be found in Holbrook [-@holbrook_home_2011]. Although this previous study included two larger Ramphastids as well, we used data only from the many-banded araçari, because a higher number of recorded locations were available. In addition to this, the home range of this species was found to be the largest for all the species studied, and therefore it was better suited to study long-distance seed dispersal events.
+We focused our study on the many-banded araçari (*Pterglossus pluricinctus*), a small toucan, and its role as a frugivore of the *Virola flexuosa* tree. A subset of animal movement data collected in a previous study [@holbrook_home_2011] was selected and used towards our models and simulations. In this previous study, araçari home ranges, average movement distances, patterns and movement rates were estimated for tracked birds over a period of four years, from 2001 to 2005, in the Ecuadorian Amazon rainforest.   Further details on field methods can be found in Holbrook [-@holbrook_home_2011]. Although this previous study included two larger Ramphastids as well, we used data only from the many-banded araçari, because a higher number of recorded locations were available. In addition to this, the home range of this species was found to be the largest for all the species studied, and therefore it was better suited to study long-distance seed dispersal events.
 
 ### Animal movement probability distributions
 What data am I using for this parameterization? It is radiotracking data, and the information on continuous trajectories for each tracked bird, to scale those distances into number of meters moved per minute for each tracking segment. I consider a tracking segment as the distance moved between two continuous radio tracking detections. (Check Kimberly's paper), because here we are taking advantage of all the tracking data since there are different tracking interval times. Then, we used that data to fit the four models described above, and did it at the different organizational levels. We considered population level data, as all the data pooled from all individuals tracked, and fit the four distributions to that data to estimate parameters. At the individual level, we fit the four pdfs for the data in respect to each individual. For the family level data, we used only a subset of the total data set to include only individuals for which family level information existed. Because these are social individuals, they tend to move with their group and so we their movements may be correlated. We wanted to explore if there were any differences at the family group levels. We fit the four pdfs to the subset of this data, as the subset population level, and then fit each distribution to the data associated to each of the family groups. We used the parameters estimated from these fits to sample step sizes for our simulation models. We also evaluated the fit of each of these distributions visually through qq plots (found in appendix A), and further details on data organization and model fitting can be found in the online repository.
@@ -23,12 +23,6 @@ What data am I using for this parameterization? It is radiotracking data, and th
 ### Model selection? for the step size
 
 
-$$AIC{_{indlevel}} = 2 \cdot \sum \left ( number parameters \right ) + 2 \cdot \sum \left ( negative log likelihood \right )$$
-
-$$ AICc{_{indlevel}} =  AIC{_{indlevel}} + (2 \cdot \sum{nparams}  \cdot \left(\sum{nparams}+1\right)/\left(\sum{observations} - \left(\sum{nparams} - 1\right)\right)$$
-
-
-$$BIC_{indlevel} = \ln{\sum observations} \cdot \sum{number parameters} + 2\cdot \sum {negative log likelihood}$$
 
 
 
