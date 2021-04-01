@@ -3,10 +3,10 @@ title: "Variation in distance between consecutive animal locations"
 abstract: |
   This should be the abstract
 output:
-  html_document:
-    df_print: paged
   word_document:
     reference_docx: docx_ref.docx
+  html_document:
+    df_print: paged
 bibliography: aracari_refs.bib
 csl: ecology-letters.csl
 ---
@@ -81,7 +81,7 @@ $$BIC_{indlevel} = \ln{\sum observations} \cdot \sum{number parameters} + 2\cdot
 ```{r setup, include=FALSE}
 # knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 knitr::opts_chunk$set(message = FALSE, warning = FALSE, 
-                      eval=FALSE,
+                      #eval=FALSE,
                       echo = FALSE)
 
 ```
@@ -125,7 +125,7 @@ aracari_df %>%
 
 
 
-```{r}
+```{r eval=FALSE}
 focus <- "dist15"
 
 df <- aracari_df %>%
@@ -146,14 +146,14 @@ df <- aracari_df %>%
   kpars <- c(1, 2, 2, 2, 2, 2, 2)
 ```
 
-```{r}
+```{r eval=FALSE}
 df %>% 
   ggplot(., aes(x = abs.angle)) +
   geom_histogram() +
   facet_wrap(~Bird_ID)
 ```
 
-```{r}
+```{r eval=FALSE}
 df %>%
   drop_na(rel.angle) %>%
   mutate(d.angle = ifelse(rel.angle > 0, rel.angle * 180/pi,
@@ -250,11 +250,6 @@ if(focus == "m15"){
 ```
 
 \newpage
-# Questions  
-* What is the distribution of distances between consecutive recorded locations? 
-* Are there differences between individuals or can we use the same distribution to describe these distances between two locations?
-
-The reasoning behind this, is that distances between locations can be used later on to describe variation in step length when simulating animal movement under simple models such as random walk.
 
 ### MPM: meters per minute
 Due to the variation in time between consecutive locations, we scaled the step lengths to displacement in one minute.
@@ -286,8 +281,7 @@ df %>%
 
 
 # Fit distribution  
-Useful resource to use the package [fitdistrplus](https://cran.r-project.org/web/packages/fitdistrplus/vignettes/FAQ.html)
-Also check [this](https://stackoverflow.com/questions/37152482/power-law-fitted-by-fitdistr-function-in-package-fitdistrplus). Should I do the opimization by hand?
+
 
 ```{r}
 
@@ -420,7 +414,7 @@ prms.df %>%
          best_aic = ifelse(deltaAIC == 0, "#fc0362", "black")) -> nice_prms
 ```
 
-So, for each individual, which is the best fitting distribution, based on AIC or BIC? This is the distribution with the lowest AIC or BIC score for each individual. These are basically the distributions that will be used for the mixed distribution model later on. 
+
 
 ```{r}
 nice_prms %>% 
@@ -435,7 +429,9 @@ nice_prms %>%
   mutate(agree = ifelse(deltaAIC == deltaBIC, paste(deltaBIC), paste(deltaBIC, "(BIC),", deltaAIC, "(AIC)"))) %>% 
   dplyr::select(., data, agree) %>% 
   rename(Individual = data,
-            `Best model` = agree)
+            `Best model` = agree) -> best_model
+
+knitr::kable(best_model)
 # 
 # 
 # nice_prms %>% 
@@ -592,9 +588,13 @@ gt_tbl %>%
     delta_BIC_across = html("&Delta; BIC<sub>across</sub>"),
     delta_AIC_within = html("&Delta; AIC<sub>within</sub>"),
     delta_AIC_across = html("&Delta; AIC<sub>across</sub>")
-  )
+  ) -> gt_table_bic
   
-  
+gtsave(gt_table_bic, "aic_bic_table.png")  
+```
+
+```{r eval=FALSE}
+knitr::include_graphics("aic_bic_table.png")
 ```
 
 ## Probability distribution parameters
@@ -735,7 +735,9 @@ plot_grid(p1, NULL, p2, p3, p4, p5, p6, p7, ncol = 2, align = "v") -> aic_grid
 plot_grid(bic_grid, aic_grid, ncol = 2)
 
 ```
-# References
+
+
+#References
 
 
 
