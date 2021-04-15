@@ -25,12 +25,14 @@ Animal telemetry data are collected by determining an animal's location at vario
 
 ## Velocity-based continuous-time model
 
-We developed an animal movement model with telemetry data in mind, thus we considered a movement trajectory as a series of consecutive recordings of an animal's location. To first set up the framework for a velocity-based model, we consider movement as the change in locations across two coordinates. We let $\mu(t)=[\mu_x(t), \mu_y(t)]'$ be the location of an individual at time $t$ in the coordinates $x$ and $y$. We establish $\boldsymbol{d}_{\Delta}(t) = \boldsymbol{\mu}(t+\Delta) - \boldsymbol{\mu}(t)$ as the difference in locations across both coordinates over $\Delta$ time units. The differential equation $d\boldsymbol{\mu}(t)=\boldsymbol{\nu}(t)dt$ represents the instantaneous velocity as $\Delta$ approaches zero under the assumption that $\boldsymbol\mu(t)$ is a continuous movement path [@johnson2008continuous]. Although the bivariate velocity process $\boldsymbol\nu(t) = [\nu_x(t), \nu_y(t)]'$ could be considered as cross-correlated between the axes, these correlated velocities produce strange directed travel and thus velocity in each coordinate is considered to be an independent process [@johnson2008continuous]. We decided instead, to focus on a velocity-based movement process using velocity scalars and turning angles. Under this framework, we define a scalar for instantaneous directionless velocity as $$\nu(t+\Delta) = \sqrt{(\mu_x(t+\Delta)-\mu_x(t))^2 + (\mu_y(t+\Delta) - \mu_y(t))^2}$$ and assume it to be a random variable with probability density $N \sim f(t|\boldsymbol\sigma)$ where $\boldsymbol\sigma$ represents the vector of parameters and determines the overall variability in velocity according to a specific probability density function $f(\boldsymbol\sigma)$. We assumed velocities to be independent of turning angles and chose to describe each with a separate probability density function, which is common practice when using movement lengths [@kareiva1983analyzing]. We calculated the turning angle $\theta(t+\Delta)$ describing the turning direction of the animal at time $t+\Delta$ and assumed the distribution of angles along a continuous movement path to be distributed with probability density $g(\theta)$.  For the specific case of a correlated random walk, the distribution of $g(\theta)$ can be used as a measure of correlation in the direction of movement, where if no correlation is present, the distribution is uniform [@kareiva1983analyzing].  As in other papers, we adopt the convention of using upper case letters for random variables and lower case letters for possible numerical values of these random variables.
+We developed an animal movement model with telemetry data in mind, thus we considered a movement trajectory as a series of consecutive recordings of an animal's location. To first set up the framework for a velocity-based model, we consider movement as the change in locations across two coordinates. We let $\boldsymbol{u}(t)=[u_x(t), u_y(t)]'$ be the location of an individual at time $t$ in the coordinates $x$ and $y$. We establish $\boldsymbol{d}_{\Delta}(t) = \boldsymbol{u}(t+\Delta) - \boldsymbol{u}(t)$ as the difference in locations across both coordinates over $\Delta$ time units. The differential equation $d\boldsymbol{u}(t)=\boldsymbol{v}(t)dt$ represents the instantaneous velocity as $\Delta$ approaches zero under the assumption that $\boldsymbol{u}(t)$ is a continuous movement path [@johnson2008continuous]. Although the bivariate velocity process $\boldsymbol{v}(t) = [u_x(t), u_y(t)]'$ could be considered as cross-correlated between the axes, these correlated velocities produce strange directed travel and thus velocity in each coordinate is considered to be an independent process [@johnson2008continuous]. We decided instead, to focus on a velocity-based movement process using velocity scalars and turning angles. Under this framework, we define a scalar for instantaneous directionless velocity as 
+$$v(t+\Delta) = \sqrt{(u_x(t+\Delta)-u_x(t))^2 + (u_y(t+\Delta) - u_y(t))^2}$$
+and assume $v(t)$ to be a random variable with probability density $h(\boldsymbol\sigma)$ where $\boldsymbol\sigma$ represents the vector of parameters and determines the overall variability in velocity. We assumed velocities to be independent of turning angles and chose to describe each with a separate probability density function, which is common practice when using movement lengths [@kareiva1983analyzing]. We calculated the turning angle $\theta(t+\Delta)$ describing the turning direction of the animal at time $t+\Delta$ and assumed the distribution of angles along a continuous movement path to be distributed with probability density $g(\theta)$.  For the specific case of a correlated random walk, the distribution of $g(\theta)$ can be used as a measure of correlation in the direction of movement, where if no correlation is present, the distribution is uniform [@kareiva1983analyzing].  As in other papers, we adopt the convention of using upper case letters for random variables and lower case letters for possible numerical values of these random variables.
 
-Using this velocity process and turning angles, the continuous-time location process $\boldsymbol\mu(t)$ can be obtained by integrating over the velocity process [@johnson2008continuous]:
-$$\boldsymbol\mu(t) = \boldsymbol\mu(0) + \int_0^t\boldsymbol\nu(u)du$$
+Using this velocity process and turning angles, the continuous-time location process $\boldsymbol{u}(t)$ can be obtained by integrating over the velocity process [@johnson2008continuous]:
+$$\boldsymbol{u}(t) = \boldsymbol{u}(0) + \int_0^t\boldsymbol{v}(\tau)d\tau$$
 where 
-$$\int_0^t\boldsymbol\nu(u)du =\int_0^t [\nu_x(u), \nu_y(u)]' du = \int_0^t [\sin(\theta_u), \cos(\theta_u)]' \cdot \nu(u)du$$
+$$\int_0^t\boldsymbol{v}(\tau)d\tau =\int_0^t [v_x(\tau), v_y(\tau)]' d\tau = \int_0^t [\sin(\theta_\tau), \cos(\theta_\tau)]' \cdot v(\tau)d\tau$$
 This integral describes the location at time $t$ as the sum of steps determined by velocities in each direction plus a starting location at time $t=0$.
 
 ## Model formulations
@@ -85,13 +87,25 @@ $$ AICc{_{indlevel}} =  AIC{_{indlevel}} + (2 \cdot \sum{nparams}  \cdot \left(\
 
 $$BIC_{indlevel} = \ln{\sum observations} \cdot \sum{number parameters} + 2\cdot \sum {negative log likelihood}$$
 
-# Example: Many-banded aracari movement  
+## Example: Many-banded aracari movement  
 
 We focused our study of individual variation on the many-banded araçari (*Pterglossus pluricinctus*), a small toucan in Yasuní National Park, Ecuador. We used previously collected data from studies using radiotelemetry to estimate home ranges and evaluate the potential seed dispersal distances for the *Virola flexuosa* tree [@holbrook2011home, holbrook2007usin]. Over a period of four years, from 2001 to 2005, *P. pluricinctus* individuals were captured and radio-transmitters were attached at the base of the central tail feathers [@holbrook2011home]. Toucan locations were estimated by triangulation using receivers and hand-held antennas, with tracking periods lasting between 4-5 hours per day, locating individual birds every 15 minutes. Further details on field methods can be found in Holbrook [-@holbrook2011home]. It is important to note that these methods did not track all birds simultaneously, and that although individual toucan locations were attempted every 15 minutes, this was not always possible, thus some successive locations have time categories associated to multiples of 15. Due to the nature of the data, and the irregular time lags between two consecutive locations, previous work calculated movement rate for each individual in order to take advantage of all the data despite variable time intervals [see Table 1 in @holbrook2011home]. Movement rates were calculated as the displacement in meters over the total length of the tracking period in minutes, where the tracking period was defined as the total active tracking time for a bird over the season when the data was collected. In other words, the movement rate could be defined as the average velocity of the animal over the entire tracking period, and thus there is one movement rate value associated to each individual bird. 
 In our case, we wanted to extend the use of the telemetry data and use all locations in a modeling framework. From the relocation data, we calculated animal trajectories by considering discrete steps between successive relocations of each animal [@turchin1998quantitative], quantifying their turning angle after each movement, estimating the Euclidean distance between successive relocations, and estimating the velocity for each segment as the displacement distance divided by the length of the time interval. We used the package 'adehabitatLT'[@adehabitatLT] in R [@Rlang] to calculate other descriptive parameters for each trajectory, such as turning angles and net squared displacement.  
 
 
+# Results
+## Fitting velocity probability density functions
 
+We compared the fit of the different probability distributions to animal movement rate data with Akaike's Information Criteria(AIC) and it's corrected version for small sample sizes (AICc), we also used the Bayesian Information Criteria (BIC) to compare these model fittings. At the population level, all information criteria concur and show that the lognormal model fits the data for movement rates the best, with the weibull model next, see table 1. However, as we visually assessed fit of these models with QQ plots and goodness-of-fit statistics (see the supplemet), the lognormal distribution model greatly overestimates the data towards the tail, whereas all the other models are significantly more conservative and tend to underestimate the data.
+
+
+At the individual level, we observed similar outcomes, where the lognormal distribution consistently overestimated the data, whereas the other distributions considered did not. When comparing across distribution models at the individual level, AIC and AICc showed the lognormal fit as the best one followed by the exponential model, whereas the BIC had the exponential as the best model followed by the lognormal.
+
+
+When comparing the population level models with the ones at the individual level, we found that information criteria differed. In the case of AIC and AICc, these consistently categorized the individual level models as best fitting when compared to their equivalent distribution model at the population level. However, BIC values show that only when we consider the exponential distribution model does the individual level do a better fitting than the population, with all other models having higher BIC values for the models that include individual heterogeneity.
+
+
+The mixed/heterogeneous model considered the best fitting distribution for each individual, and then selected given distribution to be included in the general model that includes movement for all the individuals and calculates the information criteria value. Using different information criteria yielded different best fitting models (see supplement) for each individual, which changed the distributions included on the overall model, therefore producing two different mixed/heterogeneous modelsd with individual variation, one associated to the AIC/AICc target distributions and a different one for BIC. However, all information criteria agreed on nine out of twelve individual models. In the case of AIC and AICc four individuals were better described by an exponential distribution, three by a Weibull distribution and five by a lognormal distribution. When using BIC as the model selection tool, seven individuals were described by an exponential distribution, four by a lognormal and one by the Weibull distribution. The overall AIC, AICc and BIC values were calculated for each of the mixed/heterogenous model and compared to the previous fits, where the first five results are shown in the following table (the rest can be seen in the supplement). This shows that only the lognormal model at the population level is better than the mixed/heterogeneous model by <2 BIC units.
 
 ```{r setup, include=FALSE}
 # knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
@@ -541,6 +555,73 @@ gtsave(gt_table_bic, "aic_bic_table.png")
 
 ```{r eval=FALSE}
 knitr::include_graphics("aic_bic_table.png")
+```
+
+
+```{r fig.height=10, fig.width=12}
+plot_params <- function(prm_data){
+  
+  prm_data%>% 
+  filter(., data == "POP") %>% 
+  dplyr::select(., estimate, sd) -> pop_est
+  
+  title <- paste(prm_data$dist, prm_data$param)
+  
+prm_data %>% 
+    filter(data != "POP") %>% 
+    ggplot(., aes(x = data, y = estimate)) +
+    #facet_grid(dist~param, switch = "y", scales = "free") +
+    # geom_point() +
+    # geom_errorbar(aes(ymin = estimate - sd, ymax = estimate + sd))+
+    geom_pointrange(aes(ymin = estimate - sd, ymax = estimate + sd)) +
+    geom_hline(aes(yintercept = pop_est$estimate), color = "blue") +
+    geom_hline(aes(yintercept = pop_est$estimate + pop_est$sd), color = "blue", linetype = "dashed") +
+    geom_hline(aes(yintercept = pop_est$estimate - pop_est$sd), color = "blue", linetype = "dashed") +
+    labs(x = "", y = "", subtitle = title) +
+    theme(legend.position = "none",
+          axis.text.x = element_text(angle = 45))
+}
+
+nice_prms %>% 
+  filter(., dist == "Exponential") %>% 
+  plot_params() +
+  #theme(axis.text.x = element_blank()) +
+  NULL-> p1
+
+nice_prms %>% 
+  filter(., dist == "Gamma" & param == "SHAPE") %>% 
+  plot_params() +
+  #theme(axis.text.x = element_blank()) +
+  NULL -> p2
+
+nice_prms %>% 
+  filter(., dist == "Gamma" & param == "RATE") %>% 
+  plot_params() +
+  #theme(axis.text.x = element_blank()) +
+  NULL -> p3
+
+nice_prms %>% 
+  filter(., dist == "Weibull" & param == "SHAPE") %>% 
+  plot_params() +
+  #theme(axis.text.x = element_blank()) +
+  NULL-> p4
+
+nice_prms %>% 
+  filter(., dist == "Weibull" & param == "SCALE") %>% 
+  plot_params() +
+  #theme(axis.text.x = element_blank()) +
+  NULL-> p5
+
+nice_prms %>% 
+  filter(., dist == "Lognormal" & param == "MEANLOG") %>% 
+  plot_params() -> p6
+
+nice_prms %>% 
+  filter(., dist == "Lognormal" & param == "SDLOG") %>% 
+  plot_params() ->p7
+
+
+plot_grid(p1, NULL, p2, p3, p4, p5, p6, p7, ncol = 2, align = "v")
 ```
 
 # References
