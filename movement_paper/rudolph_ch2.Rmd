@@ -3,10 +3,10 @@ title: "Individual Variation in Animal Movement"
 abstract: |
   This should be the abstract
 output:
-  word_document:
-    reference_docx: move_ref.docx
   html_document:
     df_print: paged
+  word_document:
+    reference_docx: move_ref.docx
 bibliography: aracari_movement.bib
 csl: ecology-letters.csl
 ---
@@ -20,7 +20,9 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
 
 \newpage
 # Introduction
-  
+   
+   Modeling animal telemetry data is is often necessary to  understand animal behavior, space use patterns, movement patterns, and responses to the environment. This type of data is usually analyzed with discrete time movement models, defining regular time steps between animal relocations. However, certain telemetry data such as that for marine animals, or data collected in environmental conditions that interfere with satellite signals, such as dense forest or cloud cover, can lack regular time intervals in data collection, causing these telemetry data to be observed irregularly. Although technological advances have allowed for new and more precise data collection methods, smaller tags, and data storage, some of the same problems remain and data with irregular time steps and high levels of uncertainty pose complex statistical problems [@albertsen2019generalizing]. The flexible framework of state-space models has been used as a valuable tool to model this irregularity and uncertainty, as state-space models allow for separation of the movement process from the sampling mechanism. State-space models are used to analyze time series of location observations, also referred to as movement pathways or trajectories [@jonsen2003meta]. In movement data, a state-space process allows us to couple a statistical model for the observation method, accounting for errors in sampling or detection, with a separate model for the movement dynamics which are determined by the effects of behavior or responses to the environment [@patterson2008state], thus modeling true animal locations directly with a stochastic process, and model observed locations as the conditional distribution given the true locations. Although the flexibility of a state-space framework allows for both continuous and discrete time, the applications of these approaches are still limited by number of observations, as they require good time series data and long enough animal trajectories with multiple consecutive relocations.
+   
 ## How does this relate to mutualisms and long-distance movements?
    Individuals will vary in their distances traveled while foraging or searching, directly influencing seed dispersal for the plant. Individuals with a tendency to travel larger distances or with higher probabilities of long-distance movements, will have a larger impact on plant population dynamics by increasing the plant's long-distance dispersal. These long-distance movements for seed-dispersing animals, or long-distance dispersal events for plants, can lead to spatial sorting of populations and range expansions [These are sources I haven't finished reading yet: Shine2011PNAS, Philips2008AmNat, Riotte-Lambert2019Trends.] This is also the case for pollination, where pollinator variability in movement patterns and long-distance movements has direct implications for pollination success and plant population persistence, specially in fragmented landscapes [need to find sources for this]. 
   Shaw makes references to how interspecific interactions can contribute to individual movement variation in parasite/pathogen systems. In my case, I would consider how presence of other competitive frugivores could influence this variation (Competition between toucans for the virola fruits and space. Larger aracari kick out the little ones [@holbrook2011home]). Shaw brings up how worse conditions can cause increased movement for searching better habitats and escape from these areas.

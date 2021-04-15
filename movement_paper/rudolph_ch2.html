@@ -59,6 +59,15 @@ if (!!window.navigator.userAgent.match("MSIE 8")) {
 !function(a){"use strict";a.matchMedia=a.matchMedia||function(a){var b,c=a.documentElement,d=c.firstElementChild||c.firstChild,e=a.createElement("body"),f=a.createElement("div");return f.id="mq-test-1",f.style.cssText="position:absolute;top:-100em",e.style.background="none",e.appendChild(f),function(a){return f.innerHTML='&shy;<style media="'+a+'"> #mq-test-1 { width: 42px; }</style>',c.insertBefore(e,d),b=42===f.offsetWidth,c.removeChild(e),{matches:b,media:a}}}(a.document)}(this),function(a){"use strict";function b(){u(!0)}var c={};a.respond=c,c.update=function(){};var d=[],e=function(){var b=!1;try{b=new a.XMLHttpRequest}catch(c){b=new a.ActiveXObject("Microsoft.XMLHTTP")}return function(){return b}}(),f=function(a,b){var c=e();c&&(c.open("GET",a,!0),c.onreadystatechange=function(){4!==c.readyState||200!==c.status&&304!==c.status||b(c.responseText)},4!==c.readyState&&c.send(null))};if(c.ajax=f,c.queue=d,c.regex={media:/@media[^\{]+\{([^\{\}]*\{[^\}\{]*\})+/gi,keyframes:/@(?:\-(?:o|moz|webkit)\-)?keyframes[^\{]+\{(?:[^\{\}]*\{[^\}\{]*\})+[^\}]*\}/gi,urls:/(url\()['"]?([^\/\)'"][^:\)'"]+)['"]?(\))/g,findStyles:/@media *([^\{]+)\{([\S\s]+?)$/,only:/(only\s+)?([a-zA-Z]+)\s?/,minw:/\([\s]*min\-width\s*:[\s]*([\s]*[0-9\.]+)(px|em)[\s]*\)/,maxw:/\([\s]*max\-width\s*:[\s]*([\s]*[0-9\.]+)(px|em)[\s]*\)/},c.mediaQueriesSupported=a.matchMedia&&null!==a.matchMedia("only all")&&a.matchMedia("only all").matches,!c.mediaQueriesSupported){var g,h,i,j=a.document,k=j.documentElement,l=[],m=[],n=[],o={},p=30,q=j.getElementsByTagName("head")[0]||k,r=j.getElementsByTagName("base")[0],s=q.getElementsByTagName("link"),t=function(){var a,b=j.createElement("div"),c=j.body,d=k.style.fontSize,e=c&&c.style.fontSize,f=!1;return b.style.cssText="position:absolute;font-size:1em;width:1em",c||(c=f=j.createElement("body"),c.style.background="none"),k.style.fontSize="100%",c.style.fontSize="100%",c.appendChild(b),f&&k.insertBefore(c,k.firstChild),a=b.offsetWidth,f?k.removeChild(c):c.removeChild(b),k.style.fontSize=d,e&&(c.style.fontSize=e),a=i=parseFloat(a)},u=function(b){var c="clientWidth",d=k[c],e="CSS1Compat"===j.compatMode&&d||j.body[c]||d,f={},o=s[s.length-1],r=(new Date).getTime();if(b&&g&&p>r-g)return a.clearTimeout(h),h=a.setTimeout(u,p),void 0;g=r;for(var v in l)if(l.hasOwnProperty(v)){var w=l[v],x=w.minw,y=w.maxw,z=null===x,A=null===y,B="em";x&&(x=parseFloat(x)*(x.indexOf(B)>-1?i||t():1)),y&&(y=parseFloat(y)*(y.indexOf(B)>-1?i||t():1)),w.hasquery&&(z&&A||!(z||e>=x)||!(A||y>=e))||(f[w.media]||(f[w.media]=[]),f[w.media].push(m[w.rules]))}for(var C in n)n.hasOwnProperty(C)&&n[C]&&n[C].parentNode===q&&q.removeChild(n[C]);n.length=0;for(var D in f)if(f.hasOwnProperty(D)){var E=j.createElement("style"),F=f[D].join("\n");E.type="text/css",E.media=D,q.insertBefore(E,o.nextSibling),E.styleSheet?E.styleSheet.cssText=F:E.appendChild(j.createTextNode(F)),n.push(E)}},v=function(a,b,d){var e=a.replace(c.regex.keyframes,"").match(c.regex.media),f=e&&e.length||0;b=b.substring(0,b.lastIndexOf("/"));var g=function(a){return a.replace(c.regex.urls,"$1"+b+"$2$3")},h=!f&&d;b.length&&(b+="/"),h&&(f=1);for(var i=0;f>i;i++){var j,k,n,o;h?(j=d,m.push(g(a))):(j=e[i].match(c.regex.findStyles)&&RegExp.$1,m.push(RegExp.$2&&g(RegExp.$2))),n=j.split(","),o=n.length;for(var p=0;o>p;p++)k=n[p],l.push({media:k.split("(")[0].match(c.regex.only)&&RegExp.$2||"all",rules:m.length-1,hasquery:k.indexOf("(")>-1,minw:k.match(c.regex.minw)&&parseFloat(RegExp.$1)+(RegExp.$2||""),maxw:k.match(c.regex.maxw)&&parseFloat(RegExp.$1)+(RegExp.$2||"")})}u()},w=function(){if(d.length){var b=d.shift();f(b.href,function(c){v(c,b.href,b.media),o[b.href]=!0,a.setTimeout(function(){w()},0)})}},x=function(){for(var b=0;b<s.length;b++){var c=s[b],e=c.href,f=c.media,g=c.rel&&"stylesheet"===c.rel.toLowerCase();e&&g&&!o[e]&&(c.styleSheet&&c.styleSheet.rawCssText?(v(c.styleSheet.rawCssText,e,f),o[e]=!0):(!/^([a-zA-Z:]*\/\/)/.test(e)&&!r||e.replace(RegExp.$1,"").split("/")[0]===a.location.host)&&("//"===e.substring(0,2)&&(e=a.location.protocol+e),d.push({href:e,media:f})))}w()};x(),c.update=x,c.getEmValue=t,a.addEventListener?a.addEventListener("resize",b,!1):a.attachEvent&&a.attachEvent("onresize",b)}}(this);
 };
 </script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
 <script>
 
 /**
@@ -1492,12 +1501,16 @@ window.onload = function() {
 };
 </script>
 
-<style type="text/css">code{white-space: pre;}</style>
 <style type="text/css">
-  pre:not([class]) {
-    background-color: white;
-  }
-</style>
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
 <script type="text/javascript">
 if (window.hljs) {
   hljs.configure({languages: []});
@@ -1520,32 +1533,7 @@ if (window.hljs) {
   }
 </style>
 
-<style type="text/css">
-h1 {
-  font-size: 34px;
-}
-h1.title {
-  font-size: 38px;
-}
-h2 {
-  font-size: 30px;
-}
-h3 {
-  font-size: 24px;
-}
-h4 {
-  font-size: 18px;
-}
-h5 {
-  font-size: 16px;
-}
-h6 {
-  font-size: 12px;
-}
-.table th:not([align]) {
-  text-align: left;
-}
-</style>
+
 
 
 
@@ -1555,10 +1543,6 @@ h6 {
   max-width: 940px;
   margin-left: auto;
   margin-right: auto;
-}
-code {
-  color: inherit;
-  background-color: rgba(0, 0, 0, 0.04);
 }
 img {
   max-width:100%;
@@ -1575,6 +1559,9 @@ button.code-folding-btn:focus {
 summary {
   display: list-item;
 }
+pre code {
+  padding: 0;
+}
 </style>
 
 
@@ -1587,7 +1574,6 @@ summary {
   max-height: 500px;
   min-height: 44px;
   overflow-y: auto;
-  background: white;
   border: 1px solid #ddd;
   border-radius: 4px;
 }
@@ -1651,7 +1637,7 @@ summary {
 
 
 
-<div class="fluid-row" id="header">
+<div id="header">
 
 
 
@@ -1667,17 +1653,10 @@ summary {
 <div style="page-break-after: always;"></div>
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
-<div id="why-do-we-study-animal-movement-and-what-can-it-tell-us" class="section level2">
-<h2>Why do we study animal movement and what can it tell us?</h2>
-<p>Movement is a fundamental ecological process, critical to an animal’s biology and it’s interactions with the environment. The study of animal movement tends to focus on four basic mechanistic questions: the why, when, where, and how, and these questions can be answered at the scales of individuals or populations. A general framework for movement ecology that allows to link movement patterns and processes, starts with a focus on movement itself and the individual’s internal state, navigation capacity, motion capacity, and responses to external factors <span class="citation">(Nathan <em>et al.</em> 2008)</span>. The overall goal of studying movement seeks to find the linkages between the causes and mechanisms of animal movement, that result in spatiotemporal patterns that feedback to various ecological and evolutionary processes.</p>
-</div>
-<div id="what-is-the-importance-of-individual-variation-in-animal-movement" class="section level2">
-<h2>What is the importance of individual variation in animal movement?</h2>
-<p>Although there is variation in animal movement at the individual scale, the general focus has been on understanding the typical movement patterns, built around average measures at population levels. This focus on generality has driven to a lack of frameworks for understanding variation, how it is maintained, and the consequences of this variation across populations, communities, and ecosystems. Although there have been recent calls for incorporating individual variation in movement <span class="citation">(Snell <em>et al.</em> 2019)</span> we still need to develop theory that explores different types of variation in movement patterns to understand its consequences across these levels. In particular, when considering species interactions, incorporating individual variation becomes essential to understand how positive or negative feedback loops play into the maintenance of variation in movement as individuals respond to external factors in their environment <span class="citation">(Shaw 2020)</span>.</p>
-</div>
+<p>Modeling animal telemetry data is is often necessary to understand animal behavior, space use patterns, movement patterns, and responses to the environment. This type of data is usually analyzed with discrete time movement models, defining regular time steps between animal relocations. However, certain telemetry data such as that for marine animals, or data collected in environmental conditions that interfere with satellite signals, such as dense forest or cloud cover, can lack regular time intervals in data collection, causing these telemetry data to be observed irregularly. Although technological advances have allowed for new and more precise data collection methods, smaller tags, and data storage, some of the same problems remain and data with irregular time steps and high levels of uncertainty pose complex statistical problems <span class="citation">(<span class="citeproc-not-found" data-reference-id="albertsen2019generalizing"><strong>???</strong></span>)</span>. The flexible framework of state-space models has been used as a valuable tool to model this irregularity and uncertainty, as state-space models allow for separation of the movement process from the sampling mechanism. State-space models are used to analyze time series of location observations, also referred to as movement pathways or trajectories <span class="citation">(<span class="citeproc-not-found" data-reference-id="jonsen2003meta"><strong>???</strong></span>)</span>. In movement data, a state-space process allows us to couple a statistical model for the observation method, accounting for errors in sampling or detection, with a separate model for the movement dynamics which are determined by the effects of behavior or responses to the environment <span class="citation">(Patterson <em>et al.</em> 2008)</span>, thus modeling true animal locations directly with a stochastic process, and model observed locations as the conditional distribution given the true locations. Although the flexibility of a state-space framework allows for both continuous and discrete time, the applications of these approaches are still limited by number of observations, as they require good time series data and long enough animal trajectories with multiple consecutive relocations.</p>
 <div id="how-does-this-relate-to-mutualisms-and-long-distance-movements" class="section level2">
 <h2>How does this relate to mutualisms and long-distance movements?</h2>
-<p>The specific case of seed dispersal is interesting because of the different levels and interactions happening. At the individual level, we focus on an individual bird consuming fruit and dispersing the seeds of the tree. How this particular individual moves across the landscape directly affects the dispersal for that specific tree and other trees from which it consumes fruit. At the same time, that individual has intra-individual variation in movement patterns associated to specific events in that individual’s lifetime, such as breeding and nesting, or even smaller scale variation related to different states, such as foraging or resting. Interspecific interactions come at play as multiple species find themselves together feeding from the same tress, and thus competing for these resources, while at the same time intraspecific interactions due to social behavior broadly determine general movement patterns. From the plant’s perspective, the variation in movement patterns across all dispersers will determine eventual plant population spatial spread and success. Individuals will vary in their distances traveled while foraging or searching, directly influencing seed dispersal for the plant. Individuals with a tendency to travel larger distances or with higher probabilities of long-distance movements, will have a larger impact on plant population dynamics by increasing the plant’s long-distance dispersal. These long-distance movements for seed-dispersing animals, or long-distance dispersal events for plants, can lead to spatial sorting of populations and range expansions [These are sources I haven’t finished reading yet: Shine2011PNAS, Philips2008AmNat, Riotte-Lambert2019Trends.] This is also the case for pollination, where pollinator variability in movement patterns and long-distance movements has direct implications for pollination success and plant population persistence, specially in fragmented landscapes [need to find sources for this]. Shaw makes references to how interspecific interactions can contribute to individual movement variation in parasite/pathogen systems. In my case, I would consider how presence of other competitive frugivores could influence this variation (Competition between toucans for the virola fruits and space. Larger aracari kick out the little ones <span class="citation">(Holbrook 2011)</span>). Shaw brings up how worse conditions can cause increased movement for searching better habitats and escape from these areas.</p>
+<p>Individuals will vary in their distances traveled while foraging or searching, directly influencing seed dispersal for the plant. Individuals with a tendency to travel larger distances or with higher probabilities of long-distance movements, will have a larger impact on plant population dynamics by increasing the plant’s long-distance dispersal. These long-distance movements for seed-dispersing animals, or long-distance dispersal events for plants, can lead to spatial sorting of populations and range expansions [These are sources I haven’t finished reading yet: Shine2011PNAS, Philips2008AmNat, Riotte-Lambert2019Trends.] This is also the case for pollination, where pollinator variability in movement patterns and long-distance movements has direct implications for pollination success and plant population persistence, specially in fragmented landscapes [need to find sources for this]. Shaw makes references to how interspecific interactions can contribute to individual movement variation in parasite/pathogen systems. In my case, I would consider how presence of other competitive frugivores could influence this variation (Competition between toucans for the virola fruits and space. Larger aracari kick out the little ones <span class="citation">(Holbrook 2011)</span>). Shaw brings up how worse conditions can cause increased movement for searching better habitats and escape from these areas.</p>
 </div>
 <div id="what-will-this-paper-actually-do-to-address-the-main-question" class="section level2">
 <h2>What will this paper actually do to address the main question?</h2>
@@ -1686,11 +1665,11 @@ summary {
 </div>
 <div id="methods" class="section level1">
 <h1>Methods</h1>
-<div id="overview-of-state-space-models-for-movement" class="section level2">
-<h2>Overview of state-space models for movement</h2>
-<p>State-space models provide a probabilistic framework that allow for prediction of future states of a system based from previous states, by coupling an observation model with an underlying mechanistic model. When extending this framework to movement ecology, we understand that the process model provides the mechanism for movement across space and time, and the observation model is related to the sampling process. In movement data, a state-space process allows us to couple a statistical model for the observation method, accounting for errors in sampling or detection, with a separate model for the movement dynamics which are determined by the effects of behavior or responses to the environment <span class="citation">(Patterson <em>et al.</em> 2008)</span>.</p>
-<p>The moveHMM package allows for fitting hmm models to different time series, which can come from different individuals, assuming that all individuals share the same movement models, meaning the same distributions and parameters for step length and angle. This is referred to as ‘complete pooling’ <span class="citation">(Michelot <em>et al.</em> 2016a)</span></p>
+<p>The moveHMM package allows for fitting hmm models to different time series, which can come from different individuals, assuming that all individuals share the same movement models, meaning the same distributions and parameters for step length and angle. This is referred to as ‘complete pooling’ <span class="citation">(Langrock <em>et al.</em> 2012)</span>, but there is no current implementation for fitting HMMs to highly irregular and noisy tracking data, that explicitly incorporates variability among individuals. In this paper, we would like to show the effects of incorporating individual variability under a HMM framework that allows for variation not only in parameter values associated to udnerlying model distributions of step length and angle, but also on overall distribution function.</p>
 </div>
+<div id="notes-on-march-17-2021" class="section level1">
+<h1>Notes on March 17, 2021</h1>
+<p>So, one of the main questions I have is that I am trying to decipher animal paths yet it seems like most animal movement ecologists are trying to figure out behavioral states out of movement data, which is not my focus. Reading the <span class="citation">(Langrock <em>et al.</em> 2012)</span> paper.</p>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1 class="unnumbered">References</h1>
@@ -1701,23 +1680,11 @@ summary {
 <div id="ref-langrock2012flexible">
 <p>Langrock, R., King, R., Matthiopoulos, J., Thomas, L., Fortin, D. &amp; Morales, J.M. (2012). Flexible and practical modeling of animal telemetry data: Hidden markov models and extensions. <em>Ecology</em>, 93, 2336–2342.</p>
 </div>
-<div id="ref-moveHMM">
-<p>Michelot, T., Langrock, R. &amp; Patterson, T.A. (2016a). MoveHMM: An r package for the statistical modelling of animal movement data using hidden markov models. <em>Methods in Ecology and Evolution</em>, 7, 1308–1315.</p>
-</div>
 <div id="ref-michelot2016movehmm">
-<p>Michelot, T., Langrock, R. &amp; Patterson, T.A. (2016b). MoveHMM: An r package for the statistical modelling of animal movement data using hidden markov models. <em>Methods in Ecology and Evolution</em>, 7, 1308–1315.</p>
-</div>
-<div id="ref-nathan2008movement">
-<p>Nathan, R., Getz, W.M., Revilla, E., Holyoak, M., Kadmon, R. &amp; Saltz, D. <em>et al.</em> (2008). A movement ecology paradigm for unifying organismal movement research. <em>Proceedings of the National Academy of Sciences</em>, 105, 19052–19059.</p>
+<p>Michelot, T., Langrock, R. &amp; Patterson, T.A. (2016). MoveHMM: An r package for the statistical modelling of animal movement data using hidden markov models. <em>Methods in Ecology and Evolution</em>, 7, 1308–1315.</p>
 </div>
 <div id="ref-patterson2008state">
 <p>Patterson, T.A., Thomas, L., Wilcox, C., Ovaskainen, O. &amp; Matthiopoulos, J. (2008). State–space models of individual animal movement. <em>Trends in ecology &amp; evolution</em>, 23, 87–94.</p>
-</div>
-<div id="ref-shaw2020causes">
-<p>Shaw, A.K. (2020). Causes and consequences of individual variation in animal movement. <em>Movement ecology</em>, 8, 1–12.</p>
-</div>
-<div id="ref-snell2019consequences">
-<p>Snell, R.S., Beckman, N.G., Fricke, E., Loiselle, B.A., Carvalho, C.S. &amp; Jones, L.R. <em>et al.</em> (2019). Consequences of intraspecific variation in seed dispersal for plant demography, communities, evolution and global change. <em>AoB Plants</em>, 11, plz016.</p>
 </div>
 </div>
 </div>
@@ -1731,7 +1698,7 @@ summary {
 
 // add bootstrap table styles to pandoc tables
 function bootstrapStylePandocTables() {
-  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
 }
 $(document).ready(function () {
   bootstrapStylePandocTables();
@@ -1749,7 +1716,7 @@ $(document).ready(function () {
 
 $(document).ready(function () {
   $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
+    $(this).parent().toggleClass('nav-tabs-open');
   });
 });
 </script>
