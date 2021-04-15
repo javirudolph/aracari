@@ -36,45 +36,8 @@ $$\int_0^t\boldsymbol{v}(\tau)d\tau =\int_0^t [v_x(\tau), v_y(\tau)]' d\tau = \i
 This integral describes the location at time $t$ as the sum of steps determined by velocities in each direction plus a starting location at time $t=0$.
 
 ## Model formulations
-  
-Assume weibull distributions for step length and wrapped cauchy distributions for the turning angles [@langrock2012flexible], but they tried Gamma and von Mises, respectively, but got outperformed by AIC. Used negative binomial for the state dwell times. 
-  
-Random walks used broadly in biology to characterize animal and cell movement. Describes que commonly used distributions for angles: von Mises, wrapped normal and wrapped Cauchy distributions. [@codling2008random]
-- IDEA: so maybe use these distributions for the angles. We might see that there is not much difference in angle movement across individuals? They all tend to move forward perhaps, or something like that, and where the real differences are is in the distances. 
-- Also might be intriguing to incorporate the time as a set of multiple random walks? or repeats the velocity value for that number of minutes. Maybe just using a correlated random walk, which takes into account short-term correlations in the direction of movement?
-  - Codling describes this as a velocity jump process, since the markov process is the walker's velocity rather than the location. Details at the end of page 7. 
-  - We consider the individuals moving in space at a constant speed $\nu$, and at each time step $\tau$ each individual changes direction and moves a distance $\delta$ in a new direction (with probability $r=\lambda\tau$), or moves a distance $\delta$ in the previous direction (with probability $q=1-\lambda\tau$). Hence, turning events occur as a Poisson process with rate $\lambda$. **This is textual from paper, so modify** Their focus is also on multiple individuals at the same time, and the density of individuals at a given time and location.
-    - In my case, the distance $\delta$ would also be randomly sampled, or this are the velocities I suppose. So, perhaps it is constant speed, and the distance is actually times to account for 15, 30, etc minutes based on the data. 
-    - Remember too that this velocity $\nu$ is actually the distance over time $\delta/\tau$
-  - Pg11. A correlated random walk, CRW, consisting of a series of independet draws from a step length PDF and a turning angle PDF for each step, a first order markov process.
-    - using mean square displacement. The effect of step length variability on MSD can be quite significant.
-    - MSD being of interest to ecologists due to its relation with the diffusion coefficient D. equations 2.13 and 2.14
-** Should write a conclusion about this paper**
-  
 
-
-
-[@kareiva1983analyzing] - approximating displacements by connecting a series of straight lines, and thus summarize animal movement based on parameters for movement length and turning angle. Using square displacement instead of linear displacement, because it's expectation can be calculated from turning angles and step lengths. Assume that the length of each move and the turning angle are independent random variables, each with its own probability density. Assume that a series of moves can be represented by random draws from these probability densities, and since each random draw is independent from the preceding ones, the random draw process is a first order markov chain. The result is a correlated random walk, and the distribution g(theta) gives a measure of the degree to which the angles of movement are correlated.
-*Would be interesting to add a figure with what I am actually analyzing. So, visually show how the gps locations get turned into straight lines, and angles, with an associated time interval. Or we could just multiply everything? So have it all for 15 minute intervals, and then repeat the ones that went on longer, perhaps set a limit for 60 minutes?*
-
-
-probabilistic rules of movement. 
-
-
-
-
-  
-
-
-
-
-
-"Location accuracy using radio telemetry may be reduced in tropical forests... conservative distance categories of 100-m increments to better represent precision. Time categories: 15, 30, 60, 90 minutes. Then calculated probability of movements made within each distance category within each time category, summed across each time category to give a final probability for each distance category."
-
-"Distances travelled per movement bout ranged from 0 to >2000m. Strong leptokurtic distributions of movements with most being <300m. Longest recorded movement for Pluricinctus is 3665m (recorded in 30 minutes)" *this is a corresponding velocity of `r 3665/30` meters per minute.
-
-
-Evaluating models with their individual-specific counterparts, using AIC or BIC. In individual-specific models the AIC results from the joint likelihood of the individual-specific models. 
+Here describe the nine different models which vary according to pooling level and use of a different probability density.
 
 ## Model evaluation using information criteria  
 
