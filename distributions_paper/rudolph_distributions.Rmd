@@ -34,55 +34,6 @@ $$\int_0^t\boldsymbol\nu(u)du =\int_0^t [\nu_x(u), \nu_y(u)]' du = \int_0^t [\si
 This integral describes the location at time $t$ as the sum of steps determined by velocities in each direction plus a starting location at time $t=0$.
 
 ## Model formulations
-
-## Model evaluation using information criteria  
-
-## Example: Many-banded aracari movement  
-
-We focused our study of individual variation on the many-banded araçari (*Pterglossus pluricinctus*), a small toucan in Yasuní National Park, Ecuador. We used previously collected data from studies using radiotelemetry to estimate home ranges and evaluate the potential seed dispersal distances for the *Virola flexuosa* tree [@holbrook2011home, holbrook2007usin]. Over a period of four years, from 2001 to 2005, *P. pluricinctus* individuals were captured and radio-transmitters were attached at the base of the central tail feathers [@holbrook2011home]. Toucan locations were estimated by triangulation using receivers and hand-held antennas, with tracking periods lasting between 4-5 hours per day, locating individual birds every 15 minutes. Further details on field methods can be found in Holbrook [-@holbrook2011home]. It is important to note that these methods did not track all birds simultaneously, and that although individual toucan locations were attempted every 15 minutes, this was not always possible, thus some successive locations have time categories associated to multiples of 15. Due to the nature of the data, and the irregular time lags between two consecutive locations, previous work calculated movement rate for each individual in order to take advantage of all the data despite variable time intervals [see Table 1 in @holbrook2011home]. Movement rates were calculated as the displacement in meters over the total length of the tracking period in minutes, where the tracking period was defined as the total active tracking time for a bird over the season when the data was collected. In other words, the movement rate could be defined as the average velocity of the animal over the entire tracking period, and thus there is one movement rate value associated to each individual bird. 
-In our case, we wanted to extend the use of the telemetry data and use all locations in a modeling framework. From the relocation data, we calculated animal trajectories by considering discrete steps between successive relocations of each animal [@turchin1998quantitative], quantifying their turning angle after each movement, estimating the Euclidean distance between successive relocations, and estimating the velocity for each segment as the displacement distance divided by the length of the time interval. We used the package 'adehabitatLT'[@adehabitatLT] in R [@Rlang] to calculate other descriptive parameters for each trajectory, such as turning angles and net squared displacement.
-
-
-
-
-# Results  
-The majority of trajectories obtained were regular, with 15 minute time lags between successive relocations, however, some relocations were gathered at different time intervals, making them irregular. To analyze all trajectories and compare their descriptive parameters, we decided to work under a velocity-based framework.
-
-<span style="color:red">For our analyses, we focused on toucans with a minimum of **20?** recorded locations, and we calculated turning angles (in radians), and the associated Euclidean step lengths in meters for each successive set of locations and turning directions. We worked under a velocity-based framework, and thus divided step lengths by the time interval during which they were recorded. This gave us a total of **600ish?** data points for turning angles and velocities.red</span>
-
-What do we consider a trajectory? The path followed by consecutive relocations during a tracking session. The tracking session for this data is the 4-5 hour period each day that they follow the bird. Then, the number of relocations for each trajectory varies from one to 26, with a mean of 4 relocations. This is a limitation of the data, since it's not easy to characterize a full trajectory of movement with such a small number of relocations in a trajectory. 
-
-Dealing with the issue of autocorrelation in this case: what does that mean? Or we just assume each step is independent from the others. Think I saw this in the Kareiva Shigesada paper. 
-```{r eval=FALSE}
-# For this to run I need to move the load of data and such higher up
-aracari_df %>%
-  group_by(id, burst) %>% 
-  tally() -> relocs 
-
-# Having a minimum number of relocations for "time series analysis" or something, fitting.
-relocs %>% 
-  filter(n >= 5) %>% 
-  distinct(id)
-
-
-relocs %>% 
-  ggplot(., aes(x = n, fill = id)) +
-  geom_histogram()
-summary(relocs$n)
-```
-
-
-```{r eval=FALSE}
-aracari_df %>% 
-  filter(R2n >0) %>% 
-  ggplot(., aes(x = R2n)) +
-  geom_histogram() +
-  facet_wrap(~id)
-```
-
-
-**Could I find anything pre HMMs of SSMs? Wondering what people could do before? And wondering this because we have broken up tracking periods, not continuous ones**  
-Seems like I need to focus more on random walks
   
 Assume weibull distributions for step length and wrapped cauchy distributions for the turning angles [@langrock2012flexible], but they tried Gamma and von Mises, respectively, but got outperformed by AIC. Used negative binomial for the state dwell times. 
   
@@ -121,9 +72,10 @@ probabilistic rules of movement.
 "Distances travelled per movement bout ranged from 0 to >2000m. Strong leptokurtic distributions of movements with most being <300m. Longest recorded movement for Pluricinctus is 3665m (recorded in 30 minutes)" *this is a corresponding velocity of `r 3665/30` meters per minute.
 
 
-Evaluating models with their individual-specific counterparts, using AIC or BIC. In individual-specific models the AIC results from the joint likelihood of the individual-specific models.     
+Evaluating models with their individual-specific counterparts, using AIC or BIC. In individual-specific models the AIC results from the joint likelihood of the individual-specific models. 
 
-Consider incorporating NAs for missed observations so we keep the regular 15 minute time interval.
+## Model evaluation using information criteria  
+
 
 
 $$AIC{_{indlevel}} = 2 \cdot \sum \left ( number parameters \right ) + 2 \cdot \sum \left ( negative log likelihood \right )$$
@@ -133,10 +85,18 @@ $$ AICc{_{indlevel}} =  AIC{_{indlevel}} + (2 \cdot \sum{nparams}  \cdot \left(\
 
 $$BIC_{indlevel} = \ln{\sum observations} \cdot \sum{number parameters} + 2\cdot \sum {negative log likelihood}$$
 
+# Example: Many-banded aracari movement  
+
+We focused our study of individual variation on the many-banded araçari (*Pterglossus pluricinctus*), a small toucan in Yasuní National Park, Ecuador. We used previously collected data from studies using radiotelemetry to estimate home ranges and evaluate the potential seed dispersal distances for the *Virola flexuosa* tree [@holbrook2011home, holbrook2007usin]. Over a period of four years, from 2001 to 2005, *P. pluricinctus* individuals were captured and radio-transmitters were attached at the base of the central tail feathers [@holbrook2011home]. Toucan locations were estimated by triangulation using receivers and hand-held antennas, with tracking periods lasting between 4-5 hours per day, locating individual birds every 15 minutes. Further details on field methods can be found in Holbrook [-@holbrook2011home]. It is important to note that these methods did not track all birds simultaneously, and that although individual toucan locations were attempted every 15 minutes, this was not always possible, thus some successive locations have time categories associated to multiples of 15. Due to the nature of the data, and the irregular time lags between two consecutive locations, previous work calculated movement rate for each individual in order to take advantage of all the data despite variable time intervals [see Table 1 in @holbrook2011home]. Movement rates were calculated as the displacement in meters over the total length of the tracking period in minutes, where the tracking period was defined as the total active tracking time for a bird over the season when the data was collected. In other words, the movement rate could be defined as the average velocity of the animal over the entire tracking period, and thus there is one movement rate value associated to each individual bird. 
+In our case, we wanted to extend the use of the telemetry data and use all locations in a modeling framework. From the relocation data, we calculated animal trajectories by considering discrete steps between successive relocations of each animal [@turchin1998quantitative], quantifying their turning angle after each movement, estimating the Euclidean distance between successive relocations, and estimating the velocity for each segment as the displacement distance divided by the length of the time interval. We used the package 'adehabitatLT'[@adehabitatLT] in R [@Rlang] to calculate other descriptive parameters for each trajectory, such as turning angles and net squared displacement.  
+
+
+
+
 ```{r setup, include=FALSE}
 # knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 knitr::opts_chunk$set(message = FALSE, warning = FALSE, 
-                      eval=FALSE,
+                      #eval=FALSE,
                       echo = FALSE)
 
 ```
@@ -157,23 +117,31 @@ theme_set(theme_bw())
 aracari_df <- readRDS("aracari_df.RDS")
 ```
 
-```{r eval=FALSE}
-# Which individuals will we conside? Need at least a certain number of data points to fit distributions
-# Don't remove any yet, just make sure you make it clear how many data points you have for each
-
+```{r}
 aracari_df %>% 
-  dplyr::filter(dist != 0) %>% 
-  group_by(id) %>% 
-  tally()
+  mutate(nu = dist/(dt/60)) %>% 
+  dplyr::select(id, nu, rel.angle, dt) %>% 
+  drop_na(nu) %>% 
+  mutate(B_id = paste0("B", id))-> df
 
-aracari_df %>% 
-  mutate(tmin = dt/60,
-         mpm = dist/tmin) %>% 
-  drop_na(tmin) %>% 
-  filter(tmin == 60) %>% 
+# Select individuals with at least 30 data points for velocity
+df %>% 
+  dplyr::select(id, nu) %>% 
   group_by(id) %>% 
   tally() %>% 
-  filter(n >=20)
+  filter(., n >= 30) %>% 
+  dplyr::pull(id) -> nu_id
+
+# Select individuals with 20 or 30? angles
+df %>% 
+  dplyr::select(id, rel.angle, dt) %>%
+  mutate(dt = dt/60) %>% 
+  drop_na(rel.angle) %>% 
+  #filter(., dt == 15) %>% 
+  group_by(id) %>% 
+  tally() %>% 
+  filter(., n >= 25) %>% 
+  dplyr::pull(id) -> angle_id
 
 ```
 
@@ -206,172 +174,88 @@ aracari_df %>%
 ```
 
 
-```{r eval=FALSE}
-focus <- "dist15"
 
-df <- aracari_df %>%
-  mutate(tmin = dt/60,
-         mpm = dist/tmin,
-         Bird_ID = paste0("B", id),
-         focus = mpm) %>% 
-  drop_na(tmin) %>% 
-  filter(tmin == 15) %>% 
-  dplyr::filter(dist != 0) %>% 
-  group_by(id) %>%
-  filter(., n() >= 20) %>%
-  ungroup()
-  
-  dist.used <- c( "exp", "gamma", "weibull", "lnorm")
-  param <- c("rate", "shape", "rate", "shape", "scale", "meanlog", "sdlog")
-  dist <- c("exp", "gamma", "gamma", "weibull", "weibull", "lnorm", "lnorm")
-  kpars <- c(1, 2, 2, 2, 2, 2, 2)
-```
+```{r}
 
-```{r eval=FALSE}
-df %>% 
-  ggplot(., aes(x = abs.angle)) +
-  geom_histogram() +
-  facet_wrap(~Bird_ID)
-```
-
-```{r eval=FALSE}
-df %>%
-  drop_na(rel.angle) %>%
+nu_df <- df %>% 
+  dplyr::filter(nu != 0,
+                id %in% nu_id) %>% 
   mutate(d.angle = ifelse(rel.angle > 0, rel.angle * 180/pi,
-                          rel.angle * 180/pi + 360)) %>%
+                          rel.angle * 180/pi + 360))
+  
+dist.used <- c( "exp", "gamma", "weibull", "lnorm")
+param <- c("rate", "shape", "rate", "shape", "scale", "meanlog", "sdlog")
+dist <- c("exp", "gamma", "gamma", "weibull", "weibull", "lnorm", "lnorm")
+kpars <- c(1, 2, 2, 2, 2, 2, 2)
+
+```
+
+
+\newpage
+Figure 1. Probability densities of velocities for each individual bird (gray lines) compared to the complete pooling of data (light blue).  
+
+```{r}
+nu_df %>%
+  ggplot(., aes((x = nu))) +
+  geom_line(aes(x = nu, group = id), stat = "density", alpha = 0.4) +
+  geom_line(stat = "density", color = "#1191d1", lwd = 1) +
+  geom_vline(xintercept = 0, color = "grey") +
+  geom_hline(yintercept = 0, color = "grey") +
+  labs(y = "Density", x = "Velocity in meters/minute") +
+  theme_classic()
+```
+
+Figure 2. Probability densities of turning angles in radians  
+
+```{r}
+nu_df %>% 
+  drop_na(rel.angle) %>% 
+  ggplot(., aes(x = rel.angle)) +
+  geom_line(aes(x =  rel.angle, group = id), stat = "density", alpha = 0.4) +
+  geom_line(stat = "density", color = "#1191d1", lwd = 1) +
+  geom_vline(xintercept = 0, color = "grey") +
+  geom_hline(yintercept = 0, color = "grey") +
+  labs(y = "Density", x = "Turning angle in radians")
+```
+
+Figure 3. Comparison between histograms of turning angles in degrees for individuals versus complete pooling of data.  
+
+```{r}
+p1_angles <- nu_df %>% 
+  drop_na(d.angle) %>% 
   ggplot(., aes(x = d.angle)) +
-  #facet_wrap(~id) +
   geom_histogram(color = "grey", fill = "grey") +
   coord_polar(theta = "x", start = -pi/2, direction = -1) +
   scale_x_continuous(breaks = seq(0, 360, 30), limits = c(0, 360)) +
   theme_minimal() +
   theme(axis.title = element_blank(),
         axis.text.y = element_blank(),
-        legend.position = "none")
-```
+        legend.position = "none") +
+  labs(title = "Complete pooling")
 
-```{r}
-# Create my focus variable and only for individuals with 30+ observations
+p2_angles <- nu_df %>% 
+  drop_na(d.angle) %>% 
+  ggplot(., aes(x = d.angle)) +
+  geom_histogram(color = "grey", fill = "grey") +
+  coord_polar(theta = "x", start = -pi/2, direction = -1) +
+  scale_x_continuous(breaks = seq(0, 360, 30), limits = c(0, 360)) +
+  theme_minimal() +
+  theme(axis.title = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position = "none") +
+  facet_wrap(~B_id) +
+  theme(axis.text = element_blank()) +
+  labs(title = "No pooling")
 
-# focus <- "dist"
-# focus <- "R2n"
- focus <- "mpm"
-# focus <- "m15"
-
-if(focus == "dist"){
-  df <- aracari_df %>%
-  dplyr::filter(dist != 0) %>%
-  group_by(id) %>%
-  filter(., n() >= 30) %>%
-  ungroup() %>%
-  dplyr::filter(dist != 0) %>% 
-    mutate(Bird_ID = paste0("B", id),
-           focus = dist)
-  
-  dist.used <- c("lnorm", "weibull", "cauchy")
-  param <- c("meanlog", "sdlog", "shape", "scale", "location", "scale")
-  dist <- c("lnorm", "lnorm", "weibull", "weibull", "cauchy", "cauchy")
-  kpars <- c(2, 2, 2, 2, 2, 2)
-}
-
-if(focus == "R2n"){
-  df <- aracari_df %>%
-  dplyr::filter(R2n != 0) %>%
-  group_by(id) %>%
-  filter(., n() >= 30) %>%
-  ungroup() %>%
-  dplyr::filter(R2n != 0) %>% 
-    mutate(Bird_ID = paste0("B", id),
-           focus = sqrt(R2n))
-  
-  dist.used <- c( "exp", "gamma", "weibull", "lnorm")
-  param <- c("rate", "shape", "rate", "shape", "scale", "meanlog", "sdlog")
-  dist <- c("exp", "gamma", "gamma", "weibull", "weibull", "lnorm", "lnorm")
-  kpars <- c(1, 2, 2, 2, 2, 2, 2)
-}
-
-if(focus == "mpm"){
-  df <- aracari_df %>% 
-  dplyr::filter(dist != 0) %>% 
-  group_by(id) %>%
-  filter(., n() >= 30) %>%
-  ungroup() %>%
-  mutate(tmin = dt/60,
-         mpm = dist/tmin,
-         Bird_ID = paste0("B", id),
-         focus = mpm) %>% 
-  dplyr::filter(., mpm != 0)
-  
-  dist.used <- c( "exp", "gamma", "weibull", "lnorm")
-  param <- c("rate", "shape", "rate", "shape", "scale", "meanlog", "sdlog")
-  dist <- c("exp", "gamma", "gamma", "weibull", "weibull", "lnorm", "lnorm")
-  kpars <- c(1, 2, 2, 2, 2, 2, 2)
-}
-
-if(focus == "m15"){
-  df <- aracari_df %>% 
-  dplyr::filter(dist != 0) %>% 
-  group_by(id) %>%
-  filter(., n() >= 30) %>%
-  ungroup() %>%
-  mutate(tmin = dt/60,
-         mpm = dist/tmin,
-         m15 = mpm*15,
-         Bird_ID = paste0("B", id),
-         focus = m15) %>% 
-  dplyr::filter(., m15 != 0)
-  
-  dist.used <- c( "exp", "gamma", "weibull", "lnorm")
-  param <- c("rate", "shape", "rate", "shape", "scale", "meanlog", "sdlog")
-  dist <- c("exp", "gamma", "gamma", "weibull", "weibull", "lnorm", "lnorm")
-  kpars <- c(1, 2, 2, 2, 2, 2, 2)
-}
-
+plot_grid(p1_angles, p2_angles)
 
 ```
-
-\newpage
-
-
-
-
-### MPM: meters per minute
-Due to the variation in time between consecutive locations, we scaled the step lengths to displacement in one minute.
-**Visualize the variation and distribution of these distances between locations**  
-
-```{r}
- df %>%
-  ggplot(., aes((x = focus))) +
-  geom_line(aes(x = focus, group = id), stat = "density", alpha = 0.4) +
-  geom_line(stat = "density", color = "#1191d1", lwd = 1) +
-  geom_vline(xintercept = 0, color = "grey") +
-  geom_hline(yintercept = 0, color = "grey") +
-  labs(y = "Density", x = paste(focus)) +
-  theme_classic()
-
-
-```
-
-```{r}
-df %>%
-  ggplot(., aes(x = focus)) +
-  facet_wrap(~id) +
-  geom_line(stat = "density") +
-  geom_vline(xintercept = 0, color = "grey") +
-  geom_hline(yintercept = 0, color = "grey") +
-  labs(y = "Density", x = paste(focus)) +
-  theme_classic()
-```
-
-
-# Fit distribution  
-
 
 ```{r}
 
 # Fit the four models for the population level data
   
-pop <- lapply(dist.used, function(x){fitdist(df$focus, distr = x)})
+pop <- lapply(dist.used, function(x){fitdist(nu_df$nu, distr = x)})
 
 # Get data for qqplot at population level
 qqpop <- qqcomp(pop, plotstyle = "ggplot")$data
@@ -396,15 +280,15 @@ prms.df <- build_fits_df(pop) %>%
          data = "pop")
 
 # Repeating the process for data at the individual level
-inds <- unique(as.character(df$Bird_ID))
+inds <- unique(as.character(nu_df$B_id))
 
 # Fitting the four distributions for each individual and saving the parameters in a dataframe
 ind.models <- NULL
 for(i in 1:length(inds)){
-  fit.df <- df %>% 
-    dplyr::filter(., Bird_ID == inds[i])
+  fit.df <- nu_df %>% 
+    dplyr::filter(., B_id == inds[i])
   
-  fit <- lapply(dist.used, function(x){fitdist(fit.df$focus, distr = x)})
+  fit <- lapply(dist.used, function(x){fitdist(fit.df$nu, distr = x)})
   
   ind.models[[i]] <- fit
   
@@ -432,11 +316,13 @@ for(i in 1:length(inds)){
 }
 ```
 
+Figure 4. QQplot fits of each distribution model to the velocity data  
+
 
 ```{r ind_QQplots, fig.width=12, fig.height=5}
 
 qqpop %>% 
-  mutate(individual = "POPULATION") %>% 
+  mutate(individual = "Complete Pooling") %>% 
   ggplot(., aes(x = theoretical, y = empirical, color = fdist)) +
   facet_wrap(~individual) +
   #coord_equal() +
@@ -467,7 +353,6 @@ inds.models.data%>%
 plot_grid(a,b, rel_widths = c(1,2), labels = "AUTO")
 
 ```
-
 ## Information criteria
 
 ```{r}
@@ -496,11 +381,7 @@ prms.df %>%
          deltaAICc = signif(AICc - min(AICc), 3)) %>% 
   mutate(best_bic = ifelse(deltaBIC == 0, "#ffaa00", "black"),
          best_aic = ifelse(deltaAIC == 0, "#fc0362", "black")) -> nice_prms
-```
 
-
-
-```{r}
 nice_prms %>% 
   filter(., str_detect(data, "B")) %>% 
   dplyr::select(dist, data, deltaAIC,
@@ -515,26 +396,9 @@ nice_prms %>%
   rename(Individual = data,
             `Best model` = agree) -> best_model
 
-knitr::kable(best_model)
-# 
-# 
-# nice_prms %>% 
-#   filter(., data != "pop") %>% 
-#   dplyr::select(dist, data, deltaAIC,
-#                 #deltaAICc,
-#                 deltaBIC) %>% 
-#   distinct() %>% 
-#   pivot_longer(., cols = starts_with("delta"), names_to = "ic", values_to = "value") %>% 
-#   filter(value > 0 & value <= 2) %>%  
-#   pivot_wider(., names_from = ic, values_from = dist) %>% 
-#   mutate(agree = ifelse(deltaAIC == deltaBIC, paste(deltaBIC), paste(deltaBIC, "(BIC),", deltaAIC, "(AIC)"))) %>% 
-#   dplyr::select(., data, agree) %>% 
-#   rename(Individual = data,
-#             `Best model` = agree)
-
+# knitr::kable(best_model)
 ```
 
-However, it is not as straight-forward since there are multiple competing models for certain individuals, which we consider as those within less than 2 units of the delta AIC or BIC. When using AIC, there are competing models for almost every individual, whereas with BIC, only 4 of the individuals have competing models. We should use 4 for BIC and 3 for AIC. Look for the paper Taper Ponciano 2016. 
 ```{r fig.width=12, fig.height=4}
 # To visualize the differences in the information criteria at the individual level
 
@@ -558,10 +422,8 @@ nice_prms %>%
   theme(legend.position = "bottom") +
   guides(color = guide_legend(title = "Distribution"))
   
-```
-Now we can compare what we call *models*, in which we compare a model that does complete pooling and considers all the data together, and the other model that considers individual variation, and so it fits a separate distribution to the data from each individual.
+```  
 
-The individual variation models will fit a distribution to each individual. At one level we will use the same distribution for all individuals and only consider variation in parameters. At the next level, we will consider a change in parameters and distributions, where individuals can have different distributions, and this is what we call the mixed distribution model for individual variation. 
 
 
 ```{r}
@@ -620,7 +482,7 @@ popind.IC.comp %>%
 
 ```
 
-Considering just focusing on BIC because of JMP's paper, and also in this specific case, it provides less competing models for each individual
+
 ```{r}
 # Table for BIC and AIC only
 
@@ -648,15 +510,15 @@ gt_tbl %>%
   ) %>% 
   tab_stubhead(label = "Model") %>% 
   tab_row_group(
-    group = "Multidist",
+    group = "No Pooling",
     rows = 9
   ) %>% 
   tab_row_group(
-    group = "Individual",
+    group = "Partial Pooling",
     rows = 1:4
   ) %>% 
   tab_row_group(
-    group = "Population", 
+    group = "Complete Pooling", 
     rows = 5:8
   ) %>% 
   tab_spanner(
@@ -681,147 +543,7 @@ gtsave(gt_table_bic, "aic_bic_table.png")
 knitr::include_graphics("aic_bic_table.png")
 ```
 
-## Probability distribution parameters
-We can compare the different parameter values estimated for each distribution and their standard deviations. These parameters can give us some insight into some of the characteristics of each set of distances moved per minute, such as which individuals have higher means or longer tails in the distribution of their distances moved per minute. The x axis in the following plots highlights which individuals have the lowest BIC (yellow) or AIC(magenta) with that model. The blue lines show the value of that parameter for the population level model, and dashed blue lines show the upper and lower limits of that parameter estimate. Overall, at the population level, the lognormal model had the lowest AIC and BIC values.
-
-```{r}
-
-plot_params <- function(prm_data, best_col){
-  
-  prm_data%>% 
-  filter(., data == "POP") %>% 
-  dplyr::select(., estimate, sd) -> pop_est
-  
-  title <- paste(prm_data$dist, prm_data$param)
-  
-  if(best_col == "BIC"){
-    prm_data %>% 
-    filter(data != "POP") %>% 
-    ggplot(., aes(x = data, y = estimate)) +
-    #facet_grid(dist~param, switch = "y", scales = "free") +
-    # geom_point() +
-    # geom_errorbar(aes(ymin = estimate - sd, ymax = estimate + sd))+
-    geom_pointrange(aes(ymin = estimate - sd, ymax = estimate + sd)) +
-    geom_hline(aes(yintercept = pop_est$estimate), color = "blue") +
-    geom_hline(aes(yintercept = pop_est$estimate + pop_est$sd), color = "blue", linetype = "dashed") +
-    geom_hline(aes(yintercept = pop_est$estimate - pop_est$sd), color = "blue", linetype = "dashed") +
-    labs(x = "", y = "", subtitle = title) +
-    theme(legend.position = "none",
-          axis.text.x = element_text(angle = 45, color = prm_data$best_bic)) -> plot
-  }
-  
-  if(best_col == "AIC"){
-    prm_data %>% 
-    filter(data != "POP") %>% 
-    ggplot(., aes(x = data, y = estimate)) +
-    #facet_grid(dist~param, switch = "y", scales = "free") +
-    # geom_point() +
-    # geom_errorbar(aes(ymin = estimate - sd, ymax = estimate + sd))+
-    geom_pointrange(aes(ymin = estimate - sd, ymax = estimate + sd)) +
-    geom_hline(aes(yintercept = pop_est$estimate), color = "blue") +
-    geom_hline(aes(yintercept = pop_est$estimate + pop_est$sd), color = "blue", linetype = "dashed") +
-    geom_hline(aes(yintercept = pop_est$estimate - pop_est$sd), color = "blue", linetype = "dashed") +
-    labs(x = "", y = "", subtitle = title) +
-    theme(legend.position = "none",
-          axis.text.x = element_text(angle = 45, color = prm_data$best_aic)) -> plot
-  }
-  return(plot)
-  
-          
-}
-
-```
-
-```{r fig.height=10, fig.width=12}
-
-nice_prms %>% 
-  filter(., dist == "Exponential") %>% 
-  plot_params(., best_col = "BIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL-> p1
-
-nice_prms %>% 
-  filter(., dist == "Gamma" & param == "SHAPE") %>% 
-  plot_params(., best_col = "BIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL -> p2
-
-nice_prms %>% 
-  filter(., dist == "Gamma" & param == "RATE") %>% 
-  plot_params(., best_col = "BIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL -> p3
-
-nice_prms %>% 
-  filter(., dist == "Weibull" & param == "SHAPE") %>% 
-  plot_params(., best_col = "BIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL-> p4
-
-nice_prms %>% 
-  filter(., dist == "Weibull" & param == "SCALE") %>% 
-  plot_params(., best_col = "BIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL-> p5
-
-nice_prms %>% 
-  filter(., dist == "Lognormal" & param == "MEANLOG") %>% 
-  plot_params(., best_col = "BIC") -> p6
-
-nice_prms %>% 
-  filter(., dist == "Lognormal" & param == "SDLOG") %>% 
-  plot_params(., best_col = "BIC") ->p7
-
-
-plot_grid(p1, NULL, p2, p3, p4, p5, p6, p7, ncol = 2, align = "v") -> bic_grid
-
-nice_prms %>% 
-  filter(., dist == "Exponential") %>% 
-  plot_params(., best_col = "AIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL-> p1
-
-nice_prms %>% 
-  filter(., dist == "Gamma" & param == "SHAPE") %>% 
-  plot_params(., best_col = "AIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL -> p2
-
-nice_prms %>% 
-  filter(., dist == "Gamma" & param == "RATE") %>% 
-  plot_params(., best_col = "AIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL -> p3
-
-nice_prms %>% 
-  filter(., dist == "Weibull" & param == "SHAPE") %>% 
-  plot_params(., best_col = "AIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL-> p4
-
-nice_prms %>% 
-  filter(., dist == "Weibull" & param == "SCALE") %>% 
-  plot_params(., best_col = "AIC") +
-  #theme(axis.text.x = element_blank()) +
-  NULL-> p5
-
-nice_prms %>% 
-  filter(., dist == "Lognormal" & param == "MEANLOG") %>% 
-  plot_params(., best_col = "AIC") -> p6
-
-nice_prms %>% 
-  filter(., dist == "Lognormal" & param == "SDLOG") %>% 
-  plot_params(., best_col = "AIC") ->p7
-
-
-plot_grid(p1, NULL, p2, p3, p4, p5, p6, p7, ncol = 2, align = "v") -> aic_grid
-
-plot_grid(bic_grid, aic_grid, ncol = 2)
-
-```
-
-
-#References
+# References
 
 
 
