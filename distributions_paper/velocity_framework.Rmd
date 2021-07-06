@@ -1,0 +1,233 @@
+---
+title: "Testing velocity framework"
+output: html_notebook
+---
+ 
+```{r setup, include=FALSE}
+# knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
+```
+
+```{r}
+library(aracari)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(purrr)
+library(stringr)
+library(adehabitatLT)
+library(cowplot)
+library(RColorBrewer)
+library(gt)
+library(lubridate)
+
+
+library(tidyverse)
+library(fitdistrplus)
+
+theme_set(theme_bw())
+```
+
+
+```{r data}
+# First, read in the raw tracking data
+aracari_data <- read.csv("rawdata_ptpl.csv")
+# Time is presented as a time ID
+# Each time interval is equivalent to 15 minutes
+# Interval 1 == 6AM, so if we start at midnight, 6am is 24 intervals of 15 minutes each. I'm setting 6am as the start just because I don't have actual data on it, but we know they started early morning and that's what the time IDs are for in Kimberly's work.
+
+
+# create a column for number of minutes equivalent to the intervals
+
+dt <- paste(aracari_data$DATE, aracari_data$TIME) %>% 
+  parse_date_time(., "dmy IMS p")
+
+aracari_data$dt <- dt
+
+names(aracari_data)[1] <- "TRANS"
+
+
+# seconds <- (24*15 + aracari_data$Time_ID * 15) * 60
+# td <- seconds_to_period(seconds)
+# aracari_data$time <- sprintf("%02d:%02d:%02d", td@hour, minute(td), second(td))
+# 
+# date <- paste(aracari_data$DATE, aracari_data$time)
+# aracari_data$date <- parse_date_time(date, "dmyHMS")
+# aracari_data$burst <- paste(aracari_data$Bird_ID, aracari_data$DATE, sep="_")
+
+aracari_data$burst <- paste(aracari_data$TRANS, aracari_data$DATE)
+
+# Only keep the columns we need for adehabitat
+
+# aracari_data <- dplyr::select(aracari_data, Bird_ID, burst,
+#                            date, X_Estimate, Y_Estimate)
+
+
+
+
+aracari_data %>% 
+  dplyr::select(., TRANS, burst, dt, X_Estimate, Y_Estimate) -> aracari_data
+
+names(aracari_data) <- c("animal_id","burst_id", "date_time", "x", "y")
+
+```
+
+```{r}
+# we set the spatial coordinates for our data frame
+aracari_spatial <- aracari_data
+coordinates(aracari_spatial) <- c("x", "y")
+
+#Assign a projection, I know it is UTM zone 18 because it is Ecuadorian Amazon
+proj4string(aracari_spatial) <- CRS("+proj=utm +zone=18 +datum=WGS84")
+
+# Create ltraj object for work with adehabitat
+# We set typeII = TRUE because we have variable time frames, although locations were attempted every 15 minutes, this didn't always happen.
+aracari_ltraj <- as.ltraj(coordinates(aracari_spatial), 
+                          burst = aracari_spatial$burst_id,
+                          date=aracari_spatial$date_time,
+                          id=aracari_spatial$animal_id,
+                          typeII = TRUE)
+
+# We can see the locations for all the individuals tracked
+# plot(aracari_ltraj)
+```
+
+
+```{r}
+# head(aracari_ltraj)
+
+# Transform to a dataframe
+aracari_df <- ld(aracari_ltraj)
+
+nbursts <- aracari_df %>% drop_na(dt) %>% group_by(id) %>% distinct(burst) %>% tally() %>% arrange(id) %>% rename(nbursts = n)
+nlocs <- aracari_df %>% group_by(id) %>% tally() %>% arrange(id) %>% rename(nlocs = n)
+
+# Check number of bursts per animal and the number of locations
+# merge(nbursts, nlocs, by = "id", all=TRUE) %>% arrange(nlocs)
+
+# I want to include family groups in that data set, just in case we want to use that later
+# The social groups are as follows: (1, 3, 5), (7), (13, 19), (22), (28), and (49, 84).
+# I've added another group for birds (29,30) which are Yasuni birds, with overlapping territories and I would assume they are a social group.
+# All others are left as unknown.
+aracari_df$id <- factor(aracari_df$id, levels = unique(aracari_df$id))
+# unique(aracari_df$id)
+aracari_df %>%
+  mutate(fam_g = ifelse(id %in% c(1,3,5), "f1",
+                        ifelse(id == 7, "f2",
+                               ifelse(id %in% c(13, 19), "f3",
+                                      ifelse(id == 22, "f4",
+                                             ifelse(id == 28, "f5",
+                                                    ifelse(id %in% c(49,84),
+                                                           "f6", 
+                                                           ifelse(id %in% c(29, 30), "f7", "unknown")
+                                             ))))))) -> aracari_df
+
+```
+
+# Velocity-based framework
+
+Animal telemetry data are collected by determining an animal's location at various points in time. Many of the movement models used to analyze animal telemetry data rely on regular time intervals between locations (Jonsen et al. 2003 and 2005, Turchin 1998). However, based on field methods, or environmental variables such as heavy cloud cover or dense forest, can make data collection at regular intervals difficult, and thus location data becomes more opportunistic and with irregular time intervals. Previous methods to analyze data under these irregular conditions have relied on interpolating, subsampling, or aggregating data during pre-processing in order to make it fit model assumptions. In this study, we propose the use of a model capable of handling irregular time intervals by considering movement as a stochastic process on a continuous time scale, and thus focus on the animal's instantaneous velocity rather than on its absolute displacements between locations. Using this continuous-time framework, we are able to estimate movement paths by integrating velocity functions. We also explore the effects of individual variation in speeds as a comparison between velocity probability density functions across different levels of data aggregation between individuals. We illustrate the use of this model and the individual variation comparison by analyzing a telemetry data set of twelve many-banded aracari individuals, *Pteroglossus pluricinctus*. 
+ 
+To first set up the framework for a velocity-based model, we consider movement as the change in locations across two coordinates. We let $\mu(t)=[\mu_x(t), \mu_y(t)]$ be the location of an individual at time $t$ in the coordinates $x$ and $y$, and establish $\boldsymbol{d}_{\Delta}(t) = \boldsymbol{\mu}(t+\Delta) - \boldsymbol{\mu}(t)$ as the difference in locations across both coordinates over $\Delta$ time units. The differential equation $d\boldsymbol{\mu}(t)=\boldsymbol{\nu}(t)dt$ represents the instantaneous velocity as $\Delta$ approaches zero under the assumption that $\boldsymbol\mu(t)$ is a continuous movement path (Johnson et al. 2008). 
+
+Although the bivariate velocity process $\boldsymbol\nu(t) = [\nu_x(t), \nu_y(t)]$ could be considered as cross-correlated between the axes, these correlated velocities produce strange directed travel (Johnson et. al. 2008), therefore we considered the velocity in each coordinate to be an independent process. 
+
+
+We consider turning angle and velocity as independent processes. You need at least three relocations for relative angle calculations, and only two to calculate velocities. So, fitting the data makes more sense if they are completely separate. Based on a correlated random walk framework, you assess the level of correlation based on the distribution and symmetry of the probability density of the angles. 
+
+nu, velocity in meters per minute
+
+```{r}
+aracari_df %>% 
+  mutate(nu = dist/(dt/60)) %>% 
+  dplyr::select(id, nu, rel.angle, dt) %>% 
+  drop_na(nu) -> df
+
+# Select individuals with at least 30 data points for velocity
+df %>% 
+  dplyr::select(id, nu) %>% 
+  group_by(id) %>% 
+  tally() %>% 
+  filter(., n >= 30) %>% 
+  dplyr::pull(id) -> nu_id
+
+# Select individuals with 20 or 30? angles
+df %>% 
+  dplyr::select(id, rel.angle, dt) %>%
+  mutate(dt = dt/60) %>% 
+  drop_na(rel.angle) %>% 
+  #filter(., dt == 15) %>% 
+  group_by(id) %>% 
+  tally() %>% 
+  filter(., n >= 25) %>% 
+  dplyr::pull(id) -> angle_id
+```
+
+
+```{r}
+df %>% 
+  dplyr::select(., id, nu) %>% 
+  filter(., id %in% nu_id) %>% 
+  ggplot(., aes(x = nu)) +
+  geom_histogram() +
+  facet_wrap(~id)
+```
+
+```{r}
+df %>% 
+  dplyr::select(id, rel.angle, dt) %>% 
+  mutate(dt = dt/60,
+         d.angle = ifelse(rel.angle > 0, rel.angle * 180/pi,
+                          rel.angle * 180/pi + 360)) %>% 
+  drop_na(rel.angle) %>% 
+  filter(., id %in% angle_id,
+         dt ==15) %>%
+  ggplot(., aes(x = rel.angle)) +
+  #ggplot(., aes(x = d.angle)) +
+  geom_histogram() +
+  facet_wrap(~id)
+```
+
+
+
+# Fit distributions to velocity data
+
+  
+Assume weibull distributions for step length and wrapped cauchy distributions for the turning angles [@langrock2012flexible], but they tried Gamma and von Mises, respectively, but got outperformed by AIC. Used negative binomial for the state dwell times. 
+  
+Random walks used broadly in biology to characterize animal and cell movement. Describes que commonly used distributions for angles: von Mises, wrapped normal and wrapped Cauchy distributions. [@codling2008random]
+- IDEA: so maybe use these distributions for the angles. We might see that there is not much difference in angle movement across individuals? They all tend to move forward perhaps, or something like that, and where the real differences are is in the distances. 
+- Also might be intriguing to incorporate the time as a set of multiple random walks? or repeats the velocity value for that number of minutes. Maybe just using a correlated random walk, which takes into account short-term correlations in the direction of movement?
+  - Codling describes this as a velocity jump process, since the markov process is the walker's velocity rather than the location. Details at the end of page 7. 
+  - We consider the individuals moving in space at a constant speed $\nu$, and at each time step $\tau$ each individual changes direction and moves a distance $\delta$ in a new direction (with probability $r=\lambda\tau$), or moves a distance $\delta$ in the previous direction (with probability $q=1-\lambda\tau$). Hence, turning events occur as a Poisson process with rate $\lambda$. **This is textual from paper, so modify** Their focus is also on multiple individuals at the same time, and the density of individuals at a given time and location.
+    - In my case, the distance $\delta$ would also be randomly sampled, or this are the velocities I suppose. So, perhaps it is constant speed, and the distance is actually times to account for 15, 30, etc minutes based on the data. 
+    - Remember too that this velocity $\nu$ is actually the distance over time $\delta/\tau$
+  - Pg11. A correlated random walk, CRW, consisting of a series of independet draws from a step length PDF and a turning angle PDF for each step, a first order markov process.
+    - using mean square displacement. The effect of step length variability on MSD can be quite significant.
+    - MSD being of interest to ecologists due to its relation with the diffusion coefficient D. equations 2.13 and 2.14
+** Should write a conclusion about this paper**
+  
+
+
+
+[@kareiva1983analyzing] - approximating displacements by connecting a series of straight lines, and thus summarize animal movement based on parameters for movement length and turning angle. Using square displacement instead of linear displacement, because it's expectation can be calculated from turning angles and step lengths. Assume that the length of each move and the turning angle are independent random variables, each with its own probability density. Assume that a series of moves can be represented by random draws from these probability densities, and since each random draw is independent from the preceding ones, the random draw process is a first order markov chain. The result is a correlated random walk, and the distribution g(theta) gives a measure of the degree to which the angles of movement are correlated.
+*Would be interesting to add a figure with what I am actually analyzing. So, visually show how the gps locations get turned into straight lines, and angles, with an associated time interval. Or we could just multiply everything? So have it all for 15 minute intervals, and then repeat the ones that went on longer, perhaps set a limit for 60 minutes?*
+
+
+probabilistic rules of movement. 
+
+
+
+
+  
+
+
+
+
+
+"Location accuracy using radio telemetry may be reduced in tropical forests... conservative distance categories of 100-m increments to better represent precision. Time categories: 15, 30, 60, 90 minutes. Then calculated probability of movements made within each distance category within each time category, summed across each time category to give a final probability for each distance category."
+
+"Distances travelled per movement bout ranged from 0 to >2000m. Strong leptokurtic distributions of movements with most being <300m. Longest recorded movement for Pluricinctus is 3665m (recorded in 30 minutes)" *this is a corresponding velocity of `r 3665/30` meters per minute.
+
+
+Evaluating models with their individual-specific counterparts, using AIC or BIC. In individual-specific models the AIC results from the joint likelihood of the individual-specific models. 

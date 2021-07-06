@@ -21,6 +21,18 @@ Random walks have been used broadly in biology to model movement of animals and 
   
 Animal telemetry data are collected by determining an animal's location at various points in time. Many of the movement models used to analyze animal telemetry data rely on regular time intervals between locations [@jonsen2003meta; @jonsen2005robust]. However, based on field methods, or environmental variables such as heavy cloud cover or dense forest, can make data collection at regular intervals difficult, and thus location data becomes more opportunistic and with irregular time intervals. Previous methods to analyze data under these irregular conditions have relied on interpolating, subsampling, or aggregating data during pre-processing in order to make it fit model assumptions[@johnson2008continuous]. In this study, we propose the use of a model capable of handling irregular time intervals by considering movement as a stochastic process on a continuous time scale, and thus focus on the animal's instantaneous velocity rather than on its absolute displacements between locations. Using this continuous-time framework, we are able to estimate movement paths by integrating velocity functions. We also explore the effects of individual variation in speeds as a comparison between velocity probability density functions across different levels of data aggregation between individuals. Unlike other studies which focus on deciphering the underlying behaviors from animal movement data, our focus was to uncover potential differences between individuals and how these differences can be obscured when modeling population-level animal movement. We know these simple correlated random walks, or simple movement models might not be enough to describe net displacements under more complex processes, for which developments in state-space modeling frameworks show to be promising. However, our goal in this study was to use a simpler model that would adjust to irregular and sparse telemetry data, and focus on potential differences that arise when comparing data from multiple individuals under frameworks that completely pool data in contrast to those that don't. We illustrate the use of this model and the individual variation comparison by analyzing a telemetry data set of twelve many-banded aracari individuals, *Pteroglossus pluricinctus*. 
 
+**2021-05-03**
+
+- Explain what levy processes are and why they are suggested. Random search for resources. 
+- Classical random walks for homogeneous environments, and in more complex environments, use mixtures of these 'classical' random walks, to show the animals adaptability to the changes in the environment. 
+- Levy walks claimed to be more efficient than classical random walks for search or activity patterns.
+- Levy walks are non-oriented and superdiffusive. Interesting too because they may be involved when the random variable follows a power-law distribution. 
+- Classical random walks have step lengths distributed with finite variance, and in their simplest form, both their step length and turning angles are uniformly distributed. Levy walks are also uncorrelated and unbiased, like mere random walks, but their step lengths are characterized by infinite variance (i.e. drawn from a heavy-tail distribution). simplest example with a pareto distribution. [Benhamou 2007]
+
+
+Bartumeus 2007
+Levy-type processes can be relevant in large-scale animal movement. 
+
 # Methods
 
 ## Velocity-based continuous-time model
@@ -100,6 +112,14 @@ aracari_df %>%
   dplyr::select(id, nu, rel.angle, dt) %>% 
   drop_na(nu) %>% 
   mutate(B_id = paste0("B", id))-> df
+
+# jmp <- aracari_df %>% 
+#   drop_na(dist) %>% 
+#   filter(id == 5) %>% 
+#   dplyr::select(dist, dt) %>% 
+#   mutate(vel = dist/(dt/60))
+# 
+# save(jmp, file = "ex_data.RData")
 
 # Select individuals with at least 30 data points for velocity
 df %>% 
