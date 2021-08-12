@@ -1,0 +1,25 @@
+What is dispersal?
+
+What is the difference with movement?
+
+What is the role of individual variation in dispersal and movement?
+
+How can we explore the role and importance of this variation?
+
+What statistical tools can we leverage to understand and predict the role of individual variation in dispersal and how does this extend to populations and ecosystems?
+
+
+Twenty-nine years ago, I was born in Santiago, Chile a place I call home, my place of birth and that where all my family currently resides. A few years later, my parents and I migrated to Ecuador in search for a better quality of life, and after completing my bachelor's degree, I moved to Gainesville, Florida to pursue a doctoral program. I moved to a different country to further my education and improve my opportunities for the future. In Gainesville, Florida, I met my partner, with whom we married and started a family, one that consists of two dogs, two cats, and soon two little kids. In the eyes of a biologist, my life trajectory is a clear example of dispersal, one that incorporates travel from my natal place, transitory dispersal, and a final settling stage, where I have reproduced and increased my fitness. Dispersal is not a phenomena of humans, it is a fundamental process in nature, one that most organisms are part of with significant variation in the lengths to which they disperse.
+
+Over the years, studies have shown that the underlying causes of dispersal are many. Cite here the article by french author, rolling stone thing. And also use Bob's quals question to guide it. Use the two dispersal books I have.
+
+In particular, long-distance dispersal is an interesting phenomenon. Why? We think it happens rarely, when in fact we see examples across systems. The implications of long-distance dispersal trascend those of the individual, but they actually get at the contribution at larger organizational scales, from populations to regions.
+
+An interesting case study or focus is that of animal or vector-mediated seed dispersal. One that incorporates the animal interactions, the mutualisms into the effect of dispersal. In this scenario, now we have to consider the role of animal behavior and their movement, and the implications of that towards understanding their consequences for the dispersal of seeds. But not all animals move the same, and this is clear at the species level, were we recognnize that animals of different species are likely to move differently and different distances. However, the focus on individual variation, or intraspecific variation in animal movement has only been a focus on recent years.
+
+In this work, we explore the variation in animal movement. we then incorporate the variation into seed dispersal models, and finally, we use a simulation model to describe and predict the characteristics of data collection that would allow us to capture this variation in real life systems. With this seed dispersal system we focus on understanding the role of individual variation in animal movement and it's implications for population level estimates of seed disprsal and plant population dynamics. Extensions of this to regional and community elvel remain to be seen.
+
+Understanding the connections between individuals, and the relationships between their environment. We want to link ecology to landscape level predictions, regional ecology. Thus, we focus on how metacommunity theory and extensions can help to frame these questions. We try to understand how the extension of hierarchical models in ecology can help us tease apart these species interactions, and the role that dispersal and variation in dispersal can play in community assembly dynamics. Although the focus is on the use of a mesocosm experiment data set initially. We explore the use of these statistical tools to understand the factors going into a seed dispersal landscape community where we simulate various levels of species interactions, these having different effect at the landscape and ecosystem level.
+
+Overall, the resulting findings show that variation in dispersal is important and the role of species interactions in this process can have significant consequences at higher organizational levels, such as community, landscape extensions.
+
