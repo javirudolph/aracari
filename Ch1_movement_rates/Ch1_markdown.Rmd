@@ -9,10 +9,114 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+Let's say there is a variation in animal movement rates, and it depends on multiple factors, such as size of the animal, breeding status, nesting, etc. So, it can also be seasonal. Since movement rates can't really be negative, we will use a lognormal distribution to describe this variation in movement rates. 
+
+Let $X_i$ be a positive random variable that is log-normally distributed $(i.e. X_i \sim Lognormal(\mu_i, \sigma_i^2)$ describing the distribution of movement rates for an animal population $i$. Such animal population's average movement rate being $\mu_i$ and the variance of their movement rates $\sigma_i^2$. We can assume we have three different populations, where perhaps some of them have larger home ranges, creating more variance across movement rates. To make things a little easier, we will consider all populations have the same average movement rate $(i.e. \mu_1=\mu_1=\mu_3 = 1)$, but different standard deviation $(\sigma_1=0.3, \sigma_2=0.5, \sigma_3=0.5)$. We can visualize the distribution of movement rates for each of these populations:
+
+```{r}
+mycols <- c("black", "blue", "purple")
+#create density plots
+curve(dlnorm(x, meanlog=1, sdlog=.3), from=0, to=10, col=mycols[1],
+      main = 'Log Normal Distribution', #add title
+      ylab = 'Density', #change y-axis label
+      )
+curve(dlnorm(x, meanlog=1, sdlog=.5), from=0, to=10, col=mycols[2], add=TRUE)
+curve(dlnorm(x, meanlog=1, sdlog=1), from=0, to=10, col=mycols[3], add=TRUE)
+
+#add legend
+legend("topright", legend=c("sdlog=.3", "sdlog=.5", "sdlog=1"),
+       col=mycols, lty=1, cex=1.2)
+```
+
+
+Now, lets sample a movement rate, $m$, for 10 individuals $(i.e. j = 1...10)$ from the first population $(i.e. m_{1,j} = m_{1,1}, ....., m_{1,10})$. We will simulate animal movement with a simple random walk, with movement length $l$ sampled from an exponential distribution, $l \sim exp(m_{i,j})$, movement angle, $\alpha$, from a uniform distribution, $\alpha \sim U(0, 360)$. We can visualize the movement for one of the individuals in the first population:
+
+```{r}
+m_1 <- rlnorm(10, meanlog = 1, sdlog = 0.3)
+m_2 <- rlnorm(10, meanlog = 1, sdlog = 0.5)
+m_3 <- rlnorm(10, meanlog = 1, sdlog = 1)
+```
+
+We can look at how those exponential distributions look for each of the individuals in those populations
 
 ```{r}
 
 ```
+
+
+
+```{r}
+t <- 1000 # Number of time steps
+
+tru.rate <- m_1[1]
+movedist <- rexp(t, rate = tru.rate)
+angle <- runif(t, min = 0, max = 360)
+distx <- movedist*cos(angle)
+xloc <- c(0, cumsum(distx))
+disty <- movedist*sin(angle)
+yloc <- c(0, cumsum(disty))
+animalTraj <- data.frame(time = 0:t, xloc = xloc, yloc = yloc)
+
+plot(x = xloc, y = yloc, type = "l", main = paste("Rate", tru.rate))
+
+```
+```{r}
+sim_movement <- function(prm, t = 1000, plot.it = TRUE, return.data.frame = FALSE){
+  tru.rate <- round(prm, 3)
+  movedist <- rexp(t, rate = tru.rate)
+  angle <- runif(t, min = 0, max = 360)
+  distx <- movedist*cos(angle)
+  xloc <- c(0, cumsum(distx))
+  disty <- movedist*sin(angle)
+  yloc <- c(0, cumsum(disty))
+  animalTraj <- data.frame(time = 0:t, xloc = xloc, yloc = yloc)
+  if(plot.it == TRUE){
+    plot(x = xloc, y = yloc, type = "l", main = paste("Rate=",tru.rate))
+  }
+  if(return.data.frame == TRUE){
+    return(animalTraj)
+  }
+}
+```
+
+```{r}
+par(mfrow=c(2,5))
+
+for(j in 1:10){
+  sim_movement(m_1[j])}
+
+```
+
+Use ggplot to make multiple rounds of each individual
+```{r}
+library(dplyr)
+library(ggplot2)
+
+df <- sim_movement(m_1[1], plot.it = FALSE, return.data.frame = TRUE)
+
+df %>% 
+  ggplot(., aes(x = xloc, y=yloc)) +
+  geom_path()
+
+```
+Overlay 5 runs for that individual
+
+```{r}
+
+df <- NULL
+
+for(k in 1:8){
+  a <- sim_movement(m_1[1], plot.it = FALSE, return.data.frame = TRUE) %>% 
+    mutate(run = paste("r_", k))
+  df <- rbind.data.frame(df, a)
+}
+  
+
+df %>% 
+  ggplot(., aes(x = xloc, y=yloc, color = run)) +
+  geom_path()
+```
+
 
 ## R Markdown
 
