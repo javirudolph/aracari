@@ -43,15 +43,15 @@ m_2 <- sort(round(rlnorm(5, meanlog = 1, sdlog = 0.5),3))
 m_3 <- sort(round(rlnorm(5, meanlog = 1, sdlog = 1),3))
 ```
 
-We can look at how those exponential distributions look for each of the individuals in those populations
+We can look at how those exponential distributions look for each of the individuals in those populations.
 
 ```{r}
 
 mycols <- rainbow(5, s=0.8)
 
-range <- c(-0.1,12)
+range <- c(-0.1,15)
 #create density plots
-curve(dexp(x, 1/m_1[1]), 
+curve(dexp(x, 1/m_1[1]), #notice rate for exponential is 1/movement rate.
       from=range[1], to=range[2], 
       col=mycols[1],
       main = 'Exponentially distributed movement lengths for 5 individuals', #add title
@@ -75,7 +75,7 @@ t <- 100 # Number of time steps
 individual <- 5
 
 tru.rate <- m_1[individual] # In case I want to do scale 1/rate
-movedist <- rexp(t, rate = tru.rate)
+movedist <- rexp(t, rate = 1/tru.rate)
 angle <- runif(t, min = 0, max = 360)
 distx <- movedist*cos(angle)
 xloc <- c(0, cumsum(distx))
@@ -89,7 +89,7 @@ plot(x = xloc, y = yloc, col = mycols[individual], type = "l", main = paste("Rat
 ```{r}
 sim_movement <- function(prm, t = 1000, plot.it = TRUE, return.data.frame = FALSE){
   tru.rate <- round(prm, 3)
-  movedist <- rexp(t, rate = tru.rate)
+  movedist <- rexp(t, rate = 1/tru.rate)
   angle <- runif(t, min = 0, max = 360)
   distx <- movedist*cos(angle)
   xloc <- c(0, cumsum(distx))
@@ -191,4 +191,22 @@ df %>%
   theme_bw()
 ```
 
+Now, we get the animals to disperse seeds. Seeds gut retention time are sampled from a gamma distribution.
+```{r eval=FALSE}
+nseeds <- 20
+grt <- round(rgamma(nseeds, shape = 4, scale = 5))
+t.grt <- max(grt)
 
+animalTraj <- sim_movement(m_1[1], t = t.grt, plot.it = FALSE, return.data.frame = TRUE)
+
+# Determine where the seeds are dropped based on the animal's location.
+seed_loc <- data.frame(seed_id = 1:nseeds, time = grt)
+seed_loc <- merge(animalTraj, seed_loc, by = "time")
+seed_loc$dispersal <- sqrt(seed_loc$xloc^2 + seed_loc$yloc^2)
+
+animalTraj %>% 
+  ggplot(., aes(x = xloc, y=yloc)) +
+  geom_path() +
+  geom_point(data=seed_loc, aes(x = xloc, y = yloc))
+
+```
