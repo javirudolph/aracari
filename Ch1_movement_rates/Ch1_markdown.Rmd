@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r message=FALSE}
 library(dplyr)
+library(tidyr)
 library(ggplot2)
 ```
 
@@ -199,10 +200,10 @@ t.grt <- max(grt)
 
 animalTraj <- sim_movement(m_1[1], t = t.grt, plot.it = FALSE, return.data.frame = TRUE)
 
-# Determine where the seeds are dropped based on the animal's location.
-seed_loc <- data.frame(seed_id = 1:nseeds, time = grt)
-seed_loc <- merge(animalTraj, seed_loc, by = "time")
-seed_loc$dispersal <- sqrt(seed_loc$xloc^2 + seed_loc$yloc^2)
+animalTraj %>% 
+  left_join(., data.frame(s.id = 1:nseeds, time = grt)) %>% 
+  mutate(disp = sqrt(xloc^2+yloc^2)) -> df
+
 
 # Calculate the mean location of seeds
 x_m <- mean(seed_loc$xloc)
@@ -215,10 +216,20 @@ xi <- (x_m - seed_loc$xloc)^2
 yi <- (y_m - seed_loc$yloc)^2
 seed_dispersion <- sum(sqrt(xi + yi))/length(seed_loc$time)
 
-animalTraj %>% 
+df %>% 
   ggplot(., aes(x = xloc, y=yloc)) +
   geom_path() +
-  geom_point(data=seed_loc, aes(x = xloc, y = yloc)) +
+  geom_point(data = df %>% drop_na(s.id), aes(x = xloc, y = yloc)) +
   geom_point(aes(x = x_m, y = y_m), color = "Red") + # Mean location of seeds
 
 ```
+
+
+
+
+
+
+
+
+
+
