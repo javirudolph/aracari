@@ -304,6 +304,14 @@ df %>%
   geom_point(data = summ.df, aes(x = x, y=y), color = "black") +
   theme_bw() 
 
+df %>% 
+  ggplot(., aes(x = xloc, y = yloc)) +
+  stat_density_2d(aes(fill = ..level..), geom = "polygon", colour="white") +
+  # geom_bin2d(bins = 50) +
+  # geom_hex() +
+  scale_fill_continuous(type = "viridis") +
+  theme_bw()
+  
 summ.df %>% 
   ggplot(., aes(y = dsprsn)) +
   geom_boxplot()
