@@ -306,8 +306,8 @@ df %>%
 
 df %>% 
   ggplot(., aes(x = xloc, y = yloc)) +
-  stat_density_2d(aes(fill = ..level..), geom = "polygon", colour="white") +
-  # geom_bin2d(bins = 50) +
+  # stat_density_2d(aes(fill = ..level..), geom = "polygon", colour="white") +
+  geom_bin2d() +
   # geom_hex() +
   scale_fill_continuous(type = "viridis") +
   theme_bw()
@@ -344,5 +344,123 @@ plot(g)
 # fitdistr(s.df$disp, densfun = "weibull")
 ```
 
+# Simulation for population 1
+```{r message=FALSE}
+nruns <- 20
 
+df <- NULL
+summ.df <- NULL
 
+for(j in 1:individual){
+  for(k in 1:nruns){
+    a <- sim_seeds(m.prms = m_1[j]) %>% 
+      mutate(indiv = as.factor(j),
+             run = factor(paste0("r_", k), levels = paste0("r_", 1:nruns)))
+    
+    b <- summ_seeds(a) %>% 
+      mutate(indiv = as.factor(j),
+             run = factor(paste0("r_", k), levels = paste0("r_", 1:nruns)))
+    
+    df <- rbind.data.frame(df, a) 
+    summ.df <- rbind.data.frame(summ.df, b) 
+}
+}
+```
+
+Visualize animal movement and seed dispersal 
+```{r}
+df %>% 
+  ggplot(., aes(x = xloc, y = yloc)) +
+  facet_wrap(~indiv) +
+  # stat_density_2d(aes(fill = ..level..), geom = "polygon", colour="white") +
+  geom_bin2d() +
+  # geom_hex() +
+  # scale_fill_continuous(type = "viridis") +
+  # geom_point(data = df %>% drop_na(s.id), 
+  #            aes(x = xloc, y = yloc)) +
+  geom_point(data = summ.df, aes(x = x, y=y), color = "red") +
+  theme_bw()
+```
+Seed dispersal kernels
+```{r}
+df %>% 
+  drop_na(s.id) %>% 
+  ggplot(., aes(x = disp, color = indiv)) +
+  geom_density() +
+  scale_color_manual(values = mycols) +
+  theme_bw()
+
+```
+
+Dispersion
+```{r}
+summ.df %>% 
+  ggplot(., aes(y = dsprsn, x = indiv)) + 
+  geom_boxplot()
+```
+```{r}
+s.df <- df %>% drop_na(s.id) %>%
+  group_by(indiv) %>%
+  sample_n(., 50)
+
+# s.df <- df %>% drop_na(s.id)
+
+weib.fits <- NULL
+
+for(i in 1:individual){
+  dat <- s.df %>% 
+    filter(indiv == i)
+  #g <- fitdist(dat$disp, distr = "weibull", method = 'mle', lower = c(0,0))
+  g <- fitdistr(dat$disp, densfun = "weibull", lower = c(0,0))
+  prms.weib <- data.frame(est.shape = as.numeric(g$estimate[1]),
+                          est.scale = as.numeric(g$estimate[2]),
+                          loglik = g$loglik, indiv = i)
+  weib.fits <- rbind.data.frame(weib.fits, prms.weib)
+  # plot(g)
+}
+
+weib.fits
+```
+Bootstrapping?
+```{r}
+weib.boot <- NULL
+
+for(j in 1:10){
+      s.df <- df %>% drop_na(s.id) %>%
+      group_by(indiv) %>%
+      sample_n(., 50)
+    
+    # s.df <- df %>% drop_na(s.id)
+    
+    weib.fits <- NULL
+    
+    for(i in 1:individual){
+      dat <- s.df %>% 
+        filter(indiv == i)
+      #g <- fitdist(dat$disp, distr = "weibull", method = 'mle', lower = c(0,0))
+      g <- fitdistr(dat$disp, densfun = "weibull", lower = c(0,0))
+      prms.weib <- data.frame(est.shape = as.numeric(g$estimate[1]),
+                              est.scale = as.numeric(g$estimate[2]),
+                              loglik = g$loglik, indiv = i)
+      weib.fits <- rbind.data.frame(weib.fits, prms.weib)
+      # plot(g)
+    }
+    
+    weib.boot <- rbind.data.frame(weib.boot, weib.fits %>% mutate(boot = j))
+}
+
+weib.boot
+```
+
+```{r}
+library(Hmisc)
+
+weib.boot %>% 
+  ggplot(., aes(x = factor(indiv), y = est.scale)) +
+  geom_violin() +
+  #geom_boxplot(width = 0.1) +
+  stat_summary(fun.data=mean_sdl, mult=1, 
+                 geom="pointrange", color="red") +
+  theme_bw()
+
+```
