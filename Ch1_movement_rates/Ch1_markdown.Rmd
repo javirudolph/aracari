@@ -238,6 +238,36 @@ df %>%
 
 
 
+```{r}
+sim_seeds <- function(nseeds = 20, m.prms = NULL,...){
+  grt <- round(rgamma(nseeds, shape = 4, scale = 5))
+  t.grt <- max(grt)
+
+  df <- sim_movement(m.prms, t = t.grt, plot.it = FALSE, return.data.frame = TRUE)
+
+  df %>% 
+    left_join(., data.frame(s.id = 1:nseeds, time = grt)) %>% 
+    mutate(disp = sqrt(xloc^2+yloc^2)) -> df
+  
+  return(df)
+}
+
+summ_seeds <- function(df = NULL){
+  df %>% 
+  drop_na(s.id) %>% 
+  mutate(xi = (mean(xloc)-xloc)^2,
+         yi = (mean(yloc)-yloc)^2) %>% 
+  summarise(x = mean(xloc),
+            y = mean(yloc),
+            av.disp = mean(disp),
+            se.disp = sd(disp)/sqrt(n()),
+            dsprsn = sum(sqrt(xi+yi))/n()) -> s.df
+  return(s.df)
+}
+
+a <- sim_seeds(m.prms = m_1[1])
+summ_seeds(a)
+```
 
 
 
