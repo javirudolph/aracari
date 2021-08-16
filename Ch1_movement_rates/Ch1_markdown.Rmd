@@ -271,19 +271,20 @@ summ_seeds <- function(df = NULL){
 
 Run a simulation for one individual, multiple runs, display animal movement, seed dispersal and print summary for all runs
 ```{r message=FALSE}
+nruns <- 10
 
 df <- NULL
 summ.df <- NULL
 
 for(j in 1:1){
-  for(k in 1:3){
+  for(k in 1:nruns){
     a <- sim_seeds(m.prms = m_1[j]) %>% 
       mutate(indiv = as.factor(j),
-             run = paste0("r_",k))
+             run = factor(paste0("r_", k), levels = paste0("r_", 1:nruns)))
     
     b <- summ_seeds(a) %>% 
       mutate(indiv = as.factor(j),
-             run = paste0("r_",k))
+             run = factor(paste0("r_", k), levels = paste0("r_", 1:nruns)))
     
     df <- rbind.data.frame(df, a) 
     summ.df <- rbind.data.frame(summ.df, b) 
@@ -300,8 +301,12 @@ df %>%
   scale_color_manual(values = mycols) +
   geom_point(data = df %>% drop_na(s.id), 
              aes(x = xloc, y = yloc)) +
-  geom_point(data = summ.df, aes(x = x, y=y, size = dsprsn), color = "black") +
-  theme_bw()
+  geom_point(data = summ.df, aes(x = x, y=y), color = "black") +
+  theme_bw() 
+
+summ.df %>% 
+  ggplot(., aes(y = dsprsn)) +
+  geom_boxplot()
 ```
 
 
