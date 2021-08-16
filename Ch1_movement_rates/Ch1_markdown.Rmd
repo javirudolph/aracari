@@ -49,17 +49,17 @@ We can look at how those exponential distributions look for each of the individu
 
 mycols <- rainbow(5, s=0.8)
 
-# range <- c(-0.9,5)
+range <- c(-0.1,12)
 #create density plots
-curve(dexp(x, m_1[5]), 
-      #from=range[1], to=range[2], 
+curve(dexp(x, 1/m_1[1]), 
+      from=range[1], to=range[2], 
       col=mycols[1],
       main = 'Exponentially distributed movement lengths for 5 individuals', #add title
       ylab = 'Density', #change y-axis label
       )
-for(i in 1:4){
-  curve(dexp(x, m_1[i]), 
-        #from=range[1], to=range[2],
+for(i in 2:5){
+  curve(dexp(x, 1/m_1[i]), 
+        from=range[1], to=range[2],
         col=mycols[i], add=TRUE)
 }
 
