@@ -204,6 +204,12 @@ animalTraj %>%
   left_join(., data.frame(s.id = 1:nseeds, time = grt)) %>% 
   mutate(disp = sqrt(xloc^2+yloc^2)) -> df
 
+df %>% 
+  drop_na(s.id) %>% 
+  summarise(x = mean(xloc),
+            y = mean(xloc),
+            av.disp = mean(disp),
+            se.disp = sd(disp)/sqrt(n()))
 
 # Calculate the mean location of seeds
 x_m <- mean(seed_loc$xloc)
