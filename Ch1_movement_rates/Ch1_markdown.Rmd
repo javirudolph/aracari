@@ -316,7 +316,25 @@ summ.df %>%
   theme_bw()
 ```
 
+Next steps.
+Fit a weibull distribution to the raw seed dispersal data, probably subsample.
+Provide summary stats for the dispersal and dispersion measures.
 
+```{r}
+# s.df <- df %>% drop_na(s.id)
+
+s.df <- df %>% drop_na(s.id) %>% 
+  sample_n(., 50)
+  
+library(fitdistrplus)
+
+g <- fitdist(s.df$disp, distr = "weibull")
+summary(g)
+plot(g)
+
+# library(MASS)
+# fitdistr(s.df$disp, densfun = "weibull")
+```
 
 
 
