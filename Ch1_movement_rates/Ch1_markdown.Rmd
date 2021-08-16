@@ -206,10 +206,14 @@ animalTraj %>%
 
 df %>% 
   drop_na(s.id) %>% 
+  mutate(xi = (mean(xloc)-xloc)^2,
+         yi = (mean(yloc)-yloc)^2) %>% 
   summarise(x = mean(xloc),
-            y = mean(xloc),
+            y = mean(yloc),
             av.disp = mean(disp),
-            se.disp = sd(disp)/sqrt(n()))
+            se.disp = sd(disp)/sqrt(n()),
+            dsprsn = sum(sqrt(xi+yi))/n()) -> s.df
+
 
 # Calculate the mean location of seeds
 x_m <- mean(seed_loc$xloc)
@@ -225,8 +229,10 @@ seed_dispersion <- sum(sqrt(xi + yi))/length(seed_loc$time)
 df %>% 
   ggplot(., aes(x = xloc, y=yloc)) +
   geom_path() +
-  geom_point(data = df %>% drop_na(s.id), aes(x = xloc, y = yloc)) +
-  geom_point(aes(x = x_m, y = y_m), color = "Red") + # Mean location of seeds
+  geom_point(data = df %>% drop_na(s.id), 
+             aes(x = xloc, y = yloc)) +
+  geom_point(data = s.df,
+             aes(x = x, y = y), color = "Red") # Mean location of seeds
 
 ```
 
