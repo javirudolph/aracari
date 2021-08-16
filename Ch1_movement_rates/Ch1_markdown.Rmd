@@ -265,11 +265,44 @@ summ_seeds <- function(df = NULL){
   return(s.df)
 }
 
-a <- sim_seeds(m.prms = m_1[1])
-summ_seeds(a)
+# a <- sim_seeds(m.prms = m_1[1])
+# summ_seeds(a)
 ```
 
+Run a simulation for one individual, multiple runs, display animal movement, seed dispersal and print summary for all runs
+```{r message=FALSE}
 
+df <- NULL
+summ.df <- NULL
+
+for(j in 1:1){
+  for(k in 1:3){
+    a <- sim_seeds(m.prms = m_1[j]) %>% 
+      mutate(indiv = as.factor(j),
+             run = paste0("r_",k))
+    
+    b <- summ_seeds(a) %>% 
+      mutate(indiv = as.factor(j),
+             run = paste0("r_",k))
+    
+    df <- rbind.data.frame(df, a) 
+    summ.df <- rbind.data.frame(summ.df, b) 
+}
+}
+  
+
+df %>% 
+  ggplot(., aes(x = xloc, y=yloc, 
+                #group = run,
+                color = indiv)) +
+  facet_wrap(~run) +
+  geom_path() +
+  scale_color_manual(values = mycols) +
+  geom_point(data = df %>% drop_na(s.id), 
+             aes(x = xloc, y = yloc)) +
+  geom_point(data = summ.df, aes(x = x, y=y), color = "black") +
+  theme_bw()
+```
 
 
 
