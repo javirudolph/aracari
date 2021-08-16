@@ -271,7 +271,7 @@ summ_seeds <- function(df = NULL){
 
 Run a simulation for one individual, multiple runs, display animal movement, seed dispersal and print summary for all runs
 ```{r message=FALSE}
-nruns <- 10
+nruns <- 100
 
 df <- NULL
 summ.df <- NULL
@@ -294,9 +294,9 @@ for(j in 1:1){
 
 df %>% 
   ggplot(., aes(x = xloc, y=yloc, 
-                #group = run,
+                group = run,
                 color = indiv)) +
-  facet_wrap(~run) +
+  # facet_wrap(~run) +
   geom_path() +
   scale_color_manual(values = mycols) +
   geom_point(data = df %>% drop_na(s.id), 
@@ -307,6 +307,13 @@ df %>%
 summ.df %>% 
   ggplot(., aes(y = dsprsn)) +
   geom_boxplot()
+
+summ.df %>% 
+  ggplot(., aes(x = av.disp)) +
+  geom_density(color = "blue") + # for the average dispersal per run
+  geom_density(data = df %>% drop_na(s.id),
+                 aes(x = disp)) + # for every seed
+  theme_bw()
 ```
 
 
