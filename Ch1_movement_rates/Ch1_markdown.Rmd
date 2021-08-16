@@ -204,9 +204,21 @@ seed_loc <- data.frame(seed_id = 1:nseeds, time = grt)
 seed_loc <- merge(animalTraj, seed_loc, by = "time")
 seed_loc$dispersal <- sqrt(seed_loc$xloc^2 + seed_loc$yloc^2)
 
+# Calculate the mean location of seeds
+x_m <- mean(seed_loc$xloc)
+y_m <- mean(seed_loc$yloc)
+mean_dispersal <- mean(seed_loc$dispersal)
+se_dispersal <- sd(seed_loc$dispersal)/sqrt(length(seed_loc$dispersal))
+
+# Calculate seed dispersion
+xi <- (x_m - seed_loc$xloc)^2
+yi <- (y_m - seed_loc$yloc)^2
+seed_dispersion <- sum(sqrt(xi + yi))/length(seed_loc$time)
+
 animalTraj %>% 
   ggplot(., aes(x = xloc, y=yloc)) +
   geom_path() +
-  geom_point(data=seed_loc, aes(x = xloc, y = yloc))
+  geom_point(data=seed_loc, aes(x = xloc, y = yloc)) +
+  geom_point(aes(x = x_m, y = y_m), color = "Red") + # Mean location of seeds
 
 ```
