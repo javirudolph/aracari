@@ -300,7 +300,7 @@ df %>%
   scale_color_manual(values = mycols) +
   geom_point(data = df %>% drop_na(s.id), 
              aes(x = xloc, y = yloc)) +
-  geom_point(data = summ.df, aes(x = x, y=y), color = "black") +
+  geom_point(data = summ.df, aes(x = x, y=y, size = dsprsn), color = "black") +
   theme_bw()
 ```
 
