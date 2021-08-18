@@ -21,14 +21,26 @@ Let's say there is a variation in animal movement rates, and it depends on multi
 Let $X_i$ be a positive random variable that is log-normally distributed $(i.e. X_i \sim Lognormal(\mu_i, \sigma_i^2)$ describing the distribution of movement rates for an animal population $i$. Such animal population's average movement rate being $\mu_i$ and the variance of their movement rates $\sigma_i^2$. We can assume we have three different populations, where perhaps some of them have larger home ranges, creating more variance across movement rates. To make things a little easier, we will consider all populations have the same average movement rate $(i.e. \mu_1=\mu_1=\mu_3 = 1)$, but different standard deviation $(\sigma_1=0.3, \sigma_2=0.5, \sigma_3=0.5)$. We can visualize the distribution of movement rates for each of these populations:
 
 ```{r}
+
+av.mov.rate <- 2
+max.x <- 20
+
 mycols <- c("black", "blue", "purple")
 #create density plots
-curve(dlnorm(x, meanlog=1, sdlog=.3), from=0, to=10, col=mycols[1],
+curve(dlnorm(x, meanlog=av.mov.rate, sdlog=.3),
+      from=0, to=max.x,
+      col=mycols[1],
       main = 'Log Normally distributed movement rates for three populations', #add title
       ylab = 'Density', #change y-axis label
       )
-curve(dlnorm(x, meanlog=1, sdlog=.5), from=0, to=10, col=mycols[2], add=TRUE)
-curve(dlnorm(x, meanlog=1, sdlog=1), from=0, to=10, col=mycols[3], add=TRUE)
+
+curve(dlnorm(x, meanlog=av.mov.rate, sdlog=.5), 
+      from=0, to=max.x,
+      col=mycols[2], add=TRUE)
+
+curve(dlnorm(x, meanlog=av.mov.rate, sdlog=1), 
+      from=0, to=max.x,
+      col=mycols[3], add=TRUE)
 
 #add legend
 legend("topright", legend=c("sdlog=.3", "sdlog=.5", "sdlog=1"),
@@ -39,9 +51,10 @@ legend("topright", legend=c("sdlog=.3", "sdlog=.5", "sdlog=1"),
 Now, lets sample a movement rate, $m$, for 5 individuals $(i.e. j = 1, ...,5)$ from the first population $(i.e. m_{1,j} = m_{1,1}, ....., m_{1,5})$. We will simulate animal movement with a simple random walk, with movement length $l$ sampled from an exponential distribution, $l \sim exp(m_{i,j})$, movement angle, $\theta$, from a uniform distribution, $\theta \sim U(0, 360)$. We can visualize the movement for one of the individuals in the first population:
 
 ```{r}
-m_1 <- sort(round(rlnorm(5, meanlog = 1, sdlog = 0.3),3))
-m_2 <- sort(round(rlnorm(5, meanlog = 1, sdlog = 0.5),3))
-m_3 <- sort(round(rlnorm(5, meanlog = 1, sdlog = 1),3))
+n.individuals <- 5
+m_1 <- sort(round(rlnorm(n.individuals, meanlog = av.mov.rate, sdlog = 0.3),3))
+m_2 <- sort(round(rlnorm(n.individuals, meanlog = av.mov.rate, sdlog = 0.5),3))
+m_3 <- sort(round(rlnorm(n.individuals, meanlog = av.mov.rate, sdlog = 1),3))
 ```
 
 We can look at how those exponential distributions look for each of the individuals in those populations.
@@ -50,7 +63,7 @@ We can look at how those exponential distributions look for each of the individu
 
 mycols <- rainbow(5, s=0.8)
 
-range <- c(-0.1,15)
+range <- c(-0.1,max.x+5)
 #create density plots
 curve(dexp(x, 1/m_1[1]), #notice rate for exponential is 1/movement rate.
       from=range[1], to=range[2], 
@@ -71,7 +84,7 @@ legend("topright", legend= m_1,
 
 
 
-```{r}
+```{r eval=FALSE}
 t <- 100 # Number of time steps
 individual <- 5
 
@@ -130,8 +143,8 @@ Population1
 
 df <- NULL
 
-for(j in 1:individual){
-  for(k in 1:10){
+for(j in 1:n.individuals){
+  for(k in 1:3){
   a <- sim_movement(m_1[j], plot.it = FALSE, return.data.frame = TRUE) %>% 
     mutate(indiv = as.factor(j),
            run = paste("r_", k))
