@@ -657,19 +657,22 @@ plot_grid(p1, p2)
 ```
 
 ```{r}
-mycols2 <- c("black", mycols)
-
 weib.curves <- NULL
 
-for(i in 0:5){
+for(i in 1:5){
   weib.boot %>% 
   filter(indiv == i) -> a
 
   b <- purrr::map(seq(1:nrow(a)), function(y)
-    stat_function(fun = dweibull, args = list(scale = a$est.scale[y], shape = a$est.shape[y]), color = mycols2[i+1], alpha = 0.3))
+    stat_function(fun = dweibull, args = list(scale = a$est.scale[y], shape = a$est.shape[y]), color = mycols[i], alpha = 0.3))
   
   weib.curves <- append(weib.curves, b)
 }
+
+weib.boot %>% 
+  filter(indiv == 0) -> c
+weib.curves.pool <- purrr::map(seq(1:nrow(a)), function(y)
+    stat_function(fun = dweibull, args = list(scale = c$est.scale[y], shape = c$est.shape[y]), color = "black", alpha = 0.8))
 
 
 # ggplot(data = data.frame(x = c(1, 60)), aes(x)) +
@@ -688,12 +691,228 @@ df %>%
 # p +
 #   stat_function(fun = dweibull, args = list(scale = weib.boot$est.scale[1], shape = weib.boot$est.shape[1]), color = "red")
 
-p + weib.curves
+p + 
+  weib.curves +
+  weib.curves.pool
+  
 
 ```
 
- 
- **NEXT** Instead of the violin plots, I should show the dispersal kernels created by each of these bootstrap replicates.   
- Also, seems like for simulations, we need to sample 5 individuals multiple times, or sample more than 5 individuals from each population. I like the second approach because it resembles just sampling more individuals in the field, increasing your sample size to get a better picture of nature.
- 
- 
+
+This is only an example for the first population, but the overall idea is that if an individual has a larger movement rate, it moves more and this tends to translate into moving further away. As a consequence, the individuals with higher movement rates disperse seeds farther away and more scattered, in comparison to individuals with lower movement rates. Thus, the seed dispersal kernels produced by these individuals also show this trend, where individuals with higher movement rates disperse seeds further. This shows with the fatter tails of the kernels, evidenced by the larger scale parameters from fitted Weibull distributions. 
+When we pool the seed dispersal data, we ignore individual differences in how each disperser moved the seeds, and we estimate a seed dispersal kernel for that whole population or group. 
+
+## Comparisson of seed dispersal kernels across populations  
+These populations all have the same average movement rates, but their variance is different. This means that in the first population, all individuals have relatively similar movement rates, whereas in the third population, there is a lot more variation among the movement rates of individuals.
+
+```{r}
+
+# For second population
+df2 <- NULL
+summ.df2 <- NULL
+
+for(j in 1:n.individuals){
+  for(k in 1:nruns){
+    a <- sim_seeds(m.prms = m_2[j]) %>% 
+      mutate(indiv = as.factor(j),
+             run = factor(paste0("r_", k), levels = paste0("r_", 1:nruns)))
+    
+    b <- summ_seeds(a) %>% 
+      mutate(indiv = as.factor(j),
+             run = factor(paste0("r_", k), levels = paste0("r_", 1:nruns)))
+    
+    df2 <- rbind.data.frame(df2, a) 
+    summ.df2 <- rbind.data.frame(summ.df2, b) 
+  }
+}
+
+# #If we wanted to visualize 
+# summ.df2 %>% 
+#   ggplot(., aes(y = dsprsn, x = indiv, color = indiv)) +
+#   geom_boxplot() +
+#   geom_point(color = "grey", alpha = 0.5) +
+#   labs(title = "Dispersion") +
+#   theme_bw() +
+#   theme(legend.position = "none") -> p1
+# # p1
+# 
+# summ.df2 %>% 
+#   ggplot(., aes(y = av.disp, x = indiv, color = indiv)) +
+#   geom_boxplot() +
+#   geom_point(color = "grey", alpha = 0.5) +
+#   labs(title = "Average dispersal per run") +
+#   theme_bw() +
+#   theme(legend.position = "none") -> p2
+# # p2
+# 
+# plot_grid(p1, p2)
+
+########################################################
+# Bootstrap for individuals
+weib.boot2 <- NULL
+
+for(j in 1:n.boots){
+  s.df <- df2 %>% drop_na(s.id) %>%
+    group_by(indiv) %>%
+    sample_n(., samp.size)
+  
+  # s.df <- df %>% drop_na(s.id)
+  
+  weib.fits <- NULL
+  
+  for(i in 1:n.individuals){
+    dat <- s.df %>% 
+      filter(indiv == i)
+    #g <- fitdist(dat$disp, distr = "weibull", method = 'mle', lower = c(0,0))
+    g <- fitdistr(dat$disp, densfun = "weibull", lower = c(0,0))
+    prms.weib <- data.frame(est.shape = as.numeric(g$estimate[1]),
+                            est.scale = as.numeric(g$estimate[2]),
+                            loglik = g$loglik, indiv = i)
+    weib.fits <- rbind.data.frame(weib.fits, prms.weib)
+    # plot(g)
+  }
+  
+  weib.boot2 <- rbind.data.frame(weib.boot2, weib.fits %>% mutate(boot = j))
+}
+
+# Pooled bootstrap
+weib.boot.pool2 <- NULL
+
+for(j in 1:n.boots){
+  s.df <- df2 %>% drop_na(s.id) %>%
+    sample_n(., samp.size)
+  
+  
+  g <- fitdistr(s.df$disp, densfun = "weibull", lower = c(0,0))
+  
+  prms.weib <- data.frame(est.shape = as.numeric(g$estimate[1]),
+                          est.scale = as.numeric(g$estimate[2]),
+                          loglik = g$loglik, indiv = 0)
+  
+  weib.boot.pool2 <- rbind.data.frame(weib.boot.pool2, prms.weib %>% mutate(boot = j))
+}
+```
+
+```{r}
+
+# For Third population
+df3 <- NULL
+summ.df3 <- NULL
+
+for(j in 1:n.individuals){
+  for(k in 1:nruns){
+    a <- sim_seeds(m.prms = m_3[j]) %>% 
+      mutate(indiv = as.factor(j),
+             run = factor(paste0("r_", k), levels = paste0("r_", 1:nruns)))
+    
+    b <- summ_seeds(a) %>% 
+      mutate(indiv = as.factor(j),
+             run = factor(paste0("r_", k), levels = paste0("r_", 1:nruns)))
+    
+    df3 <- rbind.data.frame(df3, a) 
+    summ.df3 <- rbind.data.frame(summ.df3, b) 
+  }
+}
+
+# #If we wanted to visualize 
+# summ.df3 %>% 
+#   ggplot(., aes(y = dsprsn, x = indiv, color = indiv)) +
+#   geom_boxplot() +
+#   geom_point(color = "grey", alpha = 0.5) +
+#   labs(title = "Dispersion") +
+#   theme_bw() +
+#   theme(legend.position = "none") -> p1
+# # p1
+# 
+# summ.df3 %>% 
+#   ggplot(., aes(y = av.disp, x = indiv, color = indiv)) +
+#   geom_boxplot() +
+#   geom_point(color = "grey", alpha = 0.5) +
+#   labs(title = "Average dispersal per run") +
+#   theme_bw() +
+#   theme(legend.position = "none") -> p2
+# # p2
+# 
+# plot_grid(p1, p2)
+
+########################################################
+# Bootstrap for individuals
+weib.boot3 <- NULL
+
+for(j in 1:n.boots){
+  s.df <- df3 %>% drop_na(s.id) %>%
+    group_by(indiv) %>%
+    sample_n(., samp.size)
+  
+  # s.df <- df %>% drop_na(s.id)
+  
+  weib.fits <- NULL
+  
+  for(i in 1:n.individuals){
+    dat <- s.df %>% 
+      filter(indiv == i)
+    #g <- fitdist(dat$disp, distr = "weibull", method = 'mle', lower = c(0,0))
+    g <- fitdistr(dat$disp, densfun = "weibull", lower = c(0,0))
+    prms.weib <- data.frame(est.shape = as.numeric(g$estimate[1]),
+                            est.scale = as.numeric(g$estimate[2]),
+                            loglik = g$loglik, indiv = i)
+    weib.fits <- rbind.data.frame(weib.fits, prms.weib)
+    # plot(g)
+  }
+  
+  weib.boot3 <- rbind.data.frame(weib.boot3, weib.fits %>% mutate(boot = j))
+}
+
+# Pooled bootstrap
+weib.boot.pool3 <- NULL
+
+for(j in 1:n.boots){
+  s.df <- df3 %>% drop_na(s.id) %>%
+    sample_n(., samp.size)
+  
+  
+  g <- fitdistr(s.df$disp, densfun = "weibull", lower = c(0,0))
+  
+  prms.weib <- data.frame(est.shape = as.numeric(g$estimate[1]),
+                          est.scale = as.numeric(g$estimate[2]),
+                          loglik = g$loglik, indiv = 0)
+  
+  weib.boot.pool3 <- rbind.data.frame(weib.boot.pool3, prms.weib %>% mutate(boot = j))
+}
+```
+
+```{r}
+
+weib.boot.pool %>% 
+  mutate(popu = 1) %>% 
+  bind_rows(., weib.boot.pool2 %>% 
+              mutate(popu = 2)) %>% 
+  bind_rows(., weib.boot.pool3 %>% 
+              mutate(popu = 3)) -> weib.boot.pool
+
+weib.boot.pool %>% 
+  ggplot(., aes(x = factor(popu), y = est.shape, color = factor(popu))) +
+  geom_violin() +
+  # scale_color_manual(values = c("black", mycols)) +
+  # geom_boxplot(width = 0.1) +
+  # geom_point(color = "grey", alpha = 0.5) +
+  stat_summary(fun.data=mean_sdl, mult=1, 
+                 geom="pointrange", color="black") +
+  labs(title = "Shape") +
+  theme_bw() -> p1
+# p1
+
+weib.boot.pool %>% 
+  ggplot(., aes(x = factor(popu), y = est.scale, color = factor(popu))) +
+  geom_violin() +
+  # scale_color_manual(values = c("black", mycols)) +
+  #geom_boxplot(width = 0.1) +
+  # geom_point() +
+  stat_summary(fun.data=mean_sdl, mult=1, 
+                 geom="pointrange", color="black") +
+  labs(title = "Scale") +
+  theme_bw() -> p2
+
+plot_grid(p1, p2)
+```
+
