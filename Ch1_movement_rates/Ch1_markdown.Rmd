@@ -22,9 +22,9 @@ library(Hmisc)
 ```
 
 
-Let's say there is a variation in animal movement rates, and it depends on multiple factors, such as size of the animal, breeding status, nesting, etc. So, it can also be seasonal. Since movement rates can't really be negative, we will use a lognormal distribution to describe this variation in movement rates. 
+Let's say there is a variation in animal movement rates, and it depends on multiple factors, such as size of the animal, breeding status, nesting, etc. So, it can also be seasonal. Since movement rates can't really be negative, we will use a lognormal distribution to describe this variation in movement rates among individuals from a population.
 
-Let $X_i$ be a positive random variable that is log-normally distributed $(i.e. X_i \sim Lognormal(\mu_i, \sigma_i^2)$ describing the distribution of movement rates for an animal population $i$. Such animal population's average movement rate being $\mu_i$ and the variance of their movement rates $\sigma_i^2$. We can assume we have three different populations, where perhaps some of them have larger home ranges, creating more variance across movement rates. To make things a little easier, we will consider all populations have the same average movement rate $(i.e. \mu_1=\mu_1=\mu_3 = 1)$, but different standard deviation $(\sigma_1=0.3, \sigma_2=0.5, \sigma_3=0.5)$. We can visualize the distribution of movement rates for each of these populations:
+Let $X_i$ be a positive random variable that is log-normally distributed $(i.e. X_i \sim Lognormal(\mu_i, \sigma_i^2)$ describing the distribution of movement rates for an animal population $i$. Such population's average movement rate being $\mu_i$ and the variance of their movement rates $\sigma_i^2$. These average movement rates can depend on homerange size for example, or seasonality (i.e. breeding, nesting, etc.). We will assume we have three different populations, where perhaps some of them have larger home ranges, creating more variance across movement rates. To make things a little easier, we will consider all populations have the same average movement rate $(i.e. \mu_1=\mu_1=\mu_3 = 1)$, but different standard deviation $(\sigma_1=0.3, \sigma_2=0.5, \sigma_3=0.5)$. We can visualize the distribution of movement rates for each of these populations:
 
 ```{r}
 
@@ -54,7 +54,7 @@ legend("topright", legend=c("sdlog=.3", "sdlog=.5", "sdlog=1"),
 ```
 
 
-Now, lets sample a movement rate, $m$, for 5 individuals $(i.e. j = 1, ...,5)$ from the first population $(i.e. m_{1,j} = m_{1,1}, ....., m_{1,5})$. We will simulate animal movement with a simple random walk, with movement length $l$ sampled from an exponential distribution, $l \sim exp(m_{i,j})$, movement angle, $\theta$, from a uniform distribution, $\theta \sim U(0, 360)$. We can visualize the movement for one of the individuals in the first population:
+Now, lets sample a movement rate, $m$, for 5 individuals $(i.e. j = 1, ...,5)$ from the first population $(i.e. m_{1,j} = m_{1,1}, ....., m_{1,5})$. We will simulate animal movement with a simple random walk, with movement length $l$ sampled from an exponential distribution, $l \sim exp(m_{i,j})$, and movement angle, $\theta$, from a uniform distribution, $\theta \sim U(0, 360)$.
 
 ```{r}
 n.individuals <- 5
@@ -63,19 +63,22 @@ m_2 <- sort(round(rlnorm(n.individuals, meanlog = av.mov.rate, sdlog = 0.5),3))
 m_3 <- sort(round(rlnorm(n.individuals, meanlog = av.mov.rate, sdlog = 1),3))
 ```
 
-We can look at how those exponential distributions look for each of the individuals in those populations.
+We can look at how those exponential distributions look for each of the individuals in those populations. Each curve describes the distribution of movement lengths for each of the five individuals in the first population.
 
-```{r}
+```{r fig.width=12}
 
 mycols <- rainbow(5, s=0.8)
 
 range <- c(-0.1,max.x+5)
 #create density plots
+#########################################################################
+# Fist population
 curve(dexp(x, 1/m_1[1]), #notice rate for exponential is 1/movement rate.
       from=range[1], to=range[2], 
       col=mycols[1],
-      main = 'Exponentially distributed movement lengths for 5 individuals', #add title
+      main = 'Distribution of movement lengths', #add title
       ylab = 'Density', #change y-axis label
+      xlab = "x"
       )
 for(i in 2:5){
   curve(dexp(x, 1/m_1[i]), 
@@ -85,6 +88,43 @@ for(i in 2:5){
 
 #add legend
 legend("topright", legend= m_1,
+       col=mycols, lty=1, cex=1.2)
+#########################################################################
+# Second population
+curve(dexp(x, 1/m_2[1]), #notice rate for exponential is 1/movement rate.
+      from=range[1], to=range[2], 
+      col=mycols[1],
+      main = 'Distribution of movement lengths', #add title
+      ylab = 'Density', #change y-axis label
+      xlab = "x"
+      )
+for(i in 2:5){
+  curve(dexp(x, 1/m_2[i]), 
+        from=range[1], to=range[2],
+        col=mycols[i], add=TRUE)
+}
+
+#add legend
+legend("topright", legend= m_2,
+       col=mycols, lty=1, cex=1.2)
+
+#########################################################################
+# Third population
+curve(dexp(x, 1/m_3[1]), #notice rate for exponential is 1/movement rate.
+      from=range[1], to=range[2], 
+      col=mycols[1],
+      main = 'Distribution of movement lengths', #add title
+      ylab = 'Density', #change y-axis label
+      xlab = "x"
+      )
+for(i in 2:5){
+  curve(dexp(x, 1/m_3[i]), 
+        from=range[1], to=range[2],
+        col=mycols[i], add=TRUE)
+}
+
+#add legend
+legend("topright", legend= m_3,
        col=mycols, lty=1, cex=1.2)
 ```
 
