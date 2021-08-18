@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
+library(cowplot)
 ```
 
 
@@ -100,6 +101,7 @@ animalTraj <- data.frame(time = 0:t, xloc = xloc, yloc = yloc)
 plot(x = xloc, y = yloc, col = mycols[individual], type = "l", main = paste("Rate", tru.rate))
 
 ```
+
 ```{r}
 sim_movement <- function(prm, t = 1000, plot.it = TRUE, return.data.frame = FALSE){
   tru.rate <- round(prm, 3)
@@ -138,13 +140,14 @@ df %>%
 
 ```
 
-Population1
-```{r}
-
+## Movement for individuals in the three populations
+```{r eval=FALSE}
+nruns <- 3
+# Population1
 df <- NULL
 
 for(j in 1:n.individuals){
-  for(k in 1:3){
+  for(k in 1:nruns){
   a <- sim_movement(m_1[j], plot.it = FALSE, return.data.frame = TRUE) %>% 
     mutate(indiv = as.factor(j),
            run = paste("r_", k))
@@ -158,15 +161,12 @@ df %>%
   geom_path() +
   scale_color_manual(values = mycols) +
   theme_bw()
-```
 
-Population2
-```{r}
-
+# Population2
 df <- NULL
 
-for(j in 1:individual){
-  for(k in 1:10){
+for(j in 1:n.individuals){
+  for(k in 1:nruns){
   a <- sim_movement(m_2[j], plot.it = FALSE, return.data.frame = TRUE) %>% 
     mutate(indiv = as.factor(j),
            run = paste("r_", k))
@@ -180,16 +180,12 @@ df %>%
   geom_path() +
   scale_color_manual(values = mycols) +
   theme_bw()
-```
 
-
-Population3
-```{r}
-
+# Population3
 df <- NULL
 
-for(j in 1:individual){
-  for(k in 1:10){
+for(j in 1:n.individuals){
+  for(k in 1:nruns){
   a <- sim_movement(m_3[j], plot.it = FALSE, return.data.frame = TRUE) %>% 
     mutate(indiv = as.factor(j),
            run = paste("r_", k))
@@ -204,6 +200,40 @@ df %>%
   scale_color_manual(values = mycols) +
   theme_bw()
 ```
+
+
+```{r}
+nruns <- 3
+m.data <- data.frame(m_1, m_2, m_3)
+
+df <- NULL
+
+for(m in 1:3){
+  m.0 <- m.data[m]
+  for(j in 1:n.individuals){
+  for(k in 1:nruns){
+  a <- sim_movement(m_2[j], plot.it = FALSE, return.data.frame = TRUE) %>% 
+    mutate(indiv = as.factor(j),
+           run = paste0("r_", k),
+           pop.id = paste0("p_",m))
+  df <- rbind.data.frame(df, a)
+}
+}
+  
+}
+
+
+df %>% 
+  ggplot(., aes(x = xloc, y=yloc, group = run, color = indiv)) +
+  facet_wrap(~pop.id) +
+  geom_path() +
+  scale_color_manual(values = mycols) +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  NULL
+```
+
+
 
 Now, we get the animals to disperse seeds. Seeds gut retention time are sampled from a gamma distribution.
 ```{r eval=FALSE}
@@ -303,7 +333,9 @@ for(j in 1:1){
     summ.df <- rbind.data.frame(summ.df, b) 
 }
 }
-  
+```
+
+```{r}
 
 df %>% 
   ggplot(., aes(x = xloc, y=yloc, 
@@ -315,26 +347,35 @@ df %>%
   geom_point(data = df %>% drop_na(s.id), 
              aes(x = xloc, y = yloc)) +
   geom_point(data = summ.df, aes(x = x, y=y), color = "black") +
-  theme_bw() 
+  theme_bw() +
+  labs(title = "Animal seed droppings", caption = "Lines show an individual's trajectory.\n Red dots show all seed droppings.\n Black dots show average location of seed per run") +
+  theme(legend.position = "none") -> p1
+# p1
 
 df %>% 
   ggplot(., aes(x = xloc, y = yloc)) +
   # stat_density_2d(aes(fill = ..level..), geom = "polygon", colour="white") +
   geom_bin2d() +
   # geom_hex() +
-  scale_fill_continuous(type = "viridis") +
-  theme_bw()
-  
-summ.df %>% 
-  ggplot(., aes(y = dsprsn)) +
-  geom_boxplot()
+  # scale_fill_continuous(type = "viridis") +
+  scale_fill_gradient(low = "grey", high = "black") +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  labs(title = "Density of animal movement") -> p2
+p2
 
-summ.df %>% 
-  ggplot(., aes(x = av.disp)) +
-  geom_density(color = "blue") + # for the average dispersal per run
-  geom_density(data = df %>% drop_na(s.id),
-                 aes(x = disp)) + # for every seed
-  theme_bw()
+cowplot::plot_grid(p1, p2)
+  
+# summ.df %>% 
+#   ggplot(., aes(y = dsprsn)) +
+#   geom_boxplot()
+# 
+# summ.df %>% 
+#   ggplot(., aes(x = av.disp)) +
+#   geom_density(color = "blue") + # for the average dispersal per run
+#   geom_density(data = df %>% drop_na(s.id),
+#                  aes(x = disp)) + # for every seed
+#   theme_bw()
 ```
 
 Next steps.
@@ -364,7 +405,7 @@ nruns <- 20
 df <- NULL
 summ.df <- NULL
 
-for(j in 1:individual){
+for(j in 1:n.individuals){
   for(k in 1:nruns){
     a <- sim_seeds(m.prms = m_1[j]) %>% 
       mutate(indiv = as.factor(j),
@@ -380,7 +421,7 @@ for(j in 1:individual){
 }
 ```
 
-Visualize animal movement and seed dispersal 
+Visualize animal movement and seed dispersal. It is kind of obvious, but individuals that move further away, also disperse seeds further away and scatter them more. Red points are every seed dispersed, black points show the average seed location per run. Each panel corresponds to one individual disperser.
 ```{r}
 df %>% 
   ggplot(., aes(x = xloc, y = yloc)) +
@@ -389,12 +430,14 @@ df %>%
   geom_bin2d() +
   # geom_hex() +
   # scale_fill_continuous(type = "viridis") +
-  # geom_point(data = df %>% drop_na(s.id), 
-  #            aes(x = xloc, y = yloc)) +
-  geom_point(data = summ.df, aes(x = x, y=y), color = "red") +
+  scale_fill_gradient(low = "grey", high = "black") +
+  geom_point(data = df %>% drop_na(s.id),
+             aes(x = xloc, y = yloc), color = "red", alpha = 0.3) +
+  geom_point(data = summ.df, aes(x = x, y=y), color = "black") +
   theme_bw()
 ```
-Seed dispersal kernels
+
+Seed dispersal kernels produced by each individual.
 ```{r}
 df %>% 
   drop_na(s.id) %>% 
@@ -405,7 +448,7 @@ df %>%
 
 ```
 
-Dispersion
+Dispersion. We calculate dispersion for every simulated run. Every run means an individual disperser gets 20 seeds, they move until they drop all seeds. Then, dispersion measures how far away from each other every seed is. 
 ```{r}
 summ.df %>% 
   ggplot(., aes(y = dsprsn, x = indiv)) + 
