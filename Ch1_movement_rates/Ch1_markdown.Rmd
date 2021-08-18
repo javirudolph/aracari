@@ -451,8 +451,10 @@ df %>%
 Dispersion. We calculate dispersion for every simulated run. Every run means an individual disperser gets 20 seeds, they move until they drop all seeds. Then, dispersion measures how far away from each other every seed is. 
 ```{r}
 summ.df %>% 
-  ggplot(., aes(y = dsprsn, x = indiv)) + 
-  geom_boxplot()
+  ggplot(., aes(y = dsprsn, x = indiv, color = indiv)) +
+  geom_boxplot() +
+  geom_point(color = "grey", alpha = 0.5) +
+  theme_bw()
 ```
 ```{r}
 s.df <- df %>% drop_na(s.id) %>%
