@@ -578,6 +578,14 @@ for(j in 1:10){
 
 ```{r}
 
+weib.boot %>% 
+  ggplot(., aes(x = factor(indiv), y = est.shape)) +
+  geom_violin() +
+  #geom_boxplot(width = 0.1) +
+  stat_summary(fun.data=mean_sdl, mult=1, 
+                 geom="pointrange", color="red") +
+  labs(title = "Shape") +
+  theme_bw() -> p1
 
 weib.boot %>% 
   ggplot(., aes(x = factor(indiv), y = est.scale)) +
@@ -586,7 +594,37 @@ weib.boot %>%
   stat_summary(fun.data=mean_sdl, mult=1, 
                  geom="pointrange", color="red") +
   labs(title = "Scale") +
-  theme_bw() -> p1
+  theme_bw() -> p2
+
+plot_grid(p1, p2)
+```
+
+
+**What happens when we do complete pooling of the data instead of analyzing the variation by individuals. If instead we take all seed dispersal data and randomly sample seeds, and fit a Weibull kernel?** This is the comparisson between pooling or no pooling of seed dispersal data. 
+
+```{r}
+weib.boot.pool <- NULL
+
+for(j in 1:10){
+      s.df <- df %>% drop_na(s.id) %>%
+      sample_n(., 50)
+
+    
+    g <- fitdistr(s.df$disp, densfun = "weibull", lower = c(0,0))
+    
+    prms.weib <- data.frame(est.shape = as.numeric(g$estimate[1]),
+                              est.scale = as.numeric(g$estimate[2]),
+                              loglik = g$loglik, indiv = 0)
+    
+    weib.boot.pool <- rbind.data.frame(weib.boot.pool, prms.weib %>% mutate(boot = j))
+}
+
+```
+
+```{r}
+
+weib.boot %>% 
+  rbind.data.frame(., weib.boot.pool) -> weib.boot
 
 weib.boot %>% 
   ggplot(., aes(x = factor(indiv), y = est.shape)) +
@@ -595,7 +633,23 @@ weib.boot %>%
   stat_summary(fun.data=mean_sdl, mult=1, 
                  geom="pointrange", color="red") +
   labs(title = "Shape") +
+  theme_bw() -> p1
+
+weib.boot %>% 
+  ggplot(., aes(x = factor(indiv), y = est.scale)) +
+  geom_violin() +
+  #geom_boxplot(width = 0.1) +
+  stat_summary(fun.data=mean_sdl, mult=1, 
+                 geom="pointrange", color="red") +
+  labs(title = "Scale") +
   theme_bw() -> p2
 
 plot_grid(p1, p2)
- ```
+```
+
+
+ 
+ **NEXT** Instead of the violin plots, I should show the dispersal kernels created by each of these bootstrap replicates.   
+ Also, seems like for simulations, we need to sample 5 individuals multiple times, or sample more than 5 individuals from each population. I like the second approach. 
+ 
+ 
