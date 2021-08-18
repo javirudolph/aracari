@@ -17,6 +17,8 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(cowplot)
+library(fitdistrplus)
+library(Hmisc)
 ```
 
 
@@ -385,13 +387,13 @@ Next steps.
 Fit a weibull distribution to the raw seed dispersal data, probably subsample.
 Provide summary stats for the dispersal and dispersion measures.
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 # s.df <- df %>% drop_na(s.id)
 
 s.df <- df %>% drop_na(s.id) %>% 
   sample_n(., 50)
   
-library(fitdistrplus)
+
 
 g <- fitdist(s.df$disp, distr = "weibull")
 summary(g)
@@ -529,7 +531,7 @@ for(j in 1:10){
 ```
 
 ```{r}
-library(Hmisc)
+
 
 weib.boot %>% 
   ggplot(., aes(x = factor(indiv), y = est.scale)) +
