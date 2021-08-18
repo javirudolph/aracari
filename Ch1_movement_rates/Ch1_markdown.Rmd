@@ -63,11 +63,12 @@ m_2 <- sort(round(rlnorm(n.individuals, meanlog = av.mov.rate, sdlog = 0.5),3))
 m_3 <- sort(round(rlnorm(n.individuals, meanlog = av.mov.rate, sdlog = 1),3))
 ```
 
-We can look at how those exponential distributions look for each of the individuals in those populations. Each curve describes the distribution of movement lengths for each of the five individuals in the first population.
+We can look at how those exponential distributions look for each of the individuals in those populations. Each curve describes the distribution of movement lengths for each of the five individuals in the population. Each panel represents one of the populations.
 
 ```{r fig.width=12}
 
-mycols <- rainbow(5, s=0.8)
+par(mfrow=c(1,3))
+mycols <- rainbow(n.individuals, s=1)
 
 range <- c(-0.1,max.x+5)
 #create density plots
@@ -174,7 +175,6 @@ for(j in 1:individual){
 
 ```
 
-Use ggplot to make multiple rounds of each individual
 ```{r eval=FALSE}
 
 df <- sim_movement(m_1[1], plot.it = FALSE, return.data.frame = TRUE)
@@ -185,7 +185,8 @@ df %>%
 
 ```
 
-## Movement for individuals in the three populations
+## Individual movement
+For each population, we can simulate the movement of every individual using a random walk. Colors correspond to the individuals in the plot above. Every individual is sorted based on their average movement rate, so that the first individuals, colored in red, correspond to the smallest movement rate. In contrast, individuals described by violet correspond to the individuals with the highest movement rate in that population.
 ```{r eval=FALSE}
 nruns <- 3
 # Population1
