@@ -656,6 +656,41 @@ weib.boot %>%
 plot_grid(p1, p2)
 ```
 
+```{r}
+mycols2 <- c("black", mycols)
+
+weib.curves <- NULL
+
+for(i in 0:5){
+  weib.boot %>% 
+  filter(indiv == i) -> a
+
+  b <- purrr::map(seq(1:nrow(a)), function(y)
+    stat_function(fun = dweibull, args = list(scale = a$est.scale[y], shape = a$est.shape[y]), color = mycols2[i+1], alpha = 0.3))
+  
+  weib.curves <- append(weib.curves, b)
+}
+
+
+# ggplot(data = data.frame(x = c(1, 60)), aes(x)) +
+#   weib.curves +
+#   ylab("Density") + xlab("Distance (m)") +
+#   theme_bw()  +
+#   theme(legend.position = c(0.7, 0.7),
+#         legend.title = element_blank()) 
+df %>%
+  drop_na(s.id) %>% 
+  ggplot(., aes(x = disp)) +
+  geom_histogram(aes(y = ..density..), fill = "grey") +
+  theme_bw() -> p
+# p
+# 
+# p +
+#   stat_function(fun = dweibull, args = list(scale = weib.boot$est.scale[1], shape = weib.boot$est.shape[1]), color = "red")
+
+p + weib.curves
+
+```
 
  
  **NEXT** Instead of the violin plots, I should show the dispersal kernels created by each of these bootstrap replicates.   
