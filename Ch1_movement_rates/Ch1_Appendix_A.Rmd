@@ -27,6 +27,7 @@ Let's say there is a variation in animal movement rates, and it depends on multi
 Let $X_i$ be a positive random variable that is log-normally distributed $(i.e. X_i \sim Lognormal(\mu_i, \sigma_i^2)$ describing the distribution of movement rates for an animal population $i$. Such population's average movement rate being $\mu_i$ and the variance of their movement rates $\sigma_i^2$. These average movement rates can depend on homerange size for example, or seasonality (i.e. breeding, nesting, etc.). We will assume we have three different populations, where perhaps some of them have larger home ranges, creating more variance across movement rates. To make things a little easier, we will consider all populations have the same average movement rate $(i.e. \mu_1=\mu_1=\mu_3 = 1)$, but different standard deviation $(\sigma_1=0.3, \sigma_2=0.5, \sigma_3=0.5)$. Note that variance, $\sigma^2$ is the square of standard deviation, $\sigma$. We can visualize the distribution of movement rates for each of these populations: 
 
 ```{r}
+set.seed(978)
 
 av.mov.rate <- 1
 max.x <- 10
