@@ -32,7 +32,7 @@ set.seed(98)
 av.mov.rate <- 1
 max.x <- 10
 
-mycols <- c("black", "blue", "purple")
+mycols <- c("red", "green", "blue")
 #create density plots
 curve(dlnorm(x, meanlog=av.mov.rate, sdlog=0.3),
       from=0, to=max.x,
