@@ -27,7 +27,7 @@ Let's say there is a variation in animal movement rates, and it depends on multi
 Let $X_i$ be a positive random variable that is log-normally distributed $(i.e. X_i \sim Lognormal(\mu_i, \sigma_i^2)$ describing the distribution of movement rates for an animal population $i$. Such population's average movement rate being $\mu_i$ and the variance of their movement rates $\sigma_i^2$. These average movement rates can depend on homerange size for example, or seasonality (i.e. breeding, nesting, etc.). We will assume we have three different populations, where perhaps some of them have larger home ranges, creating more variance across movement rates. To make things a little easier, we will consider all populations have the same average movement rate $(i.e. \mu_1=\mu_1=\mu_3 = 1)$, but different standard deviation $(\sigma_1=0.3, \sigma_2=0.5, \sigma_3=0.5)$. Note that variance, $\sigma^2$ is the square of standard deviation, $\sigma$. We can visualize the distribution of movement rates for each of these populations: 
 
 ```{r}
-set.seed(978)
+set.seed(98)
 
 av.mov.rate <- 1
 max.x <- 10
@@ -701,10 +701,10 @@ p +
 
 
 This is only an example for the first population, but the overall idea is that if an individual has a larger movement rate, it moves more and this tends to translate into moving further away. As a consequence, the individuals with higher movement rates disperse seeds farther away and more scattered, in comparison to individuals with lower movement rates. Thus, the seed dispersal kernels produced by these individuals also show this trend, where individuals with higher movement rates disperse seeds further. This shows with the fatter tails of the kernels, evidenced by the larger scale parameters from fitted Weibull distributions. 
-When we pool the seed dispersal data, we ignore individual differences in how each disperser moved the seeds, and we estimate a seed dispersal kernel for that whole population or group. 
+When we pool the seed dispersal data, we ignore individual differences in how each disperser moved the seeds, and estimate a single dispersal kernel sampling from all the seeds, regardless of who dispersed it. 
 
 ## Comparisson of seed dispersal kernels across populations  
-These populations all have the same average movement rates, but their variance is different. This means that in the first population, all individuals have relatively similar movement rates, whereas in the third population, there is a lot more variation among the movement rates of individuals.
+These populations all have the same average movement rates, but their variance is different. Since we are sampling individuals from these lognormally distributed populations, that means that the populations have similar averages, but in the first population individuals are very similar to each other, whereas in the third population, the individuals have movement rates more spread out. By having individuals more spread out, it means that not only are we getting individuals with much higher movement rates, we are also getting them with much lower movement rates as well. Depending on the population, we could also ask whether or not all populations follow this lognormal distribution. This is more of a behavior question, do all animals move at the same rate? meaning all very close to the average. Do most animals move at the same rate, except for some very few that like to explore and go far away? Perhaps this population needs a more skewed distribution with a longer tail. Or perhaps this relates to breeding seasons instead, or droughts.
 
 ```{r}
 
