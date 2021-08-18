@@ -2,14 +2,17 @@
 title: "Implications of animal movement rate variation in spatial patterns of seed dispersal"
 author: "Javiera Rudolph"
 date: "8/12/2021"
-output: html_document
+output: 
+  html_document:
+    toc: true
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(fig.width=12, fig.height=6) 
 ```
 
-```{r message=FALSE}
+```{r message=FALSE, warning=FALSE}
 library(dplyr)
 library(tidyr)
 library(ggplot2)
@@ -362,7 +365,7 @@ df %>%
   theme_bw() +
   theme(legend.position = "bottom") +
   labs(title = "Density of animal movement") -> p2
-p2
+# p2
 
 cowplot::plot_grid(p1, p2)
   
@@ -522,7 +525,7 @@ for(j in 1:10){
     weib.boot <- rbind.data.frame(weib.boot, weib.fits %>% mutate(boot = j))
 }
 
-weib.boot
+# weib.boot
 ```
 
 ```{r}
