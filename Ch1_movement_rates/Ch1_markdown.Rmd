@@ -28,8 +28,8 @@ Let $X_i$ be a positive random variable that is log-normally distributed $(i.e. 
 
 ```{r}
 
-av.mov.rate <- 2
-max.x <- 20
+av.mov.rate <- 1
+max.x <- 10
 
 mycols <- c("black", "blue", "purple")
 #create density plots
@@ -651,5 +651,7 @@ plot_grid(p1, p2)
  
  **NEXT** Instead of the violin plots, I should show the dispersal kernels created by each of these bootstrap replicates.   
  Also, seems like for simulations, we need to sample 5 individuals multiple times, or sample more than 5 individuals from each population. I like the second approach. 
+ Also, edit colors in violin plots to show each individuals color, and only use the one that includes the population as well. Leave population in black. Change red lines and dot to black too. 
+ 
  
  
