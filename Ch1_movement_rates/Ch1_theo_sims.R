@@ -9,6 +9,7 @@ library(Hmisc)
 
 set.seed(98)
 
+# Three populations ---------------------------------------------------------------------
 av.mov.rate <- 1
 sd.mov.rate <- c(0.3, 0.5, 1)
 max.x <- 10
@@ -33,3 +34,9 @@ curve(dlnorm(x, meanlog=av.mov.rate, sdlog=sd.mov.rate[3]),
 #add legend
 legend("topright", legend=c("sdlog=.3", "sdlog=.5", "sdlog=1"),
        col=mycols, lty=1, cex=1.2)
+
+## Simulate movement rates -------------------------------------------------------------
+n.individuals <- 30
+m_1 <- sort(round(rlnorm(n.individuals, meanlog = av.mov.rate, sdlog = sd.mov.rate[1]),3))
+m_2 <- sort(round(rlnorm(n.individuals, meanlog = av.mov.rate, sdlog = sd.mov.rate[2]),3))
+m_3 <- sort(round(rlnorm(n.individuals, meanlog = av.mov.rate, sdlog = sd.mov.rate[3]),3))
