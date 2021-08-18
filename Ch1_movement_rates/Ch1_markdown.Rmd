@@ -454,7 +454,21 @@ summ.df %>%
   ggplot(., aes(y = dsprsn, x = indiv, color = indiv)) +
   geom_boxplot() +
   geom_point(color = "grey", alpha = 0.5) +
-  theme_bw()
+  labs(title = "Dispersion") +
+  theme_bw() +
+  theme(legend.position = "none") -> p1
+# p1
+
+summ.df %>% 
+  ggplot(., aes(y = av.disp, x = indiv, color = indiv)) +
+  geom_boxplot() +
+  geom_point(color = "grey", alpha = 0.5) +
+  labs(title = "Average dispersal per run") +
+  theme_bw() +
+  theme(legend.position = "none") -> p2
+# p2
+
+plot_grid(p1, p2)
 ```
 ```{r}
 s.df <- df %>% drop_na(s.id) %>%
