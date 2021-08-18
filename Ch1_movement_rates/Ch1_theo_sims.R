@@ -40,3 +40,67 @@ n.individuals <- 30
 m_1 <- sort(round(rlnorm(n.individuals, meanlog = av.mov.rate, sdlog = sd.mov.rate[1]),3))
 m_2 <- sort(round(rlnorm(n.individuals, meanlog = av.mov.rate, sdlog = sd.mov.rate[2]),3))
 m_3 <- sort(round(rlnorm(n.individuals, meanlog = av.mov.rate, sdlog = sd.mov.rate[3]),3))
+
+## Visualize individual differences ----------------------------------------------------
+
+par(mfrow=c(1,3))
+mycols <- rainbow(n.individuals, s=1)
+
+range <- c(-0.1,max.x+5)
+#create density plots
+### Fist population--------------------------------------------------------------------
+curve(dexp(x, 1/m_1[1]), #notice rate for exponential is 1/movement rate.
+      from=range[1], to=range[2],
+      col=mycols[1],
+      main = 'Distribution of movement lengths', #add title
+      ylab = 'Density', #change y-axis label
+      xlab = "x"
+)
+for(i in 2:5){
+  curve(dexp(x, 1/m_1[i]),
+        from=range[1], to=range[2],
+        col=mycols[i], add=TRUE)
+}
+
+#add legend
+legend("topright", legend= m_1,
+       col=mycols, lty=1, cex=1.2)
+
+
+### Second population----------------------------------------------------------------
+curve(dexp(x, 1/m_2[1]), #notice rate for exponential is 1/movement rate.
+      from=range[1], to=range[2],
+      col=mycols[1],
+      main = 'Distribution of movement lengths', #add title
+      ylab = 'Density', #change y-axis label
+      xlab = "x"
+)
+for(i in 2:5){
+  curve(dexp(x, 1/m_2[i]),
+        from=range[1], to=range[2],
+        col=mycols[i], add=TRUE)
+}
+
+#add legend
+legend("topright", legend= m_2,
+       col=mycols, lty=1, cex=1.2)
+
+
+
+### Third population ---------------------------------------------------------------
+curve(dexp(x, 1/m_3[1]), #notice rate for exponential is 1/movement rate.
+      from=range[1], to=range[2],
+      col=mycols[1],
+      main = 'Distribution of movement lengths', #add title
+      ylab = 'Density', #change y-axis label
+      xlab = "x"
+)
+for(i in 2:5){
+  curve(dexp(x, 1/m_3[i]),
+        from=range[1], to=range[2],
+        col=mycols[i], add=TRUE)
+}
+
+#add legend
+legend("topright", legend= m_3,
+       col=mycols, lty=1, cex=1.2)
