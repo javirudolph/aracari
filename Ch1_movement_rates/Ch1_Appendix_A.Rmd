@@ -293,7 +293,7 @@ t.grt <- max(grt)
 animalTraj <- sim_movement(m_1[1], t = t.grt, plot.it = FALSE, return.data.frame = TRUE)
 
 animalTraj %>% 
-  left_join(., data.frame(s.id = 1:nseeds, time = grt)) %>% 
+  left_join(., data.frame(s.id = 1:nseeds, time = grt), by = "time") %>% 
   mutate(disp = sqrt(xloc^2+yloc^2)) -> df
 
 df %>% 
@@ -336,7 +336,7 @@ sim_seeds <- function(nseeds = 20, m.prms = NULL,...){
   df <- sim_movement(m.prms, t = t.grt, plot.it = FALSE, return.data.frame = TRUE)
 
   df %>% 
-    left_join(., data.frame(s.id = 1:nseeds, time = grt)) %>% 
+    left_join(., data.frame(s.id = 1:nseeds, time = grt), by = "time") %>% 
     mutate(disp = sqrt(xloc^2+yloc^2)) -> df
   
   return(df)
@@ -584,20 +584,22 @@ for(j in 1:n.boots){
 ```{r eval=FALSE}
 
 weib.boot %>% 
-  ggplot(., aes(x = factor(indiv), y = est.shape)) +
+  ggplot(., aes(x = factor(indiv), y = est.shape, color = factor(indiv))) +
   geom_violin() +
+  scale_color_manual(values = mycols) +
   #geom_boxplot(width = 0.1) +
   stat_summary(fun.data=mean_sdl, mult=1, 
-                 geom="pointrange", color="red") +
+                 geom="pointrange", color="black") +
   labs(title = "Shape") +
   theme_bw() -> p1
 
 weib.boot %>% 
-  ggplot(., aes(x = factor(indiv), y = est.scale)) +
+  ggplot(., aes(x = factor(indiv), y = est.scale, color = factor(indiv))) +
   geom_violin() +
+  scale_color_manual(values = mycols) +
   #geom_boxplot(width = 0.1) +
   stat_summary(fun.data=mean_sdl, mult=1, 
-                 geom="pointrange", color="red") +
+                 geom="pointrange", color="black") +
   labs(title = "Scale") +
   theme_bw() -> p2
 
@@ -913,6 +915,37 @@ weib.boot.pool %>%
                  geom="pointrange", color="black") +
   labs(title = "Scale") +
   theme_bw() -> p2
+
+plot_grid(p1, p2)
+```
+```{r}
+summ.df %>% 
+  mutate(popu = 1) %>% 
+  bind_rows(summ.df2 %>% 
+              mutate(popu = 2)) %>% 
+  bind_rows(., summ.df3 %>% 
+              mutate(popu = 3)) %>% 
+  ggplot(., aes(y = dsprsn, x = factor(popu), color = factor(popu))) +
+  geom_boxplot() +
+  geom_point(color = "grey", alpha = 0.5) +
+  labs(title = "Dispersion") +
+  theme_bw() +
+  theme(legend.position = "none") -> p1
+# p1
+
+summ.df %>% 
+  mutate(popu = 1) %>% 
+  bind_rows(summ.df2 %>% 
+              mutate(popu = 2)) %>% 
+  bind_rows(., summ.df3 %>% 
+              mutate(popu = 3)) %>% 
+  ggplot(., aes(y = av.disp, x = factor(popu), color = factor(popu))) +
+  geom_boxplot() +
+  geom_point(color = "grey", alpha = 0.5) +
+  labs(title = "Average dispersal per run") +
+  theme_bw() +
+  theme(legend.position = "none") -> p2
+# p2
 
 plot_grid(p1, p2)
 ```
