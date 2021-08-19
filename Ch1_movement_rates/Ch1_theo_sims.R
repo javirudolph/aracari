@@ -45,6 +45,8 @@ m_3 <- sort(round(rlnorm(n.individuals, meanlog = av.mov.rate, sdlog = sd.mov.ra
 
 par(mfrow=c(1,3))
 mycols <- rainbow(n.individuals, s=1)
+mycols <- colorRampPalette(c("#F46036", "#5B85AA", "#414770", "#372248", "#171123"))(n.individuals)
+mycols <- colorRampPalette(c("#ffba08", "#d00000", "#03071e"))(n.individuals)
 
 range <- c(-0.1,max.x+5)
 #create density plots
@@ -56,7 +58,7 @@ curve(dexp(x, 1/m_1[1]), #notice rate for exponential is 1/movement rate.
       ylab = 'Density', #change y-axis label
       xlab = "x"
 )
-for(i in 2:5){
+for(i in 2:n.individuals){
   curve(dexp(x, 1/m_1[i]),
         from=range[1], to=range[2],
         col=mycols[i], add=TRUE)
@@ -64,7 +66,7 @@ for(i in 2:5){
 
 #add legend
 legend("topright", legend= m_1,
-       col=mycols, lty=1, cex=1.2)
+       col=mycols, lty=1, cex=1.2, lwd = 2)
 
 
 ### Second population----------------------------------------------------------------
@@ -75,7 +77,7 @@ curve(dexp(x, 1/m_2[1]), #notice rate for exponential is 1/movement rate.
       ylab = 'Density', #change y-axis label
       xlab = "x"
 )
-for(i in 2:5){
+for(i in 2:n.individuals){
   curve(dexp(x, 1/m_2[i]),
         from=range[1], to=range[2],
         col=mycols[i], add=TRUE)
@@ -83,7 +85,7 @@ for(i in 2:5){
 
 #add legend
 legend("topright", legend= m_2,
-       col=mycols, lty=1, cex=1.2)
+       col=mycols, lty=1, cex=1.2, lwd = 2)
 
 
 
@@ -95,7 +97,7 @@ curve(dexp(x, 1/m_3[1]), #notice rate for exponential is 1/movement rate.
       ylab = 'Density', #change y-axis label
       xlab = "x"
 )
-for(i in 2:5){
+for(i in 2:n.individuals){
   curve(dexp(x, 1/m_3[i]),
         from=range[1], to=range[2],
         col=mycols[i], add=TRUE)
@@ -103,7 +105,7 @@ for(i in 2:5){
 
 #add legend
 legend("topright", legend= m_3,
-       col=mycols, lty=1, cex=1.2)
+       col=mycols, lty=1, cex=1.2, lwd = 2)
 
 # Functions --------------------------------------------------------------------------
 sim_movement <- function(prm, t = 1000, plot.it = TRUE, return.data.frame = FALSE){
@@ -149,3 +151,33 @@ summ_seeds <- function(df = NULL){
   return(s.df)
 }
 
+# Simulate seed dispersal ------------------------------------------------------------
+## Animal movement first ---------------------------------------------------------------
+nruns <- 3
+m.data <- data.frame(m_1, m_2, m_3)
+
+df <- NULL
+
+for(m in 1:3){
+  m.0 <- m.data[m]
+  for(j in 1:n.individuals){
+    for(k in 1:nruns){
+      a <- sim_movement(m_2[j], plot.it = FALSE, return.data.frame = TRUE) %>%
+        mutate(indiv = as.factor(j),
+               run = paste0("r_", k),
+               pop.id = paste0("p_",m))
+      df <- rbind.data.frame(df, a)
+    }
+  }
+
+}
+
+
+df %>%
+  ggplot(., aes(x = xloc, y=yloc, group = run, color = indiv)) +
+  facet_wrap(~pop.id) +
+  geom_path() +
+  scale_color_manual(values = mycols) +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  NULL
