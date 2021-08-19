@@ -280,4 +280,32 @@ group_by(., popu) %>%
 
 plot_grid(p1, p2)
 
-##
+## Fit Weibull distributions -----------------------------------------------------------------------------
+
+n.boots <- 5
+samp.size <- 10
+weib.boot <- NULL
+
+for(j in 1:n.boots){
+  s.df <- df %>% drop_na(s.id) %>%
+    group_by(indiv) %>%
+    sample_n(., samp.size)
+
+  # s.df <- df %>% drop_na(s.id)
+
+  weib.fits <- NULL
+
+  for(i in 1:n.individuals){
+    dat <- s.df %>%
+      filter(indiv == i)
+    #g <- fitdist(dat$disp, distr = "weibull", method = 'mle', lower = c(0,0))
+    g <- fitdistr(dat$disp, densfun = "weibull", lower = c(0,0))
+    prms.weib <- data.frame(est.shape = as.numeric(g$estimate[1]),
+                            est.scale = as.numeric(g$estimate[2]),
+                            loglik = g$loglik, indiv = i)
+    weib.fits <- rbind.data.frame(weib.fits, prms.weib)
+    # plot(g)
+  }
+
+  weib.boot <- rbind.data.frame(weib.boot, weib.fits %>% mutate(boot = j))
+}
