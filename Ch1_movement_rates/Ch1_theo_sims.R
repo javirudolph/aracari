@@ -283,7 +283,7 @@ plot_grid(p1, p2)
 ## Fit Weibull distributions -----------------------------------------------------------------------------
 
 n.boots <- 5
-samp.size <- 10
+samp.size <- 20
 weib.boot <- NULL
 
 for(j in 1:n.boots){
@@ -309,3 +309,28 @@ for(j in 1:n.boots){
 
   weib.boot <- rbind.data.frame(weib.boot, weib.fits %>% mutate(boot = j))
 }
+
+weib.boot %>%
+  ggplot(., aes(x = factor(indiv), y = est.shape, color = factor(indiv))) +
+  geom_violin() +
+  scale_color_manual(values = c("black", mycols)) +
+  # geom_boxplot(width = 0.1) +
+  # geom_point(color = "grey", alpha = 0.5) +
+  stat_summary(fun.data=mean_sdl, mult=1,
+               geom="pointrange", color="black") +
+  labs(title = "Shape") +
+  theme_bw() -> p1
+# p1
+
+weib.boot %>%
+  ggplot(., aes(x = factor(indiv), y = est.scale, color = factor(indiv))) +
+  geom_violin() +
+  scale_color_manual(values = c("black", mycols)) +
+  #geom_boxplot(width = 0.1) +
+  # geom_point() +
+  stat_summary(fun.data=mean_sdl, mult=1,
+               geom="pointrange", color="black") +
+  labs(title = "Scale") +
+  theme_bw() -> p2
+
+plot_grid(p1, p2)
