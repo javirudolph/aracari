@@ -217,19 +217,19 @@ save.image(file = paste0("Ch1_movement_rates/workspace_", Sys.Date(), ".RData"))
 ### Check with one individual ---------------------------------------------------------
 
 df %>%
-  filter(popu == 1, indiv == 1) -> df.ex
+  filter(popu == 1, popu == 1) -> df.ex
 
 df.ex %>%
   ggplot(., aes(x = xloc, y=yloc,
                 group = run,
-                color = indiv)) +
+                color = popu)) +
   # facet_wrap(~run) +
   geom_path() +
   scale_color_manual(values = mycols) +
   geom_point(data = df.ex %>% drop_na(s.id),
              aes(x = xloc, y = yloc)) +
   geom_point(data = summ.df %>%
-               filter(popu == 1, indiv == 1),
+               filter(popu == 1, popu == 1),
              aes(x = x, y=y), color = "black") +
   theme_bw() +
   labs(title = "Animal seed droppings", caption = "Lines show an individual's trajectory.\n Dots show all seed droppings.\n Black dots show average location of seed per run") +
@@ -282,27 +282,27 @@ plot_grid(p1, p2)
 
 ## Fit Weibull distributions -----------------------------------------------------------------------------
 
-n.boots <- 5
-samp.size <- 20
+n.boots <- 15
+samp.size <- 10
 weib.boot <- NULL
 
 for(j in 1:n.boots){
   s.df <- df %>% drop_na(s.id) %>%
-    group_by(indiv) %>%
+    group_by(popu) %>%
     sample_n(., samp.size)
 
   # s.df <- df %>% drop_na(s.id)
 
   weib.fits <- NULL
 
-  for(i in 1:n.individuals){
+  for(i in 1:3){
     dat <- s.df %>%
-      filter(indiv == i)
+      filter(popu == i)
     #g <- fitdist(dat$disp, distr = "weibull", method = 'mle', lower = c(0,0))
     g <- fitdistr(dat$disp, densfun = "weibull", lower = c(0,0))
     prms.weib <- data.frame(est.shape = as.numeric(g$estimate[1]),
                             est.scale = as.numeric(g$estimate[2]),
-                            loglik = g$loglik, indiv = i)
+                            loglik = g$loglik, popu = i)
     weib.fits <- rbind.data.frame(weib.fits, prms.weib)
     # plot(g)
   }
@@ -311,7 +311,7 @@ for(j in 1:n.boots){
 }
 
 weib.boot %>%
-  ggplot(., aes(x = factor(indiv), y = est.shape, color = factor(indiv))) +
+  ggplot(., aes(x = factor(popu), y = est.shape, color = factor(popu))) +
   geom_violin() +
   scale_color_manual(values = c("black", mycols)) +
   # geom_boxplot(width = 0.1) +
@@ -323,7 +323,7 @@ weib.boot %>%
 # p1
 
 weib.boot %>%
-  ggplot(., aes(x = factor(indiv), y = est.scale, color = factor(indiv))) +
+  ggplot(., aes(x = factor(popu), y = est.scale, color = factor(popu))) +
   geom_violin() +
   scale_color_manual(values = c("black", mycols)) +
   #geom_boxplot(width = 0.1) +
