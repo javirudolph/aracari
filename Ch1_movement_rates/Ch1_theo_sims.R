@@ -153,31 +153,125 @@ summ_seeds <- function(df = NULL){
 
 # Simulate seed dispersal ------------------------------------------------------------
 ## Animal movement first ---------------------------------------------------------------
-nruns <- 3
+
+## Don't run this, too heavy of a plot and you can't really see anything.
+# nruns <- 3
+# m.data <- data.frame(m_1, m_2, m_3)
+
+# df <- NULL
+#
+# for(m in 1:3){
+#   m.0 <- m.data[m]
+#   for(j in 1:n.individuals){
+#     for(k in 1:nruns){
+#       a <- sim_movement(m.0[j,], plot.it = FALSE, return.data.frame = TRUE) %>%
+#         mutate(indiv = as.factor(j),
+#                run = paste0("r_", k),
+#                pop.id = paste0("p_",m))
+#       df <- rbind.data.frame(df, a)
+#     }
+#   }
+#
+# }
+#
+#
+# df %>%
+#   ggplot(., aes(x = xloc, y=yloc, group = run, color = indiv)) +
+#   facet_wrap(~pop.id) +
+#   geom_path() +
+#   scale_color_manual(values = mycols) +
+#   theme_bw() +
+#   theme(legend.position = "bottom") +
+#   NULL
+
+## Generate seed dispersal data -----------------------------------------------
 m.data <- data.frame(m_1, m_2, m_3)
+kruns <- 100
+nseeds <- 20
 
 df <- NULL
+summ.df <- NULL
 
 for(m in 1:3){
   m.0 <- m.data[m]
   for(j in 1:n.individuals){
-    for(k in 1:nruns){
-      a <- sim_movement(m_2[j], plot.it = FALSE, return.data.frame = TRUE) %>%
+    for(k in 1:kruns){
+      a <- sim_seeds(m.prms = m.0[j,], nseeds = nseeds) %>%
         mutate(indiv = as.factor(j),
-               run = paste0("r_", k),
-               pop.id = paste0("p_",m))
+               run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
+               popu = as.factor(m))
+
+      b <- summ_seeds(a) %>%
+        mutate(indiv = as.factor(j),
+               run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
+               popu = as.factor(m))
+
       df <- rbind.data.frame(df, a)
+      summ.df <- rbind.data.frame(summ.df, b)
     }
   }
-
 }
 
+save.image(file = paste0("Ch1_movement_rates/workspace_", Sys.Date(), ".RData"))
+
+### Check with one individual ---------------------------------------------------------
 
 df %>%
-  ggplot(., aes(x = xloc, y=yloc, group = run, color = indiv)) +
-  facet_wrap(~pop.id) +
+  filter(popu == 1, indiv == 1) -> df.ex
+
+df.ex %>%
+  ggplot(., aes(x = xloc, y=yloc,
+                group = run,
+                color = indiv)) +
+  # facet_wrap(~run) +
   geom_path() +
   scale_color_manual(values = mycols) +
+  geom_point(data = df.ex %>% drop_na(s.id),
+             aes(x = xloc, y = yloc)) +
+  geom_point(data = summ.df %>%
+               filter(popu == 1, indiv == 1),
+             aes(x = x, y=y), color = "black") +
+  theme_bw() +
+  labs(title = "Animal seed droppings", caption = "Lines show an individual's trajectory.\n Dots show all seed droppings.\n Black dots show average location of seed per run") +
+  theme(legend.position = "none") -> p1
+# p1
+
+df.ex %>%
+  ggplot(., aes(x = xloc, y = yloc)) +
+  # stat_density_2d(aes(fill = ..level..), geom = "polygon", colour="white") +
+  geom_bin2d() +
+  # geom_hex() +
+  # scale_fill_continuous(type = "viridis") +
+  scale_fill_gradient(low = "grey", high = "black") +
+  # geom_point(data = df %>% drop_na(s.id),
+  #            aes(x = xloc, y = yloc), color = mycols[ex.i], alpha = 0.3) +
+  # geom_point(data = summ.df, aes(x = x, y=y), color = "black") +
   theme_bw() +
   theme(legend.position = "bottom") +
-  NULL
+  labs(title = "Density of animal movement") -> p2
+# p2
+
+cowplot::plot_grid(p1, p2)
+
+## Dispersion and dispersal measures across populations ------------------------------------------------------
+
+# #If we wanted to visualize
+# summ.df %>%
+#   ggplot(., aes(y = dsprsn, x = indiv, color = indiv)) +
+#   geom_boxplot() +
+#   geom_point(color = "grey", alpha = 0.5) +
+#   labs(title = "Dispersion") +
+#   theme_bw() +
+#   theme(legend.position = "none") -> p1
+# # p1
+#
+# summ.df %>%
+#   ggplot(., aes(y = av.disp, x = indiv, color = indiv)) +
+#   geom_boxplot() +
+#   geom_point(color = "grey", alpha = 0.5) +
+#   labs(title = "Average dispersal per run") +
+#   theme_bw() +
+#   theme(legend.position = "none") -> p2
+# # p2
+#
+# plot_grid(p1, p2)
