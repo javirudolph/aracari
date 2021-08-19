@@ -258,21 +258,20 @@ df <- NULL
 for(m in 1:3){
   m.0 <- m.data[m]
   for(j in 1:n.individuals){
-  for(k in 1:nruns){
-  a <- sim_movement(m_2[j], plot.it = FALSE, return.data.frame = TRUE) %>% 
-    mutate(indiv = as.factor(j),
-           run = paste0("r_", k),
-           pop.id = paste0("p_",m))
-  df <- rbind.data.frame(df, a)
-}
-}
-  
+    for(k in 1:nruns){
+      a <- sim_movement(m.0[j,], plot.it = FALSE, return.data.frame = TRUE) %>% 
+        mutate(indiv = as.factor(j),
+               run = paste0("r_", k),
+               popu = paste0("p_",m))
+      df <- rbind.data.frame(df, a)
+    }
+  }
 }
 
 
 df %>% 
   ggplot(., aes(x = xloc, y=yloc, group = run, color = indiv)) +
-  facet_wrap(~pop.id) +
+  facet_wrap(~popu) +
   geom_path() +
   scale_color_manual(values = mycols) +
   theme_bw() +
