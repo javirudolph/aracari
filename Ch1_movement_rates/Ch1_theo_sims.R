@@ -255,23 +255,29 @@ cowplot::plot_grid(p1, p2)
 
 ## Dispersion and dispersal measures across populations ------------------------------------------------------
 
-# #If we wanted to visualize
-# summ.df %>%
-#   ggplot(., aes(y = dsprsn, x = indiv, color = indiv)) +
-#   geom_boxplot() +
-#   geom_point(color = "grey", alpha = 0.5) +
-#   labs(title = "Dispersion") +
-#   theme_bw() +
-#   theme(legend.position = "none") -> p1
-# # p1
-#
-# summ.df %>%
-#   ggplot(., aes(y = av.disp, x = indiv, color = indiv)) +
-#   geom_boxplot() +
-#   geom_point(color = "grey", alpha = 0.5) +
-#   labs(title = "Average dispersal per run") +
-#   theme_bw() +
-#   theme(legend.position = "none") -> p2
-# # p2
-#
-# plot_grid(p1, p2)
+# It's too many points, so sample 1000 to visualize.
+summ.df %>%
+  group_by(., popu) %>%
+  sample_n(., 1000) %>%
+  ggplot(., aes(y = dsprsn, x = factor(popu), color = factor(popu))) +
+  geom_boxplot() +
+  geom_point(color = "grey", alpha = 0.5) +
+  labs(title = "Dispersion") +
+  theme_bw() +
+  theme(legend.position = "none") -> p1
+# p1
+
+summ.df %>% c
+group_by(., popu) %>%
+  sample_n(., 1000) %>%
+  ggplot(., aes(y = av.disp, x = factor(popu), color = factor(popu))) +
+  geom_boxplot() +
+  geom_point(color = "grey", alpha = 0.5) +
+  labs(title = "Average dispersal per run") +
+  theme_bw() +
+  theme(legend.position = "none") -> p2
+# p2
+
+plot_grid(p1, p2)
+
+
