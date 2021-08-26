@@ -36,7 +36,7 @@ legend("topright", legend=c("sdlog=.3", "sdlog=.5", "sdlog=1"),
        col=mycols, lty=1, cex=1.2)
 
 ## Simulate movement rates -------------------------------------------------------------
-n.individuals <- 30
+n.individuals <- 12
 m_1 <- sort(round(rlnorm(n.individuals, meanlog = av.mov.rate, sdlog = sd.mov.rate[1]),3))
 m_2 <- sort(round(rlnorm(n.individuals, meanlog = av.mov.rate, sdlog = sd.mov.rate[2]),3))
 m_3 <- sort(round(rlnorm(n.individuals, meanlog = av.mov.rate, sdlog = sd.mov.rate[3]),3))
@@ -186,7 +186,7 @@ summ_seeds <- function(df = NULL){
 
 ## Generate seed dispersal data -----------------------------------------------
 m.data <- data.frame(m_1, m_2, m_3)
-kruns <- 100
+kruns <- 1000
 nseeds <- 20
 
 df <- NULL
@@ -282,14 +282,19 @@ plot_grid(p1, p2)
 
 ## Fit Weibull distributions -----------------------------------------------------------------------------
 
-n.boots <- 15
-samp.size <- 10
+n.boots <- 1000
+samp.size <- 30
 weib.boot <- NULL
 
 for(j in 1:n.boots){
   s.df <- df %>% drop_na(s.id) %>%
     group_by(popu) %>%
-    sample_n(., samp.size)
+    sample_n(., samp.size) %>%
+    mutate(disp = round(disp, digits = 2))
+
+  # s.df %>%
+  #   ggplot(., aes(x = disp, fill = popu)) +
+  #   geom_histogram()
 
   # s.df <- df %>% drop_na(s.id)
 
@@ -298,8 +303,8 @@ for(j in 1:n.boots){
   for(i in 1:3){
     dat <- s.df %>%
       filter(popu == i)
-    #g <- fitdist(dat$disp, distr = "weibull", method = 'mle', lower = c(0,0))
-    g <- fitdistr(dat$disp, densfun = "weibull", lower = c(0,0))
+    g <- fitdist(dat$disp, distr = "weibull", method = 'mle', lower = c(0,0))
+    #g <- fitdistr(dat$disp, densfun = "weibull", lower = c(0,0))
     prms.weib <- data.frame(est.shape = as.numeric(g$estimate[1]),
                             est.scale = as.numeric(g$estimate[2]),
                             loglik = g$loglik, popu = i)
@@ -310,10 +315,13 @@ for(j in 1:n.boots){
   weib.boot <- rbind.data.frame(weib.boot, weib.fits %>% mutate(boot = j))
 }
 
+save.image(file = paste0("Ch1_movement_rates/workspace_", Sys.Date(), ".RData"))
+
+
 weib.boot %>%
   ggplot(., aes(x = factor(popu), y = est.shape, color = factor(popu))) +
   geom_violin() +
-  scale_color_manual(values = c("black", mycols)) +
+  # scale_color_manual(values = c("black", mycols)) +
   # geom_boxplot(width = 0.1) +
   # geom_point(color = "grey", alpha = 0.5) +
   stat_summary(fun.data=mean_sdl, mult=1,
@@ -325,7 +333,7 @@ weib.boot %>%
 weib.boot %>%
   ggplot(., aes(x = factor(popu), y = est.scale, color = factor(popu))) +
   geom_violin() +
-  scale_color_manual(values = c("black", mycols)) +
+  # scale_color_manual(values = c("black", mycols)) +
   #geom_boxplot(width = 0.1) +
   # geom_point() +
   stat_summary(fun.data=mean_sdl, mult=1,
