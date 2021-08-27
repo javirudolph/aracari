@@ -280,7 +280,8 @@ group_by(., popu) %>%
 
 plot_grid(p1, p2)
 
-## Fit Weibull distributions to every seed dispersed --------------------------------------------------------
+## Fit Weibull distributions --------------------------------------------------------
+### to every seed dispersed --------------------------------------------------------
 
 n.boots <- 1000
 samp.size <- 30
@@ -352,7 +353,7 @@ weib.boot %>%
 plot_grid(p1, p2)
 
 
-## Fit Weibull distributions to every run --------------------------------------------------------
+### to every run --------------------------------------------------------
 
 n.boots <- 1000
 samp.size <- 30
@@ -422,6 +423,8 @@ weib.boot %>%
   theme_bw() -> p2
 
 plot_grid(p1, p2)
+
+
 # Correlation between the scale parameters and the average movement rate sampled for the individuals
 # Well, I would need to fit that to the individual level data, not the population
 
