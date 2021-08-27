@@ -36,7 +36,7 @@ legend("topright", legend=c("sdlog=.3", "sdlog=.5", "sdlog=1"),
        col=mycols, lty=1, cex=1.2)
 
 ## Simulate movement rates -------------------------------------------------------------
-n.individuals <- 12
+n.individuals <- 20
 m_1 <- sort(round(rlnorm(n.individuals, meanlog = av.mov.rate, sdlog = sd.mov.rate[1]),3))
 m_2 <- sort(round(rlnorm(n.individuals, meanlog = av.mov.rate, sdlog = sd.mov.rate[2]),3))
 m_3 <- sort(round(rlnorm(n.individuals, meanlog = av.mov.rate, sdlog = sd.mov.rate[3]),3))
@@ -267,7 +267,7 @@ summ.df %>%
   theme(legend.position = "none") -> p1
 # p1
 
-summ.df %>% c
+summ.df %>%
 group_by(., popu) %>%
   sample_n(., 1000) %>%
   ggplot(., aes(y = av.disp, x = factor(popu), color = factor(popu))) +
@@ -303,11 +303,13 @@ for(j in 1:n.boots){
   for(i in 1:3){
     dat <- s.df %>%
       filter(popu == i)
+
     g <- fitdist(dat$disp, distr = "weibull", method = 'mle', lower = c(0,0))
     #g <- fitdistr(dat$disp, densfun = "weibull", lower = c(0,0))
     prms.weib <- data.frame(est.shape = as.numeric(g$estimate[1]),
                             est.scale = as.numeric(g$estimate[2]),
-                            loglik = g$loglik, popu = i)
+                            loglik = g$loglik,
+                            popu = i)
     weib.fits <- rbind.data.frame(weib.fits, prms.weib)
     # plot(g)
   }
@@ -319,26 +321,36 @@ save.image(file = paste0("Ch1_movement_rates/workspace_", Sys.Date(), ".RData"))
 
 
 weib.boot %>%
+  group_by(popu) %>%
+  sample_n(., 100) %>%
   ggplot(., aes(x = factor(popu), y = est.shape, color = factor(popu))) +
   geom_violin() +
   # scale_color_manual(values = c("black", mycols)) +
-  # geom_boxplot(width = 0.1) +
+  # geom_boxplot(width = 0.01) +
   # geom_point(color = "grey", alpha = 0.5) +
-  stat_summary(fun.data=mean_sdl, mult=1,
-               geom="pointrange", color="black") +
+  # stat_summary(fun.data=mean_sdl, mult=1,
+  #              geom="pointrange", color="black") +
+  geom_jitter(position = position_jitter(0.1)) +
   labs(title = "Shape") +
   theme_bw() -> p1
 # p1
 
 weib.boot %>%
+  group_by(popu) %>%
+  sample_n(., 100) %>%
   ggplot(., aes(x = factor(popu), y = est.scale, color = factor(popu))) +
   geom_violin() +
   # scale_color_manual(values = c("black", mycols)) +
   #geom_boxplot(width = 0.1) +
   # geom_point() +
-  stat_summary(fun.data=mean_sdl, mult=1,
-               geom="pointrange", color="black") +
+  # stat_summary(fun.data=mean_sdl, mult=1,
+  #              geom="pointrange", color="black") +
+  geom_jitter(position = position_jitter(0.1)) +
   labs(title = "Scale") +
   theme_bw() -> p2
 
 plot_grid(p1, p2)
+
+# Correlation between the scale parameters and the average movement rate sampled for the individuals
+# Well, I would need to fit that to the individual level data, not the population
+
