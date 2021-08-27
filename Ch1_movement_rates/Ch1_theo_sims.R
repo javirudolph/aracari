@@ -351,6 +351,77 @@ weib.boot %>%
 
 plot_grid(p1, p2)
 
+
+## Fit Weibull distributions to every run --------------------------------------------------------
+
+n.boots <- 1000
+samp.size <- 30
+weib.boot <- NULL
+
+for(j in 1:n.boots){
+  s.df <- summ.df %>%
+    group_by(popu) %>%
+    sample_n(., samp.size) %>%
+    mutate(disp = round(av.disp, digits = 2))
+
+  # s.df %>%
+  #   ggplot(., aes(x = disp, fill = popu)) +
+  #   geom_histogram()
+
+  # s.df <- df %>% drop_na(s.id)
+
+  weib.fits <- NULL
+
+  for(i in 1:3){
+    dat <- s.df %>%
+      filter(popu == i)
+
+    g <- fitdist(dat$disp, distr = "weibull", method = 'mle', lower = c(0,0))
+    #g <- fitdistr(dat$disp, densfun = "weibull", lower = c(0,0))
+    prms.weib <- data.frame(est.shape = as.numeric(g$estimate[1]),
+                            est.scale = as.numeric(g$estimate[2]),
+                            loglik = g$loglik,
+                            popu = i)
+    weib.fits <- rbind.data.frame(weib.fits, prms.weib)
+    # plot(g)
+  }
+
+  weib.boot <- rbind.data.frame(weib.boot, weib.fits %>% mutate(boot = j))
+}
+
+save.image(file = paste0("Ch1_movement_rates/weibull2run_", Sys.Date(), ".RData"))
+
+
+weib.boot %>%
+  group_by(popu) %>%
+  sample_n(., 100) %>%
+  ggplot(., aes(x = factor(popu), y = est.shape, color = factor(popu))) +
+  geom_violin() +
+  # scale_color_manual(values = c("black", mycols)) +
+  # geom_boxplot(width = 0.01) +
+  # geom_point(color = "grey", alpha = 0.5) +
+  # stat_summary(fun.data=mean_sdl, mult=1,
+  #              geom="pointrange", color="black") +
+  geom_jitter(position = position_jitter(0.1)) +
+  labs(title = "Shape") +
+  theme_bw() -> p1
+# p1
+
+weib.boot %>%
+  group_by(popu) %>%
+  sample_n(., 100) %>%
+  ggplot(., aes(x = factor(popu), y = est.scale, color = factor(popu))) +
+  geom_violin() +
+  # scale_color_manual(values = c("black", mycols)) +
+  #geom_boxplot(width = 0.1) +
+  # geom_point() +
+  # stat_summary(fun.data=mean_sdl, mult=1,
+  #              geom="pointrange", color="black") +
+  geom_jitter(position = position_jitter(0.1)) +
+  labs(title = "Scale") +
+  theme_bw() -> p2
+
+plot_grid(p1, p2)
 # Correlation between the scale parameters and the average movement rate sampled for the individuals
 # Well, I would need to fit that to the individual level data, not the population
 
