@@ -280,7 +280,7 @@ group_by(., popu) %>%
 
 plot_grid(p1, p2)
 
-## Fit Weibull distributions -----------------------------------------------------------------------------
+## Fit Weibull distributions to every seed dispersed --------------------------------------------------------
 
 n.boots <- 1000
 samp.size <- 30
@@ -317,7 +317,7 @@ for(j in 1:n.boots){
   weib.boot <- rbind.data.frame(weib.boot, weib.fits %>% mutate(boot = j))
 }
 
-save.image(file = paste0("Ch1_movement_rates/workspace_", Sys.Date(), ".RData"))
+save.image(file = paste0("Ch1_movement_rates/weibulldisp_", Sys.Date(), ".RData"))
 
 
 weib.boot %>%
