@@ -1,6 +1,5 @@
 # Script to run simulations using parameters from aracari movement rates
 # LIBRARIES --------------------------------------------------------------------------------
-# changed token
 
 library(dplyr)
 library(tidyr)
@@ -37,6 +36,12 @@ indiv_moverate %>%
 
 # Average movement rate for this 'population'
 mean(indiv_moverate$movrate)
+mean(ptpl$mpm)
+sum.indivs <- summary(indiv_moverate$movrate)
+
+
+# Color palette ----------------------------------------
+my.cols1 <- c("#23262f","#717492","#b3a82a","#c94f21","#980012","#0d907a","#b9bec3")
 
 # Complete pooling ---------------------------------------------
 # Fit a lognormal to the distribution of movement rates
@@ -48,12 +53,20 @@ logfit <- fitdist(indiv_moverate$movrate, distr = 'lnorm')
 exp(logfit$estimate[1])
 
 # Visualize distribution and data points
+vlines <- summary(indiv_moverate$movrate)[c(1,3,6)]
 
 indiv_moverate %>%
-  ggplot(., aes(x = movrate, y = 0, color = fam_g)) +
-  geom_point() +
-  stat_function(fun = dlnorm, args = list(meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]), color = "black", alpha = 0.8) +
-  xlim(0, 50)
+  ggplot(., aes(x = movrate, y = 0.002)) +
+  geom_point(size = 6, alpha = 0.8) +
+  stat_function(fun = dlnorm, args = list(meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),
+                color = "black", alpha = 0.8, size = 1) +
+  labs(title = "Lognormal distribution fit to movement rates from tracked individuals",
+       x = "Movement Rate (meters/minute)", y = "Density") +
+  geom_vline(xintercept = vlines, color = my.cols1[4], size = 1, lty = 2) +
+  scale_x_continuous(limits = c(0, 70), breaks = c(0, vlines[1], 20, vlines[2], 40, vlines[3], 60),
+                     labels = c(0, "Min.", 20, "Median.", 40, "Max.", 60)) +
+  #scale_x_discrete(labels = c(0, vlines[1], 20, vlines[2], 40, vlines[3], 60)) +
+  theme_bw()
 
 # Partial pooling ---------------------------------------------
 # We don't have enough individuals to fit individual lognormal distributions to each family group
@@ -72,7 +85,8 @@ indiv_moverate %>%
   geom_point(size = 5) +
   stat_function(fun = dlnorm, args = list(meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]), color = "black", alpha = 0.8) +
   geom_point(data = logfitdraw, aes(x = movrate, color = factor(indv), y = 0.01), size = 5) +
-  scale_color_viridis_d(option="magma") +
+  # scale_color_viridis_d(option="magma") +
+  scale_color_viridis_d() +
   xlim(0, 60) +
   labs(title = "Mov rate sampling lnorm") +
   theme_bw() -> plot.logfitdraw
