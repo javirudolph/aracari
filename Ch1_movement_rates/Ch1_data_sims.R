@@ -69,6 +69,52 @@ indiv_moverate %>%
 
 ggsave2(filename = "Ch1_movement_rates/Figures/Lnorm_fit2data.png", width = 6, height = 4, units = "in")
 
+# Functions --------------------------------------------------------------------------
+sim_movement <- function(prm, t = 1000, plot.it = TRUE, return.data.frame = FALSE){
+  tru.rate <- round(prm, 3)
+  movedist <- rexp(t, rate = 1/tru.rate)
+  angle <- runif(t, min = 0, max = 360)
+  distx <- movedist*cos(angle)
+  xloc <- c(0, cumsum(distx))
+  disty <- movedist*sin(angle)
+  yloc <- c(0, cumsum(disty))
+  animalTraj <- data.frame(time = 0:t, xloc = xloc, yloc = yloc)
+  if(plot.it == TRUE){
+    plot(x = xloc, y = yloc, type = "l", main = paste("Rate=",tru.rate))
+  }
+  if(return.data.frame == TRUE){
+    return(animalTraj)
+  }
+}
+
+sim_seeds <- function(nseeds = 20, m.prms = NULL,...){
+  grt <- round(rgamma(nseeds, shape = 4, scale = 5))
+  t.grt <- max(grt)
+
+  df <- sim_movement(m.prms, t = t.grt, plot.it = FALSE, return.data.frame = TRUE)
+
+  df %>%
+    left_join(., data.frame(s.id = 1:nseeds, time = grt), by = "time") %>%
+    mutate(disp = sqrt(xloc^2+yloc^2)) -> df
+
+  return(df)
+}
+
+summ_seeds <- function(df = NULL){
+  df %>%
+    drop_na(s.id) %>%
+    mutate(xi = (mean(xloc)-xloc)^2,
+           yi = (mean(yloc)-yloc)^2) %>%
+    summarise(x = mean(xloc),
+              y = mean(yloc),
+              av.disp = mean(disp),
+              se.disp = sd(disp)/sqrt(n()),
+              dsprsn = sum(sqrt(xi+yi))/n()) -> s.df
+  return(s.df)
+}
+
+
+
 # Complete pooling ---------------------------
 # We've fitted this lognormal distribution to our movement rates of 12 individuals (12 movement rates). The average movement rate for this sample of the population (the 12 individuals) is the average of the movement rate for each individual:
 mean(indiv_moverate$movrate)
@@ -80,6 +126,7 @@ mean(indiv_moverate$movrate)
 ## Compare exponential movement distances to full dataset ----------------------------------
 
 movrate_cp <- mean(indiv_moverate$movrate)
+movrate_cp_ln <- as.numeric(exp(logfit$estimate[1]))
 
 # test <- data.frame(mpm = rexp(500, rate = 1/movrate_cp))
 #
@@ -92,22 +139,73 @@ ptpl %>%
   ggplot(., aes(x = mpm)) +
   geom_histogram(aes(y = ..density..)) +
   stat_function(fun = dexp, args = list(rate = 1/movrate_cp), color = my.cols1[4], size = 1) +
-  stat_function(fun = dexp, args = list(rate = 1/exp(logfit$estimate[1])), color = my.cols1[3], size = 1) +
-  labs(title = "Hiistogram of movement distances per minute from data set",
+  stat_function(fun = dexp, args = list(rate = 1/movrate_cp_ln), color = my.cols1[3], size = 1, alpha = 0.8) +
+  labs(title = "Histogram of movement distances per minute from data set",
        x = "Movement distance per minute",
        y = "Density",
        caption = "Orange line is exponential density using average movement rate for population \n
        Yellow line shows exponential density using mean estimate from lognormal fit to movement rates") +
   theme_bw()
 
+ggsave2(filename = "Ch1_movement_rates/Figures/Movement_dist_comparison_2exp.png", width = 6, height = 4, units = "in")
+
+### Sample run -------
+
+# Which estimate to use?
+# So, we are saying here that complete pooling takes the average of all the data as one. We took all the data, then fitted a lognormal distribution. So, the parameter we use, is the average movement rate that the lognormal gives us. Since we are assuming that the lognormal distribution will describe this population's movement rates across individuals. So, we use the expected value (mean) of the fit to describe the average movement rate of the population.
+
+movrate_cp_ln
+
+# How many seeds to use? Landon used 100 because he was taking averages.
+# I guess we are focusing on a very short time frame: what does the bird do after it eats those seeds at one tree, and how does it move until it drops them all? So, only use 5 seeds.
+
+nseeds <- 5
 
 
+# Let's visualize one run quickly
+
+sim_movement(prm = movrate_cp_ln, plot.it = TRUE, return.data.frame = TRUE)
+# Print the data frame with seed info
+test_run <- sim_seeds(nseeds = nseeds, m.prms = movrate_cp_ln)
+test_run
+
+# Calculate summary for seeds in this run
+summ_test_run <- summ_seeds(test_run)
+# Visualize this one run:
+test_run %>%
+  ggplot(., aes(x = xloc, y = yloc)) +
+  geom_path(color = "#2D3335") +
+  geom_point(aes(x=0, y=0), color = "#87A986", size = 3) +
+  geom_point(data = test_run %>% drop_na(s.id),
+             aes(x = xloc, y = yloc)) +
+  # geom_point(data = summ_test_run,
+  #            aes(x = x, y = y), color = "#59879A") +
+  labs(x = "x", y = "y",
+       title = "Example of one simulation run") +
+  theme_bw() -> A
+
+test_run %>%
+  ggplot(., aes(x = xloc, y = yloc)) +
+  geom_path(color = "white", alpha = 0.1) +
+  geom_point(aes(x=0, y=0), color = "#87A986", size = 3) +
+  geom_segment(aes(x = summ_test_run$x, xend = 0, y = summ_test_run$y, yend = 0), color = "#87A986", lty = 2) +
+  geom_point(data = test_run %>% drop_na(s.id),
+             aes(x = xloc, y = yloc)) +
+  geom_segment(data = test_run %>% drop_na(s.id),
+               aes(x = xloc, y = yloc, xend = summ_test_run$x, yend = summ_test_run$y), lty = 2) +
+  geom_point(data = summ_test_run,
+             aes(x = x, y = y), color = "#E2BF80", size = 5) +
+  labs(x = "x", y = "y",
+       title = "Average dispersal and dispersion per run") +
+  theme_bw() -> B
+
+plot_grid(A, B, labels = "AUTO")
 
 
+ggsave2(filename = "Ch1_movement_rates/Figures/Ex_one_sim_run.png", width = 6, height = 4, units = "in")
 
 
-
-## Simulate movement rates -------------------------------------------------------------
+# Simulate movement rates -------------------------------------------------------------
 n.individuals <- 20
 m_1 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),3))
 
