@@ -149,7 +149,7 @@ ptpl %>%
 
 ggsave2(filename = "Ch1_movement_rates/Figures/Movement_dist_comparison_2exp.png", width = 6, height = 4, units = "in")
 
-### Sample run -------
+## Sample run -------
 
 # Which estimate to use?
 # So, we are saying here that complete pooling takes the average of all the data as one. We took all the data, then fitted a lognormal distribution. So, the parameter we use, is the average movement rate that the lognormal gives us. Since we are assuming that the lognormal distribution will describe this population's movement rates across individuals. So, we use the expected value (mean) of the fit to describe the average movement rate of the population.
@@ -203,6 +203,29 @@ plot_grid(A, B, labels = "AUTO")
 
 
 ggsave2(filename = "Ch1_movement_rates/Figures/Ex_one_sim_run.png", width = 6, height = 4, units = "in")
+
+## CP Simulations -----------------------------------------------------------------------
+# Generate seed dispersal data under a complete pooling scenario
+
+kruns <- 10
+nseeds <- 5
+m.prm <- movrate_cp_ln
+
+df <- NULL
+summ.df <- NULL
+
+for(k in 1:kruns){
+  a <- sim_seeds(m.prms = m.prm, nseeds = nseeds) %>%
+    mutate(run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
+           popu = "cp")
+
+  b <- summ_seeds(a) %>%
+    mutate(run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
+           popu = "cp")
+
+  df <- rbind.data.frame(df, a)
+  summ.df <- rbind.data.frame(summ.df, b)
+}
 
 
 # Simulate movement rates -------------------------------------------------------------
