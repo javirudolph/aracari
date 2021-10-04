@@ -192,7 +192,7 @@ test_run %>%
   geom_point(data = test_run %>% drop_na(s.id),
              aes(x = xloc, y = yloc)) +
   geom_segment(data = test_run %>% drop_na(s.id),
-               aes(x = xloc, y = yloc, xend = summ_test_run$x, yend = summ_test_run$y), lty = 2) +
+               aes(x = xloc, y = yloc, xend = summ_test_run$x, yend = summ_test_run$y), lty = 2, color = "#E2BF80") +
   geom_point(data = summ_test_run,
              aes(x = x, y = y), color = "#E2BF80", size = 5) +
   labs(x = "x", y = "y",
@@ -207,7 +207,7 @@ ggsave2(filename = "Ch1_movement_rates/Figures/Ex_one_sim_run.png", width = 6, h
 ## CP Simulations -----------------------------------------------------------------------
 # Generate seed dispersal data under a complete pooling scenario
 
-kruns <- 10
+kruns <- 10000
 nseeds <- 5
 m.prm <- movrate_cp_ln
 
@@ -226,6 +226,225 @@ for(k in 1:kruns){
   df <- rbind.data.frame(df, a)
   summ.df <- rbind.data.frame(summ.df, b)
 }
+
+
+
+### Visualize dispersal and dispersion for complete pooling ---------------------------
+
+# It's too many points, so sample 1000 to visualize.
+summ.df %>%
+  #group_by(., popu) %>%
+  sample_n(., 1000) %>%
+  ggplot(., aes(y = dsprsn, x = factor(popu))) +
+  geom_boxplot() +
+  geom_point(color = "#E2BF80", alpha = 0.2) +
+  labs(title = "Dispersion per run" , y = "Seed dispersion in meters", x = "Complete pooling") +
+  theme_bw() +
+  theme(legend.position = "none") -> p1
+# p1
+
+summ.df %>%
+  #group_by(., popu) %>%
+  sample_n(., 1000) %>%
+  ggplot(., aes(y = av.disp, x = factor(popu))) +
+  geom_boxplot() +
+  geom_point(color = "#87A986", alpha = 0.2) +
+  labs(title = "Average dispersal per run", y = "Seed dispersal in meters", x = "Complete pooling") +
+  theme_bw() +
+  theme(legend.position = "none") -> p2
+# p2
+
+plot_grid(p1, p2)
+
+
+ggsave2(filename = "Ch1_movement_rates/Figures/CP_disp_measures.png", width = 6, height = 4, units = "in")
+
+
+
+### CP Kernel ------------------------------------------------------------
+
+n.boots <- 10
+samp.size <- 30
+weib.boot.cp <- NULL
+
+for(j in 1:n.boots){
+  s.df <- df %>% drop_na(s.id) %>%
+    sample_n(., samp.size) %>%
+    mutate(disp = round(disp, digits = 2))
+
+  g <- fitdist(s.df$disp, distr = "weibull", method = 'mle', lower = c(0,0))
+
+
+  prms.weib <- data.frame(est.shape = as.numeric(g$estimate[1]),
+                          est.scale = as.numeric(g$estimate[2]),
+                          loglik = g$loglik,
+                          popu = "cp")
+  weib.boot.cp <- rbind.data.frame(weib.boot.cp, prms.weib %>% mutate(boot = j))
+}
+
+save.image(file = paste0("Ch1_movement_rates/workspace_", Sys.Date(), ".RData"))
+
+
+weib.boot.cp %>%
+  sample_n(., 100) %>%
+  ggplot(., aes(x = factor(popu), y = est.shape)) +
+  geom_violin() +
+  # scale_color_manual(values = c("black", mycols)) +
+  # geom_boxplot(width = 0.01) +
+  # geom_point(color = "grey", alpha = 0.5) +
+  # stat_summary(fun.data=mean_sdl, mult=1,
+  #              geom="pointrange", color="black") +
+  geom_jitter(position = position_jitter(0.1)) +
+  labs(title = "Shape") +
+  theme_bw() -> p1
+# p1
+
+weib.boot.cp %>%
+  sample_n(., 100) %>%
+  ggplot(., aes(x = factor(popu), y = est.scale)) +
+  geom_violin() +
+  # scale_color_manual(values = c("black", mycols)) +
+  #geom_boxplot(width = 0.1) +
+  # geom_point() +
+  # stat_summary(fun.data=mean_sdl, mult=1,
+  #              geom="pointrange", color="black") +
+  geom_jitter(position = position_jitter(0.1)) +
+  labs(title = "Scale") +
+  theme_bw() -> p2
+
+plot_grid(p1, p2)
+
+# No pooling --------------------------------------------
+# This one looks at individual variation.
+# We will sample 20 individuals, 3 times from the lognormal distribution that describes movement rates for the population
+
+n.individuals <- 20
+m_1 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),3))
+m_2 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),3))
+m_3 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),3))
+
+
+## Generate data -------------------------------------------------
+m.data <- data.frame(m_1, m_2, m_3)
+kruns <- 100
+nseeds <- 5
+
+df <- NULL
+summ.df <- NULL
+
+for(m in 1:3){
+  m.0 <- m.data[m]
+  for(j in 1:n.individuals){
+    for(k in 1:kruns){
+      a <- sim_seeds(m.prms = m.0[j,], nseeds = nseeds) %>%
+        mutate(indiv = as.factor(j),
+               run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
+               popu = as.factor(m))
+
+      b <- summ_seeds(a) %>%
+        mutate(indiv = as.factor(j),
+               run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
+               popu = as.factor(m))
+
+      df <- rbind.data.frame(df, a)
+      summ.df <- rbind.data.frame(summ.df, b)
+    }
+  }
+}
+
+### Visualize -----
+summ.df %>%
+  group_by(., popu) %>%
+  sample_n(., 100) %>%
+  ggplot(., aes(y = dsprsn, x = factor(popu), color = factor(popu))) +
+  geom_boxplot() +
+  geom_point(color = "grey", alpha = 0.5) +
+  labs(title = "Dispersion") +
+  theme_bw() +
+  theme(legend.position = "none") -> p1
+# p1
+
+summ.df %>%
+  group_by(., popu) %>%
+  sample_n(., 100) %>%
+  ggplot(., aes(y = av.disp, x = factor(popu), color = factor(popu))) +
+  geom_boxplot() +
+  geom_point(color = "grey", alpha = 0.5) +
+  labs(title = "Average dispersal per run") +
+  theme_bw() +
+  theme(legend.position = "none") -> p2
+# p2
+
+plot_grid(p1, p2)
+
+
+n.boots <- 10
+samp.size <- 30
+weib.boot <- NULL
+
+for(j in 1:n.boots){
+  s.df <- df %>% drop_na(s.id) %>%
+    group_by(popu) %>%
+    sample_n(., samp.size) %>%
+    mutate(disp = round(disp, digits = 2))
+
+  # s.df %>%
+  #   ggplot(., aes(x = disp, fill = popu)) +
+  #   geom_histogram()
+
+  # s.df <- df %>% drop_na(s.id)
+
+  weib.fits <- NULL
+
+  for(i in 1:3){
+    dat <- s.df %>%
+      filter(popu == i)
+
+    g <- fitdist(dat$disp, distr = "weibull", method = 'mle', lower = c(0,0))
+    #g <- fitdistr(dat$disp, densfun = "weibull", lower = c(0,0))
+    prms.weib <- data.frame(est.shape = as.numeric(g$estimate[1]),
+                            est.scale = as.numeric(g$estimate[2]),
+                            loglik = g$loglik,
+                            popu = i)
+    weib.fits <- rbind.data.frame(weib.fits, prms.weib)
+    # plot(g)
+  }
+
+  weib.boot <- rbind.data.frame(weib.boot, weib.fits %>% mutate(boot = j))
+}
+
+
+weib.boot %>%
+  group_by(popu) %>%
+  #sample_n(., 100) %>%
+  ggplot(., aes(x = factor(popu), y = est.shape, color = factor(popu))) +
+  geom_violin() +
+  # scale_color_manual(values = c("black", mycols)) +
+  # geom_boxplot(width = 0.01) +
+  # geom_point(color = "grey", alpha = 0.5) +
+  # stat_summary(fun.data=mean_sdl, mult=1,
+  #              geom="pointrange", color="black") +
+  geom_jitter(position = position_jitter(0.1)) +
+  labs(title = "Shape") +
+  theme_bw() -> p1
+# p1
+
+weib.boot %>%
+  group_by(popu) %>%
+  #sample_n(., 100) %>%
+  ggplot(., aes(x = factor(popu), y = est.scale, color = factor(popu))) +
+  geom_violin() +
+  # scale_color_manual(values = c("black", mycols)) +
+  #geom_boxplot(width = 0.1) +
+  # geom_point() +
+  # stat_summary(fun.data=mean_sdl, mult=1,
+  #              geom="pointrange", color="black") +
+  geom_jitter(position = position_jitter(0.1)) +
+  labs(title = "Scale") +
+  theme_bw() -> p2
+
+plot_grid(p1, p2)
+
 
 
 # Simulate movement rates -------------------------------------------------------------
