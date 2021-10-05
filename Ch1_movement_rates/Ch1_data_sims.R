@@ -67,7 +67,7 @@ indiv_moverate %>%
   #scale_x_discrete(labels = c(0, vlines[1], 20, vlines[2], 40, vlines[3], 60)) +
   theme_bw()
 
-ggsave2(filename = "Ch1_movement_rates/Figures/Lnorm_fit2data.png", width = 6, height = 4, units = "in")
+# ggsave2(filename = "Ch1_movement_rates/Figures/Lnorm_fit2data.png", width = 6, height = 4, units = "in")
 
 # Functions --------------------------------------------------------------------------
 sim_movement <- function(prm, t = 1000, plot.it = TRUE, return.data.frame = FALSE){
@@ -147,7 +147,7 @@ ptpl %>%
        Yellow line shows exponential density using mean estimate from lognormal fit to movement rates") +
   theme_bw()
 
-ggsave2(filename = "Ch1_movement_rates/Figures/Movement_dist_comparison_2exp.png", width = 6, height = 4, units = "in")
+# ggsave2(filename = "Ch1_movement_rates/Figures/Movement_dist_comparison_2exp.png", width = 6, height = 4, units = "in")
 
 ## Sample run -------
 
@@ -209,13 +209,12 @@ ggsave2(filename = "Ch1_movement_rates/Figures/Ex_one_sim_run.png", width = 6, h
 
 kruns <- 10000
 nseeds <- 5
-m.prm <- movrate_cp_ln
 
-df <- NULL
-summ.df <- NULL
+cp.df <- NULL
+cp.summ.df <- NULL
 
 for(k in 1:kruns){
-  a <- sim_seeds(m.prms = m.prm, nseeds = nseeds) %>%
+  a <- sim_seeds(m.prms = movrate_cp_ln, nseeds = nseeds) %>%
     mutate(run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
            popu = "cp")
 
@@ -223,11 +222,9 @@ for(k in 1:kruns){
     mutate(run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
            popu = "cp")
 
-  df <- rbind.data.frame(df, a)
-  summ.df <- rbind.data.frame(summ.df, b)
+  cp.df <- rbind.data.frame(cp.df, a)
+  cp.summ.df <- rbind.data.frame(cp.summ.df, b)
 }
-
-
 
 ### Visualize dispersal and dispersion for complete pooling ---------------------------
 
@@ -263,7 +260,7 @@ ggsave2(filename = "Ch1_movement_rates/Figures/CP_disp_measures.png", width = 6,
 
 ### CP Kernel ------------------------------------------------------------
 
-n.boots <- 10
+n.boots <- 500
 samp.size <- 30
 weib.boot.cp <- NULL
 
@@ -282,7 +279,7 @@ for(j in 1:n.boots){
   weib.boot.cp <- rbind.data.frame(weib.boot.cp, prms.weib %>% mutate(boot = j))
 }
 
-save.image(file = paste0("Ch1_movement_rates/workspace_", Sys.Date(), ".RData"))
+save.image(file = paste0("Ch1_movement_rates/sims_backup/", Sys.Date(), "upto_cpdatagen.RData"))
 
 
 weib.boot.cp %>%
@@ -314,6 +311,8 @@ weib.boot.cp %>%
 
 plot_grid(p1, p2)
 
+ggsave2(filename = "Ch1_movement_rates/Figures/CP_shape_scale_weibull.png", width = 6, height = 4, units = "in")
+
 # No pooling --------------------------------------------
 # This one looks at individual variation.
 # We will sample 20 individuals, 3 times from the lognormal distribution that describes movement rates for the population
@@ -326,7 +325,7 @@ m_3 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = lo
 
 ## Generate data -------------------------------------------------
 m.data <- data.frame(m_1, m_2, m_3)
-kruns <- 100
+kruns <- 1000
 nseeds <- 5
 
 df <- NULL
@@ -352,6 +351,9 @@ for(m in 1:3){
   }
 }
 
+save.image(file = paste0("Ch1_movement_rates/sims_backup/", Sys.Date(), "upto_npdatagen.RData"))
+
+
 ### Visualize -----
 summ.df %>%
   group_by(., popu) %>%
@@ -361,7 +363,7 @@ summ.df %>%
   geom_point(color = "grey", alpha = 0.5) +
   labs(title = "Dispersion") +
   theme_bw() +
-  theme(legend.position = "none") -> p1
+  theme(legend.position = "none") -> np_p1
 # p1
 
 summ.df %>%
@@ -372,13 +374,13 @@ summ.df %>%
   geom_point(color = "grey", alpha = 0.5) +
   labs(title = "Average dispersal per run") +
   theme_bw() +
-  theme(legend.position = "none") -> p2
+  theme(legend.position = "none") -> np_p2
 # p2
 
-plot_grid(p1, p2)
+plot_grid(np_p1, np_p2)
 
-
-n.boots <- 10
+### Kernel -----
+n.boots <- 100
 samp.size <- 30
 weib.boot <- NULL
 
@@ -426,7 +428,7 @@ weib.boot %>%
   #              geom="pointrange", color="black") +
   geom_jitter(position = position_jitter(0.1)) +
   labs(title = "Shape") +
-  theme_bw() -> p1
+  theme_bw() -> np_weib_p1
 # p1
 
 weib.boot %>%
@@ -441,9 +443,9 @@ weib.boot %>%
   #              geom="pointrange", color="black") +
   geom_jitter(position = position_jitter(0.1)) +
   labs(title = "Scale") +
-  theme_bw() -> p2
+  theme_bw() -> np_weib_p2
 
-plot_grid(p1, p2)
+plot_grid(np_weib_p1, np_weib_p2)
 
 
 
