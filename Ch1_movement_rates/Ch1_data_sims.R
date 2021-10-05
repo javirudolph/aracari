@@ -314,6 +314,122 @@ plot_grid(p1, p2)
 
 ggsave2(filename = "Ch1_movement_rates/Figures/CP_shape_scale_weibull.png", width = 6, height = 4, units = "in")
 
+# Patial pooling --------------------------------------------------------------------------
+## Overview ------------------
+fam_moverate
+
+ptpl %>%
+  distinct(fam_g, Bird_ID)
+
+ptpl %>%
+  dplyr::select(fam_g, Bird_ID) %>%
+  distinct(Bird_ID, .keep_all = TRUE) %>%
+  group_by(fam_g) %>%
+  summarise(n = n()) %>%
+  right_join(., fam_moverate) %>%
+  mutate(logpar = log(movrate),
+         fitted_sd = logfit$estimate[2]) -> fam_moverate
+fam_moverate
+
+# Using the average movement rate per family group as the meanlog for a lognormal distribution, and the sdlog from the fitted distribution to the whole dataset since we don't have enough individuals per fmaily group to fit a new lognormal.
+
+
+# My question now is whether or not I would be considering individual variation. I'm saying no, because that's like douible variaion of no pooling? Like, we have a lognormal for each family group, and then get individuals from each family group. That is one thing.
+# The other option is just using the average movement rates per family group to go into the exponential distribution for movement distances. This is what I would consider partial pooling.
+# I guess the other is also a type of partial pooling, as you are only allowing the individual variation to occur within the bound of the family group expectations.
+
+## Visualize mov rates ---------------
+pp_1 <- sort(round(fam_moverate$movrate,3))
+
+### Compare lognorm fits CP and PP -----------
+
+logfit_fam <- fitdist(fam_moverate$movrate, distr = 'lnorm')
+# normfit <- fitdist(indiv_moverate$movrate, distr = "norm")
+
+# Mean using the fit
+exp(logfit_fam$estimate[1])
+
+# Visualize distribution and data points
+vlines_fam <- summary(fam_moverate$movrate)[c(1,3,6)]
+
+indiv_moverate %>%
+  ggplot(., aes(x = movrate, y = 0.002)) +
+  stat_function(fun = dlnorm, args = list(meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),
+                color = "black", alpha = 0.8, size = 1) +
+  geom_point(size = 3, alpha = 0.8) +
+  geom_vline(xintercept = vlines, color = "black", size = 1, lty = 2) +
+  scale_x_continuous(limits = c(0, 70), breaks = c(0, vlines[1], 20, vlines[2], 40, vlines[3], 60),
+                     labels = c(0, "Min.", 20, "Median.", 40, "Max.", 60)) +
+  stat_function(fun = dlnorm, args = list(meanlog = logfit_fam$estimate[1], sdlog = logfit_fam$estimate[2]),
+                color = my.cols1[4], alpha = 0.8, size = 1) +
+  geom_point(data = fam_moverate, aes(x = movrate, y = 0.004),size = 3, alpha = 0.8, color = my.cols1[4]) +
+  geom_vline(xintercept = vlines_fam, color = my.cols1[4], size = 1, lty = 2) +
+  labs(x = "Movement Rate (meters/minute)", y = "Density",
+       title = "Average movement rates lognormal fits") +
+  theme_bw()
+
+## PP w/fam moverates ---------------------------------------
+# Meaning, we use the average movement rate for each family group as the parameter for an exponential from which we draw movement distances for the simulation.
+
+fam_moverate %>%
+  arrange(., movrate) -> fam_moverate
+
+fam_moverate %>%
+  ggplot(., aes(x = movrate, y = 0, color = movrate)) +
+  geom_point(size = 3) +
+  stat_function(fun = dlnorm, args = list(meanlog = logfit_fam$estimate[1], sdlog = logfit_fam$estimate[2]),
+                color = "black", alpha = 0.8, size = 1) +
+  xlim(0, 60) +
+  labs(title = "Lognormal fitted to family group",
+       x = "Movement rate",
+       y = "Density") +
+  scale_color_viridis_c() +
+  theme_bw() +
+  theme(legend.position = "none") -> pp_logfit
+
+mycols2 <- viridisLite::viridis(7)
+expcurves_pp1 <- purrr::map(seq(1:7), function(y)
+  stat_function(fun = dexp, args = list(rate = 1/fam_moverate$movrate[y]), color = mycols2[y], alpha = 0.8))
+
+ggplot() +
+  expcurves_pp1 +
+  xlim(-1, 125) +
+  labs(title = "Movement distance exponential draws", x = 'Movement Distance', y = "Density") +
+  theme_bw() -> pp_expdraws
+
+
+cowplot::plot_grid(pp_logfit, pp_expdraws)
+ggsave2(filename = "Ch1_movement_rates/Figures/PP_logfit_famgroup_moverate.png", width = 6, height = 4, units = "in")
+
+### PP Generate data ------------------------------------------------------
+
+kruns <- 10
+nseeds <- 5
+
+pp.df <- NULL
+pp.summ.df <- NULL
+
+for(j in 1:7){
+  for(k in 1:kruns){
+    a <- sim_seeds(m.prms = fam_moverate$movrate[j], nseeds = nseeds) %>%
+      mutate(fam_g = fam_moverate$fam_g[j],
+             run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
+             model = paste0("pp_1"))
+
+    b <- summ_seeds(a) %>%
+      mutate(fam_g = fam_moverate$fam_g[j],
+             run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
+             model = paste0("pp_1"))
+
+    pp.df <- rbind.data.frame(pp.df, a)
+    pp.summ.df <- rbind.data.frame(pp.summ.df, b)
+  }
+}
+
+
+save.image(file = paste0("Ch1_movement_rates/sims_backup/", Sys.Date(), "upto_ppdatagen.RData"))
+
+
 # No pooling --------------------------------------------
 # This one looks at individual variation.
 # We will sample 20 individuals, 3 times from the lognormal distribution that describes movement rates for the population
@@ -493,31 +609,6 @@ weib.boot.np %>%
   theme_bw() -> np_weib_p2
 
 plot_grid(np_weib_p1, np_weib_p2)
-
-# Patial pooling --------------------------------------------------------------------------
-fam_moverate
-
-ptpl %>%
-  distinct(fam_g, Bird_ID)
-
-ptpl %>%
-  dplyr::select(fam_g, Bird_ID) %>%
-  distinct(Bird_ID, .keep_all = TRUE) %>%
-  group_by(fam_g) %>%
-  summarise(n = n()) %>%
-  right_join(., fam_moverate) %>%
-  mutate(logpar = log(movrate),
-         fitted_sd = logfit$estimate[2]) -> fam_moverate
-
-# Using the average movement rate per family group as the meanlog for a lognormal distribution, and the sdlog from the fitted distribution to the whole dataset since we don't have enough individuals per fmaily group to fit a new lognormal.
-
-
-# My question now is whether or not I would be considering individual variation. I'm saying no, because that's like douible variaion of no pooling? Like, we have a lognormal for each family group, and then get individuals from each family group. That is one thing.
-# The other option is just using the average movement rates per family group to go into the exponential distribution for movement distances. This is what I would consider partial pooling.
-# I guess the other is also a type of partial pooling, as you are only allowing the individual variation to occur within the bound of the family group expectations.
-
-
-
 
 
 # Joint Vis CP and NP --------------------------------------------------------------------
