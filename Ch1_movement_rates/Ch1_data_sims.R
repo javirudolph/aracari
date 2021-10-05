@@ -229,7 +229,7 @@ for(k in 1:kruns){
 ### Visualize dispersal and dispersion for complete pooling ---------------------------
 
 # It's too many points, so sample 1000 to visualize.
-summ.df %>%
+cp.summ.df %>%
   #group_by(., popu) %>%
   sample_n(., 1000) %>%
   ggplot(., aes(y = dsprsn, x = factor(popu))) +
@@ -240,7 +240,7 @@ summ.df %>%
   theme(legend.position = "none") -> p1
 # p1
 
-summ.df %>%
+cp.summ.df %>%
   #group_by(., popu) %>%
   sample_n(., 1000) %>%
   ggplot(., aes(y = av.disp, x = factor(popu))) +
@@ -265,7 +265,7 @@ samp.size <- 30
 weib.boot.cp <- NULL
 
 for(j in 1:n.boots){
-  s.df <- df %>% drop_na(s.id) %>%
+  s.df <- cp.df %>% drop_na(s.id) %>%
     sample_n(., samp.size) %>%
     mutate(disp = round(disp, digits = 2))
 
@@ -322,6 +322,50 @@ m_1 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = lo
 m_2 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),3))
 m_3 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),3))
 
+logfitdraw <- data.frame(indv = 1:20, m_1 = m_1, m_2 = m_2, m_3 = m_3)
+
+indiv_moverate %>%
+  ggplot(., aes(x = movrate, y = 0)) +
+  geom_point(size = 5) +
+  stat_function(fun = dlnorm, args = list(meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]), color = "black", alpha = 0.8) +
+  geom_point(data = logfitdraw, aes(x = m_1, color = factor(indv), y = 0.005), size = 3) +
+  geom_point(data = logfitdraw, aes(x = m_2, color = factor(indv), y = 0.006), size = 3) +
+  geom_point(data = logfitdraw, aes(x = m_3, color = factor(indv), y = 0.007), size = 3) +
+  # scale_color_viridis_d(option="magma") +
+  scale_color_viridis_d() +
+  xlim(0, 60) +
+  labs(title = "Sampling individuals from lognormal",
+       x = "Movement rate",
+       y = "Density") +
+  theme_bw() +
+  theme(legend.position = "none") -> plot.logfitdraw
+plot.logfitdraw
+
+mycols <- viridisLite::viridis(20)
+
+expcurves_m1 <- purrr::map(seq(1:n.individuals), function(y)
+  stat_function(fun = dexp, args = list(rate = 1/logfitdraw$m_1[y]), color = mycols[y], alpha = 0.8))
+
+expcurves_m2 <- purrr::map(seq(1:n.individuals), function(y)
+  stat_function(fun = dexp, args = list(rate = 1/logfitdraw$m_2[y]), color = mycols[y], alpha = 0.8))
+
+expcurves_m3 <- purrr::map(seq(1:n.individuals), function(y)
+  stat_function(fun = dexp, args = list(rate = 1/logfitdraw$m_3[y]), color = mycols[y], alpha = 0.8))
+
+logfitdraw %>%
+  ggplot() +
+  expcurves_m1 +
+  expcurves_m2 +
+  expcurves_m3 +
+  xlim(-1, 125) +
+  labs(title = "Movement distance Exponential Draws", x = 'Movement Distance', y = "Density") +
+  theme_bw() -> expdraws
+expdraws
+
+cowplot::plot_grid(plot.logfitdraw, expdraws)
+
+
+ggsave2(filename = "Ch1_movement_rates/Figures/Sampling_indivs_lnorm.png", width = 6, height = 4, units = "in")
 
 ## Generate data -------------------------------------------------
 m.data <- data.frame(m_1, m_2, m_3)
@@ -350,6 +394,8 @@ for(m in 1:3){
     }
   }
 }
+
+
 
 save.image(file = paste0("Ch1_movement_rates/sims_backup/", Sys.Date(), "upto_npdatagen.RData"))
 
@@ -449,38 +495,9 @@ plot_grid(np_weib_p1, np_weib_p2)
 
 
 
-# Simulate movement rates -------------------------------------------------------------
-n.individuals <- 20
-m_1 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),3))
 
-logfitdraw <- data.frame(indv = 1:20, movrate = m_1)
-
-mycols <- viridis::magma(20)
-
-indiv_moverate %>%
-  ggplot(., aes(x = movrate, y = 0)) +
-  geom_point(size = 5) +
-  stat_function(fun = dlnorm, args = list(meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]), color = "black", alpha = 0.8) +
-  geom_point(data = logfitdraw, aes(x = movrate, color = factor(indv), y = 0.01), size = 5) +
-  # scale_color_viridis_d(option="magma") +
-  scale_color_viridis_d() +
-  xlim(0, 60) +
-  labs(title = "Mov rate sampling lnorm") +
-  theme_bw() -> plot.logfitdraw
-plot.logfitdraw
 
 ### Fist population--------------------------------------------------------------------
 
-expcurves <- purrr::map(seq(1:n.individuals), function(y)
-  stat_function(fun = dexp, args = list(rate = 1/logfitdraw$movrate[y]), color = mycols[y], alpha = 0.8))
 
-logfitdraw %>%
-  ggplot() +
-  expcurves +
-  xlim(-1, 125) +
-  labs(title = "MD dist exp", x = 'movement distance') +
-  theme_bw() -> expdraws
-expdraws
-
-cowplot::plot_grid(plot.logfitdraw, expdraws)
 
