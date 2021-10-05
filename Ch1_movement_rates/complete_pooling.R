@@ -63,14 +63,13 @@ indiv_moverate %>%
   #scale_x_discrete(labels = c(0, vlines[1], 20, vlines[2], 40, vlines[3], 60)) +
   theme_bw()
 
-ggsave2(filename = "Ch1_movement_rates/Figures/logfit_cp.png", width = 6, height = 4, units = "in")
+ggsave2(filename = "Ch1_movement_rates/Figures/logfit_cp.png")
 
 
 
-# Complete pooling ---------------------------
-# We've fitted this lognormal distribution to our movement rates of 12 individuals (12 movement rates). The average movement rate for this sample of the population (the 12 individuals) is the average of the movement rate for each individual:
+# The average movement rate for this sample of the population (the 12 individuals) is the average of the movement rate for each individual:
+
 mean(indiv_moverate$movrate)
-
 # 27.94211 meters/minute
 
 # In a complete pooling approach, we take this average movement rate and use it as the parameter for our exponential distribution, from which we draw the movement distance at each time step.
@@ -151,10 +150,33 @@ test_run %>%
        title = "Average dispersal and dispersion per run") +
   theme_bw() -> B
 
-plot_grid(A, B, labels = "AUTO")
+test_run %>%
+  ggplot(., aes(x = xloc, y = yloc)) +
+  geom_path(color = "white", alpha = 0.1) +
+  #geom_segment(aes(x = summ_test_run$x, xend = 0, y = summ_test_run$y, yend = 0), color = "#87A986", lty = 2) +
+  geom_point(data = test_run %>% drop_na(s.id),
+             aes(x = xloc, y = yloc)) +
+  geom_segment(data = test_run %>% drop_na(s.id),
+               aes(x = xloc, y = yloc, xend = 0, yend = 0), lty = 2, color = "black") +
+  geom_point(data = summ_test_run,
+             aes(x = x, y = y), color = "#E2BF80", size = 3) +
+  geom_point(aes(x=0, y=0), color = "#87A986", size = 5) +
+  labs(x = "x", y = "y",
+       title = "Seed dispersal distance from parent tree") +
+  theme_bw() -> C
+
+test_run %>%
+  drop_na(s.id) %>%
+  ggplot(., aes(x = disp)) +
+    geom_histogram(bins = 30) +
+  labs(x = "Dispersal distance in meters", y = "Count",
+       title = "Seed dispersal distance for each seed") +
+  theme_bw() -> D
 
 
-ggsave2(filename = "Ch1_movement_rates/Figures/Ex_one_sim_run.png", width = 6, height = 4, units = "in")
+plot_grid(A, B, C, D, labels = "AUTO")
+
+ggsave2(filename = "Ch1_movement_rates/Figures/Ex_one_sim_run.png")
 
 ## CP Simulations -----------------------------------------------------------------------
 # Generate seed dispersal data under a complete pooling scenario
@@ -178,42 +200,44 @@ for(k in 1:kruns){
   cp.summ.df <- rbind.data.frame(cp.summ.df, b)
 }
 
+save(cp.df, cp.summ.df, file = "Ch1_movement_rates/sims_backup/datagen_cp.RData")
+
 ### Visualize dispersal and dispersion for complete pooling ---------------------------
 
-# It's too many points, so sample 1000 to visualize.
-cp.summ.df %>%
-  #group_by(., popu) %>%
-  sample_n(., 1000) %>%
-  ggplot(., aes(y = dsprsn, x = factor(popu))) +
-  geom_boxplot() +
-  geom_point(color = "#E2BF80", alpha = 0.2) +
-  labs(title = "Dispersion per run" , y = "Seed dispersion in meters", x = "Complete pooling") +
-  theme_bw() +
-  theme(legend.position = "none") -> p1
-# p1
-
-cp.summ.df %>%
-  #group_by(., popu) %>%
-  sample_n(., 1000) %>%
-  ggplot(., aes(y = av.disp, x = factor(popu))) +
-  geom_boxplot() +
-  geom_point(color = "#87A986", alpha = 0.2) +
-  labs(title = "Average dispersal per run", y = "Seed dispersal in meters", x = "Complete pooling") +
-  theme_bw() +
-  theme(legend.position = "none") -> p2
-# p2
-
-plot_grid(p1, p2)
-
-
-ggsave2(filename = "Ch1_movement_rates/Figures/CP_disp_measures.png", width = 6, height = 4, units = "in")
+# # It's too many points, so sample 1000 to visualize.
+# cp.summ.df %>%
+#   #group_by(., popu) %>%
+#   sample_n(., 1000) %>%
+#   ggplot(., aes(y = dsprsn, x = factor(popu))) +
+#   geom_boxplot() +
+#   geom_point(color = "#E2BF80", alpha = 0.2) +
+#   labs(title = "Dispersion per run" , y = "Seed dispersion in meters", x = "Complete pooling") +
+#   theme_bw() +
+#   theme(legend.position = "none") -> p1
+# # p1
+#
+# cp.summ.df %>%
+#   #group_by(., popu) %>%
+#   sample_n(., 1000) %>%
+#   ggplot(., aes(y = av.disp, x = factor(popu))) +
+#   geom_boxplot() +
+#   geom_point(color = "#87A986", alpha = 0.2) +
+#   labs(title = "Average dispersal per run", y = "Seed dispersal in meters", x = "Complete pooling") +
+#   theme_bw() +
+#   theme(legend.position = "none") -> p2
+# # p2
+#
+# plot_grid(p1, p2)
+#
+#
+# ggsave2(filename = "Ch1_movement_rates/Figures/CP_disp_measures.png", width = 6, height = 4, units = "in")
 
 
 
 ### CP Kernel ------------------------------------------------------------
-# sample with replacement groups of 100 seeds and git weibutll , here are the parameters.
-n.boots <- 500
-samp.size <- 30
+# sample with replacement groups of 100 seeds and fit weibull , here are the parameters.
+n.boots <- 100
+samp.size <- 100
 weib.boot.cp <- NULL
 
 for(j in 1:n.boots){
@@ -231,11 +255,11 @@ for(j in 1:n.boots){
   weib.boot.cp <- rbind.data.frame(weib.boot.cp, prms.weib %>% mutate(boot = j))
 }
 
-save.image(file = paste0("Ch1_movement_rates/sims_backup/", Sys.Date(), "upto_cpdatagen.RData"))
+save(weib.boot.cp, file = "Ch1_movement_rates/sims_backup/weib_cp.RData")
 
-
+samp2plot <- 100
 weib.boot.cp %>%
-  sample_n(., 100) %>%
+  sample_n(., samp2plot) %>%
   ggplot(., aes(x = factor(popu), y = est.shape)) +
   geom_violin() +
   # scale_color_manual(values = c("black", mycols)) +
@@ -249,7 +273,7 @@ weib.boot.cp %>%
 # p1
 
 weib.boot.cp %>%
-  sample_n(., 100) %>%
+  sample_n(., samp2plot) %>%
   ggplot(., aes(x = factor(popu), y = est.scale)) +
   geom_violin() +
   # scale_color_manual(values = c("black", mycols)) +
@@ -263,4 +287,4 @@ weib.boot.cp %>%
 
 plot_grid(p1, p2)
 
-ggsave2(filename = "Ch1_movement_rates/Figures/CP_shape_scale_weibull.png", width = 6, height = 4, units = "in")
+ggsave2(filename = "Ch1_movement_rates/Figures/CP_shape_scale_weibull.png")
