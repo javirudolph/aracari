@@ -257,34 +257,34 @@ for(j in 1:n.boots){
 
 save(weib.boot.cp, file = "Ch1_movement_rates/sims_backup/weib_cp.RData")
 
-samp2plot <- 100
-weib.boot.cp %>%
-  sample_n(., samp2plot) %>%
-  ggplot(., aes(x = factor(popu), y = est.shape)) +
-  geom_violin() +
-  # scale_color_manual(values = c("black", mycols)) +
-  # geom_boxplot(width = 0.01) +
-  # geom_point(color = "grey", alpha = 0.5) +
-  # stat_summary(fun.data=mean_sdl, mult=1,
-  #              geom="pointrange", color="black") +
-  geom_jitter(position = position_jitter(0.1)) +
-  labs(title = "Shape") +
-  theme_bw() -> p1
-# p1
-
-weib.boot.cp %>%
-  sample_n(., samp2plot) %>%
-  ggplot(., aes(x = factor(popu), y = est.scale)) +
-  geom_violin() +
-  # scale_color_manual(values = c("black", mycols)) +
-  #geom_boxplot(width = 0.1) +
-  # geom_point() +
-  # stat_summary(fun.data=mean_sdl, mult=1,
-  #              geom="pointrange", color="black") +
-  geom_jitter(position = position_jitter(0.1)) +
-  labs(title = "Scale") +
-  theme_bw() -> p2
-
-plot_grid(p1, p2)
-
-ggsave2(filename = "Ch1_movement_rates/Figures/CP_shape_scale_weibull.png")
+# samp2plot <- 100
+# weib.boot.cp %>%
+#   sample_n(., samp2plot) %>%
+#   ggplot(., aes(x = factor(popu), y = est.shape)) +
+#   geom_violin() +
+#   # scale_color_manual(values = c("black", mycols)) +
+#   # geom_boxplot(width = 0.01) +
+#   # geom_point(color = "grey", alpha = 0.5) +
+#   # stat_summary(fun.data=mean_sdl, mult=1,
+#   #              geom="pointrange", color="black") +
+#   geom_jitter(position = position_jitter(0.1)) +
+#   labs(title = "Shape") +
+#   theme_bw() -> p1
+# # p1
+#
+# weib.boot.cp %>%
+#   sample_n(., samp2plot) %>%
+#   ggplot(., aes(x = factor(popu), y = est.scale)) +
+#   geom_violin() +
+#   # scale_color_manual(values = c("black", mycols)) +
+#   #geom_boxplot(width = 0.1) +
+#   # geom_point() +
+#   # stat_summary(fun.data=mean_sdl, mult=1,
+#   #              geom="pointrange", color="black") +
+#   geom_jitter(position = position_jitter(0.1)) +
+#   labs(title = "Scale") +
+#   theme_bw() -> p2
+#
+# plot_grid(p1, p2)
+#
+# ggsave2(filename = "Ch1_movement_rates/Figures/CP_shape_scale_weibull.png")
