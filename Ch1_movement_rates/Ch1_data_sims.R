@@ -22,7 +22,8 @@ indiv_moverate <- ptpl %>%
 
 fam_moverate <- ptpl %>%
   group_by(fam_g) %>%
-  summarise(movrate = mean(mpm))
+  summarise(movrate = mean(mpm),
+            sd = sd(mpm))
 
 ids <- ptpl %>% distinct(., Bird_ID, fam_g)
 
@@ -259,7 +260,7 @@ ggsave2(filename = "Ch1_movement_rates/Figures/CP_disp_measures.png", width = 6,
 
 
 ### CP Kernel ------------------------------------------------------------
-
+# sample with replacement groups of 100 seeds and git weibutll , here are the parameters.
 n.boots <- 500
 samp.size <- 30
 weib.boot.cp <- NULL
@@ -369,11 +370,11 @@ ggsave2(filename = "Ch1_movement_rates/Figures/Sampling_indivs_lnorm.png", width
 
 ## Generate data -------------------------------------------------
 m.data <- data.frame(m_1, m_2, m_3)
-kruns <- 1000
+kruns <- 10
 nseeds <- 5
 
-df <- NULL
-summ.df <- NULL
+np.df <- NULL
+np.summ.df <- NULL
 
 for(m in 1:3){
   m.0 <- m.data[m]
@@ -389,8 +390,8 @@ for(m in 1:3){
                run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
                popu = as.factor(m))
 
-      df <- rbind.data.frame(df, a)
-      summ.df <- rbind.data.frame(summ.df, b)
+      np.df <- rbind.data.frame(np.df, a)
+      np.summ.df <- rbind.data.frame(np.summ.df, b)
     }
   }
 }
@@ -401,7 +402,7 @@ save.image(file = paste0("Ch1_movement_rates/sims_backup/", Sys.Date(), "upto_np
 
 
 ### Visualize -----
-summ.df %>%
+np.summ.df %>%
   group_by(., popu) %>%
   sample_n(., 100) %>%
   ggplot(., aes(y = dsprsn, x = factor(popu), color = factor(popu))) +
@@ -412,7 +413,7 @@ summ.df %>%
   theme(legend.position = "none") -> np_p1
 # p1
 
-summ.df %>%
+np.summ.df %>%
   group_by(., popu) %>%
   sample_n(., 100) %>%
   ggplot(., aes(y = av.disp, x = factor(popu), color = factor(popu))) +
@@ -428,10 +429,10 @@ plot_grid(np_p1, np_p2)
 ### Kernel -----
 n.boots <- 100
 samp.size <- 30
-weib.boot <- NULL
+weib.boot.np <- NULL
 
 for(j in 1:n.boots){
-  s.df <- df %>% drop_na(s.id) %>%
+  s.df <- np.df %>% drop_na(s.id) %>%
     group_by(popu) %>%
     sample_n(., samp.size) %>%
     mutate(disp = round(disp, digits = 2))
@@ -458,11 +459,11 @@ for(j in 1:n.boots){
     # plot(g)
   }
 
-  weib.boot <- rbind.data.frame(weib.boot, weib.fits %>% mutate(boot = j))
+  weib.boot.np <- rbind.data.frame(weib.boot.np, weib.fits %>% mutate(boot = j))
 }
 
 
-weib.boot %>%
+weib.boot.np %>%
   group_by(popu) %>%
   #sample_n(., 100) %>%
   ggplot(., aes(x = factor(popu), y = est.shape, color = factor(popu))) +
@@ -477,7 +478,7 @@ weib.boot %>%
   theme_bw() -> np_weib_p1
 # p1
 
-weib.boot %>%
+weib.boot.np %>%
   group_by(popu) %>%
   #sample_n(., 100) %>%
   ggplot(., aes(x = factor(popu), y = est.scale, color = factor(popu))) +
@@ -493,11 +494,105 @@ weib.boot %>%
 
 plot_grid(np_weib_p1, np_weib_p2)
 
+# Patial pooling --------------------------------------------------------------------------
+fam_moverate
+
+ptpl %>%
+  distinct(fam_g, Bird_ID)
+
+ptpl %>%
+  dplyr::select(fam_g, Bird_ID) %>%
+  distinct(Bird_ID, .keep_all = TRUE) %>%
+  group_by(fam_g) %>%
+  summarise(n = n()) %>%
+  right_join(., fam_moverate) %>%
+  mutate(logpar = log(movrate),
+         fitted_sd = logfit$estimate[2]) -> fam_moverate
+
+# Using the average movement rate per family group as the meanlog for a lognormal distribution, and the sdlog from the fitted distribution to the whole dataset since we don't have enough individuals per fmaily group to fit a new lognormal.
+
+
+# My question now is whether or not I would be considering individual variation. I'm saying no, because that's like douible variaion of no pooling? Like, we have a lognormal for each family group, and then get individuals from each family group. That is one thing.
+# The other option is just using the average movement rates per family group to go into the exponential distribution for movement distances. This is what I would consider partial pooling.
+# I guess the other is also a type of partial pooling, as you are only allowing the individual variation to occur within the bound of the family group expectations.
 
 
 
 
-### Fist population--------------------------------------------------------------------
+
+# Joint Vis CP and NP --------------------------------------------------------------------
+
+cp.summ.df %>%
+  dplyr::select(av.disp, dsprsn, popu) %>%
+  mutate(model = "cp") %>%
+  bind_rows(., summ.df %>%
+              dplyr::select(av.disp, dsprsn, popu) %>%
+              mutate(model = paste0("np_", popu))) -> joint_summs
+
+joint_summs %>%
+  group_by(., model) %>%
+  sample_n(., 1000) %>%
+  ggplot(., aes(y = dsprsn, x = model)) +
+  geom_boxplot() +
+  geom_point(color = "grey", alpha = 0.5) +
+  labs(title = "Dispersion", y = "Dispersion in meters", x = "Model") +
+  theme_bw() +
+  theme(legend.position = "none") -> p_dispersion
+
+joint_summs %>%
+  group_by(., model) %>%
+  sample_n(., 1000) %>%
+  ggplot(., aes(y = av.disp, x = model)) +
+  geom_boxplot() +
+  geom_point(color = "grey", alpha = 0.5) +
+  labs(title = "Average dispersal", y = "Dispersal in meters", x = "Model") +
+  theme_bw() +
+  theme(legend.position = "none") -> p_dispersal
+
+plot_grid(p_dispersal, p_dispersion)
+
+ggsave2(filename = "Ch1_movement_rates/Figures/Disp_plot_joint.png", width = 6, height = 4, units = "in")
 
 
+
+# Now the kernel parameters
+
+weib.boot.cp %>%
+  mutate(model = "cp") %>%
+  dplyr::select(., est.shape, est.scale, boot, model) %>%
+  bind_rows(., weib.boot %>%
+              mutate(model = paste0("np_", popu)) %>%
+              dplyr::select(., est.shape, est.scale, boot, model)) -> joint_weib
+
+joint_weib %>%
+  group_by(model) %>%
+  sample_n(., 100) %>%
+  ggplot(., aes(x = model, y = est.shape)) +
+  geom_violin() +
+  # scale_color_manual(values = c("black", mycols)) +
+  # geom_boxplot(width = 0.01) +
+  # geom_point(color = "grey", alpha = 0.5) +
+  # stat_summary(fun.data=mean_sdl, mult=1,
+  #              geom="pointrange", color="black") +
+  geom_jitter(position = position_jitter(0.1)) +
+  labs(title = "Shape") +
+  theme_bw() -> weib_shape
+
+joint_weib %>%
+  group_by(model) %>%
+  sample_n(., 100) %>%
+  ggplot(., aes(x = model, y = est.scale)) +
+  geom_violin() +
+  # scale_color_manual(values = c("black", mycols)) +
+  # geom_boxplot(width = 0.01) +
+  # geom_point(color = "grey", alpha = 0.5) +
+  # stat_summary(fun.data=mean_sdl, mult=1,
+  #              geom="pointrange", color="black") +
+  geom_jitter(position = position_jitter(0.1)) +
+  labs(title = "Scale") +
+  theme_bw() -> weib_scale
+
+plot_grid(weib_shape, weib_scale)
+
+ggsave2(filename = "Ch1_movement_rates/Figures/Weib_plot_joint.png", width = 6, height = 4, units = "in")
 
