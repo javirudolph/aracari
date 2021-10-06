@@ -207,13 +207,15 @@ save(np.df, np.summ.df, file = "Ch1_movement_rates/sims_backup/datagen_np.RData"
 
 n.individuals <- 6
 
-f.data <- NULL
+f.data <- data.frame(indiv = 1:n.individuals)
 
 for(i in 1:7){
   samp <- rlnorm(n.individuals, meanlog = fam_moverate$logpar[i], sdlog = logfit$estimate[2])
-  f.data <- bind_cols(f.data, samp)
-  names(f.data)[i] <- paste(fam_moverate$fam_g[i])
+  f.data <- cbind.data.frame(f.data, samp)
+  names(f.data)[i+1] <- paste(fam_moverate$fam_g[i])
 }
+
+f.data <- f.data[2:8]
 
 # NP Generate data
 kruns <- 1000
@@ -241,8 +243,6 @@ for(f in 1:7){
     }
   }
 }
-
-
 
 
 save(ppi.df, ppi.summ.df, file = "Ch1_movement_rates/sims_backup/datagen_ppi.RData")

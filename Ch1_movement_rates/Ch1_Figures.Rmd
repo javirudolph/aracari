@@ -379,6 +379,7 @@ cowplot::plot_grid(plot.logfitdraw, expdraws)
 load("Ch1_movement_rates/sims_backup/datagen_cp.RData")
 load("Ch1_movement_rates/sims_backup/datagen_pp.RData")
 load("Ch1_movement_rates/sims_backup/datagen_np.RData")
+load("Ch1_movement_rates/sims_backup/datagen_ppi.RData")
 
 load("Ch1_movement_rates/sims_backup/weib_cp.RData")
 load("Ch1_movement_rates/sims_backup/weib_pp.RData")
@@ -395,7 +396,10 @@ cp.summ.df %>%
   bind_rows(., np.summ.df %>%
               dplyr::select(av.disp, dsprsn, popu) %>%
               mutate(model = paste0("np_", popu))) %>% 
-  mutate(model = factor(model, levels = c("cp", "pp", "np_1", "np_2", "np_3"))) -> disp_df
+  bind_rows(., ppi.summ.df %>% 
+              dplyr::select(av.disp, dsprsn, model) %>% 
+              mutate(model = "ppi")) %>% 
+  mutate(model = factor(model, levels = c("cp", "pp", "ppi","np_1", "np_2", "np_3"))) -> disp_df
 
 disp_df %>%
   group_by(., model) %>%
