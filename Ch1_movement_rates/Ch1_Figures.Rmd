@@ -384,6 +384,7 @@ load("Ch1_movement_rates/sims_backup/datagen_ppi.RData")
 load("Ch1_movement_rates/sims_backup/weib_cp.RData")
 load("Ch1_movement_rates/sims_backup/weib_pp.RData")
 load("Ch1_movement_rates/sims_backup/weib_np.RData")
+load("Ch1_movement_rates/sims_backup/weib_ppi.RData")
 
 # Dispersion and Dispersal --------------------------------------------------------------------
 
@@ -436,16 +437,21 @@ weib.boot.cp %>%
   dplyr::select(., est.shape, est.scale, boot, model) %>%
   bind_rows(., weib.boot.pp %>%
               dplyr::select(., est.shape, est.scale, boot, model)) %>%
+  bind_rows(., weib.boot.ppi %>%
+              # mutate(model = paste0(model, "_", popu)) %>% 
+              dplyr::select(., est.shape, est.scale, boot, model)) %>%
   bind_rows(., weib.boot.np %>%
               mutate(model = paste0("np_", popu)) %>%
               dplyr::select(., est.shape, est.scale, boot, model)) -> joint_weib
 
 joint_weib %>% 
-  mutate(model = factor(model, levels = c("cp", "pp", "np_1", "np_2", "np_3"))) -> joint_weib
+  mutate(model = factor(model, levels = c("cp", "pp", "ppi", "np_1", "np_2", "np_3"))) -> joint_weib
+```
 
+```{r}
 joint_weib %>%
   group_by(model) %>%
-  sample_n(., 100) %>%
+  sample_n(., 200) %>%
   ggplot(., aes(x = model, y = est.shape)) +
   geom_violin() +
   # scale_color_manual(values = c("black", mycols)) +
@@ -459,7 +465,7 @@ joint_weib %>%
 
 joint_weib %>%
   group_by(model) %>%
-  sample_n(., 100) %>%
+  sample_n(., 200) %>%
   ggplot(., aes(x = model, y = est.scale)) +
   geom_violin() +
   # scale_color_manual(values = c("black", mycols)) +
