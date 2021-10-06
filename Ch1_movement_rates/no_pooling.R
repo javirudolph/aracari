@@ -152,8 +152,8 @@ save(np.df, np.summ.df, file = "Ch1_movement_rates/sims_backup/datagen_np.RData"
 # plot_grid(np_p1, np_p2)
 
 ### Kernel -----
-n.boots <- 100
-samp.size <- 50
+n.boots <- 1000
+samp.size <- 100
 weib.boot.np <- NULL
 
 for(j in 1:n.boots){
@@ -172,7 +172,8 @@ for(j in 1:n.boots){
 
   for(i in 1:3){
     dat <- s.df %>%
-      filter(popu == i)
+      filter(popu == i) %>%
+      filter(disp != 0)
 
     g <- fitdist(dat$disp, distr = "weibull", method = 'mle', lower = c(0,0))
     #g <- fitdistr(dat$disp, densfun = "weibull", lower = c(0,0))

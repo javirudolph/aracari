@@ -236,8 +236,8 @@ save(cp.df, cp.summ.df, file = "Ch1_movement_rates/sims_backup/datagen_cp.RData"
 
 ### CP Kernel ------------------------------------------------------------
 # sample with replacement groups of 100 seeds and fit weibull , here are the parameters.
-n.boots <- 100
-samp.size <- 50
+n.boots <- 1000
+samp.size <- 100
 weib.boot.cp <- NULL
 
 for(j in 1:n.boots){

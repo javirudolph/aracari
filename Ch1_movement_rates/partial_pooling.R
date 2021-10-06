@@ -139,12 +139,12 @@ for(j in 1:7){
     a <- sim_seeds(m.prms = fam_moverate$movrate[j], nseeds = nseeds) %>%
       mutate(fam_g = fam_moverate$fam_g[j],
              run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
-             model = paste0("pp_1"))
+             model = paste0("pp"))
 
     b <- summ_seeds(a) %>%
       mutate(fam_g = fam_moverate$fam_g[j],
              run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
-             model = paste0("pp_1"))
+             model = paste0("pp"))
 
     pp.df <- rbind.data.frame(pp.df, a)
     pp.summ.df <- rbind.data.frame(pp.summ.df, b)
@@ -156,8 +156,8 @@ save(pp.df, pp.summ.df, file = "Ch1_movement_rates/sims_backup/datagen_pp.RData"
 
 
 # sample with replacement groups of 100 seeds and fit weibull , here are the parameters.
-n.boots <- 100
-samp.size <- 50
+n.boots <- 1000
+samp.size <- 100
 weib.boot.pp <- NULL
 
 for(j in 1:n.boots){
