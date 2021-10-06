@@ -8,7 +8,7 @@ library(cowplot)
 library(fitdistrplus)
 library(Hmisc)
 
-set.seed(98)
+set.seed(927)
 
 # Functions --------------------------------------------------------------------------
 sim_movement <- function(prm, t = 1000, plot.it = TRUE, return.data.frame = FALSE){
@@ -76,6 +76,8 @@ ids <- ptpl %>% distinct(., Bird_ID, fam_g)
 my.cols1 <- c("#23262f","#717492","#b3a82a","#c94f21","#980012","#0d907a","#b9bec3")
 
 
+logfit <- fitdist(indiv_moverate$movrate, distr = 'lnorm')
+
 movrate_cp <- mean(indiv_moverate$movrate)
 movrate_cp_ln <- as.numeric(exp(logfit$estimate[1]))
 # Which estimate to use?
@@ -113,7 +115,7 @@ for(k in 1:kruns){
 save(cp.df, cp.summ.df, file = "Ch1_movement_rates/sims_backup/datagen_cp.RData")
 
 ## PP Simulations -----------------------------------------------------------------------
-logfit <- fitdist(indiv_moverate$movrate, distr = 'lnorm')
+
 
 ptpl %>%
   dplyr::select(fam_g, Bird_ID) %>%
