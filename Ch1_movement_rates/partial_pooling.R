@@ -175,7 +175,7 @@ for(j in 1:n.boots){
   weib.boot.pp <- rbind.data.frame(weib.boot.pp, prms.weib %>% mutate(boot = j))
 }
 
-save(weib.boot.cp, file = "Ch1_movement_rates/sims_backup/weib_pp.RData")
+save(weib.boot.pp, file = "Ch1_movement_rates/sims_backup/weib_pp.RData")
 
 # Visualize -----
 
