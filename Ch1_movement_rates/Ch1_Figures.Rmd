@@ -164,7 +164,7 @@ test.df %>%
 
 plot_grid(A, B, C, D, labels = "AUTO")
 
-ggsave2(filename = "Ch1_movement_rates/Figures/Figure1.png")
+# ggsave2(filename = "Ch1_movement_rates/Figures/Figure1.png")
 ```
 
 ```{r}
