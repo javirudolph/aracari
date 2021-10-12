@@ -8,7 +8,7 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
-knitr::opts_chunk$set(fig.width=12, fig.height=6)
+# knitr::opts_chunk$set(fig.width=12, fig.height=6)
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 ```
 
@@ -53,14 +53,118 @@ ids <- ptpl %>% distinct(., Bird_ID, fam_g)
 # Color palette ----------------------------------------
 my.cols1 <- c("#23262f","#717492","#b3a82a","#c94f21","#980012","#0d907a","#b9bec3")
 
-# Vis Movement Rates ---------------------------------------------
 # Fit a lognormal to the distribution of movement rates
-# Keep in mind these are all males.
 
 logfit <- fitdist(indiv_moverate$movrate, distr = 'lnorm')
-# normfit <- fitdist(indiv_moverate$movrate, distr = "norm")
-# Mean using the fit
-exp(logfit$estimate[1])
+movrate_cp_ln <- as.numeric(exp(logfit$estimate[1]))
+
+```
+
+
+```{r}
+# Figure 1 - example of how the process works.
+# set.seed(72)
+# set.seed(987)
+set.seed(235)
+
+cols.fig1 <- c("#23262f","#717492","#b3a82a","#c94f21","#980012","#0d907a","#b9bec3")
+#library(scales)
+#show_col(cols.fig1)
+
+# We are using 5 seeds
+nseeds <- 5
+
+# Doing one run for the first three panels.
+
+test_run <- sim_seeds(nseeds = nseeds, m.prms = movrate_cp_ln)
+#test_run
+
+# Calculate summary for seeds in this run
+summ_test_run <- summ_seeds(test_run)
+# Visualize this one run:
+test_run %>%
+  ggplot(., aes(x = xloc, y = yloc)) +
+  geom_path(color = cols.fig1[2]) +
+  geom_point(aes(x=0, y=0), color = cols.fig1[6], size = 4) +
+  geom_point(data = test_run %>% drop_na(s.id),
+             aes(x = xloc, y = yloc), shape = "diamond", size = 2.5) +
+  # geom_point(data = summ_test_run,
+  #            aes(x = x, y = y), color = "#59879A") +
+  labs(x = "x", 
+       #title = "Example of one simulation run",
+       y = "y") +
+  theme_bw() -> A
+
+test_run %>%
+  ggplot(., aes(x = xloc, y = yloc)) +
+  geom_path(color = "white", alpha = 0.1) +
+  geom_segment(data = test_run %>% drop_na(s.id),
+               aes(x = xloc, y = yloc, xend = summ_test_run$x, yend = summ_test_run$y), lty = 2, color = cols.fig1[4]) +
+  geom_point(data = test_run %>% drop_na(s.id),
+             aes(x = xloc, y = yloc), shape = "diamond", size = 2.5) +
+  geom_point(aes(x=0, y=0), color = cols.fig1[6], size = 4) +
+  geom_point(data = summ_test_run,
+             aes(x = x, y = y), color = cols.fig1[4], size = 4, shape = "square") +
+  labs(x = "x", 
+       #title = "Average dispersal and dispersion per run",
+       y = "y") +
+  theme_bw() -> B
+
+test_run %>%
+  ggplot(., aes(x = xloc, y = yloc)) +
+  geom_path(color = "white", alpha = 0.1) +
+  geom_segment(aes(x = summ_test_run$x, xend = 0, y = summ_test_run$y, yend = 0), color = cols.fig1[1], lty = "twodash") +
+  geom_segment(data = test_run %>% drop_na(s.id),
+               aes(x = xloc, y = yloc, xend = 0, yend = 0), lty = 2, color = cols.fig1[6]) +
+  #geom_segment(aes(x = summ_test_run$x, xend = 0, y = summ_test_run$y, yend = 0), color = "#87A986", lty = 2) +
+  geom_point(data = test_run %>% drop_na(s.id),
+             aes(x = xloc, y = yloc), shape = "diamond", size = 2.5) +
+  geom_point(data = summ_test_run,
+             aes(x = x, y = y), color = cols.fig1[4], size = 4, shape = "square") +
+  geom_point(aes(x=0, y=0), color = cols.fig1[6], size = 4) +
+  labs(x = "x",
+       #title = "Seed dispersal distance from parent tree",
+       y = "y") +
+  theme_bw() -> C
+
+# The fourth panel will show the histogram and weibull fit for the seed dispersal kernel generated from 100 simulation runs
+kruns <- 100
+test.df <- NULL
+test.summ.df <- NULL
+
+for(k in 1:kruns){
+  a <- sim_seeds(m.prms = movrate_cp_ln, nseeds = nseeds) %>%
+    mutate(run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
+           model = "test")
+
+  b <- summ_seeds(a) %>%
+    mutate(run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
+           model = "test")
+
+  test.df <- rbind.data.frame(test.df, a)
+  test.summ.df <- rbind.data.frame(test.summ.df, b)
+}
+
+test.df %>% drop_na(s.id) -> seed.df
+
+weib.fit <- fitdistr(seed.df$disp, densfun = "weibull")
+
+
+test.df %>%
+  drop_na(s.id) %>%
+  ggplot(., aes(x = disp)) +
+  geom_histogram(aes(y = ..density..), bins = 30, fill = cols.fig1[7], color = cols.fig1[6]) +
+  stat_function(fun = dweibull, args = list(shape = weib.fit$estimate[1], scale = weib.fit$estimate[2]),
+                color = "black", alpha = 0.8, size = 1) +
+  labs(x = "Distance in meters", 
+       #title = "SDK from 100 runs",
+       y = "Density") +
+  theme_bw() -> D
+
+
+plot_grid(A, B, C, D, labels = "AUTO")
+
+ggsave2(filename = "Ch1_movement_rates/Figures/Figure1.png")
 ```
 
 ```{r}
@@ -118,87 +222,7 @@ ptpl %>%
 
 ```
 
-```{r}
-# ggsave2(filename = "Ch1_movement_rates/Figures/Movement_dist_comparison_2exp.png", width = 6, height = 4, units = "in")
 
-## Sample run -------
-
-# Which estimate to use?
-# So, we are saying here that complete pooling takes the average of all the data as one. We took all the data, then fitted a lognormal distribution. So, the parameter we use, is the average movement rate that the lognormal gives us. Since we are assuming that the lognormal distribution will describe this population's movement rates across individuals. So, we use the expected value (mean) of the fit to describe the average movement rate of the population.
-
-# movrate_cp_ln
-
-# How many seeds to use? Landon used 100 because he was taking averages.
-# I guess we are focusing on a very short time frame: what does the bird do after it eats those seeds at one tree, and how does it move until it drops them all? So, only use 5 seeds.
-
-nseeds <- 5
-
-
-# Let's visualize one run quickly
-
-#sim_movement(prm = movrate_cp_ln, plot.it = TRUE, return.data.frame = TRUE)
-# Print the data frame with seed info
-test_run <- sim_seeds(nseeds = nseeds, m.prms = movrate_cp_ln)
-#test_run
-
-# Calculate summary for seeds in this run
-summ_test_run <- summ_seeds(test_run)
-# Visualize this one run:
-test_run %>%
-  ggplot(., aes(x = xloc, y = yloc)) +
-  geom_path(color = "#2D3335") +
-  geom_point(aes(x=0, y=0), color = "#87A986", size = 3) +
-  geom_point(data = test_run %>% drop_na(s.id),
-             aes(x = xloc, y = yloc)) +
-  # geom_point(data = summ_test_run,
-  #            aes(x = x, y = y), color = "#59879A") +
-  labs(x = "x", y = "y",
-       title = "Example of one simulation run") +
-  theme_bw() -> A
-
-test_run %>%
-  ggplot(., aes(x = xloc, y = yloc)) +
-  geom_path(color = "white", alpha = 0.1) +
-  geom_point(aes(x=0, y=0), color = "#87A986", size = 3) +
-  geom_segment(aes(x = summ_test_run$x, xend = 0, y = summ_test_run$y, yend = 0), color = "#87A986", lty = 2) +
-  geom_point(data = test_run %>% drop_na(s.id),
-             aes(x = xloc, y = yloc)) +
-  geom_segment(data = test_run %>% drop_na(s.id),
-               aes(x = xloc, y = yloc, xend = summ_test_run$x, yend = summ_test_run$y), lty = 2, color = "#E2BF80") +
-  geom_point(data = summ_test_run,
-             aes(x = x, y = y), color = "#E2BF80", size = 5) +
-  labs(x = "x", y = "y",
-       title = "Average dispersal and dispersion per run") +
-  theme_bw() -> B
-
-test_run %>%
-  ggplot(., aes(x = xloc, y = yloc)) +
-  geom_path(color = "white", alpha = 0.1) +
-  #geom_segment(aes(x = summ_test_run$x, xend = 0, y = summ_test_run$y, yend = 0), color = "#87A986", lty = 2) +
-  geom_point(data = test_run %>% drop_na(s.id),
-             aes(x = xloc, y = yloc)) +
-  geom_segment(data = test_run %>% drop_na(s.id),
-               aes(x = xloc, y = yloc, xend = 0, yend = 0), lty = 2, color = "black") +
-  geom_point(data = summ_test_run,
-             aes(x = x, y = y), color = "#E2BF80", size = 3) +
-  geom_point(aes(x=0, y=0), color = "#87A986", size = 5) +
-  labs(x = "x", y = "y",
-       title = "Seed dispersal distance from parent tree") +
-  theme_bw() -> C
-
-test_run %>%
-  drop_na(s.id) %>%
-  ggplot(., aes(x = disp)) +
-    geom_histogram(bins = 30) +
-  labs(x = "Dispersal distance in meters", y = "Count",
-       title = "Seed dispersal distance for each seed") +
-  theme_bw() -> D
-
-
-plot_grid(A, B, C, D, labels = "AUTO")
-
-# ggsave2(filename = "Ch1_movement_rates/Figures/Ex_one_sim_run.png")
-```
 
 ```{r include=FALSE}
 ## Visualize mov rates ---------------
