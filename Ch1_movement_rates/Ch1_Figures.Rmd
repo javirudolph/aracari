@@ -290,12 +290,13 @@ indiv_moverate %>%
   geom_vline(xintercept = vlines, color = "black", size = 1, lty = 2) +
   scale_x_continuous(limits = c(0, 70), breaks = c(0, vlines[1], 20, vlines[2], 40, vlines[3], 60),
                      labels = c(0, "Min.", 20, "Median.", 40, "Max.", 60)) +
-  stat_function(fun = dlnorm, args = list(meanlog = logfit_fam$estimate[1], sdlog = logfit_fam$estimate[2]),
-                color = my.cols1[4], alpha = 0.8, size = 1) +
+  # stat_function(fun = dlnorm, args = list(meanlog = logfit_fam$estimate[1], sdlog = logfit_fam$estimate[2]),
+  #               color = my.cols1[4], alpha = 0.8, size = 1) +
   geom_point(data = fam_moverate, aes(x = movrate, y = 0.004),size = 3, alpha = 0.8, color = my.cols1[4]) +
-  geom_vline(xintercept = vlines_fam, color = my.cols1[4], size = 1, lty = 2) +
-  labs(x = "Movement Rate (meters/minute)", y = "Density",
-       title = "Average movement rates lognormal fits") +
+  # geom_vline(xintercept = vlines_fam, color = my.cols1[4], size = 1, lty = 2) +
+  labs(x = "Movement Rate (meters/minute)",
+       # title = "Average movement rates lognormal fits",
+       y = "Density") +
   theme_bw()
 ```
 
