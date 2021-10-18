@@ -183,13 +183,14 @@ ptpl %>%
   dplyr::select(Bird_ID, obs, movrate, fam_g, famrate) -> table1
 
 knitr::kable(table1)
-write.csv(table1, file = "Ch1_movement_rates/Figures/table1.csv")
+# write.csv(table1, file = "Ch1_movement_rates/Figures/table1.csv")
 
 ```
 
 
 # Figure 2   
 
+In process
 
 # Figure 3 - gut retention times:  
 
@@ -222,239 +223,240 @@ grt_data %>%
 ```
 
 
+ 
 
 
-```{r}
-# Visualize distribution and data points
-vlines <- summary(indiv_moverate$movrate)[c(1,3,6)]
+<!-- ```{r} -->
+<!-- # Visualize distribution and data points -->
+<!-- vlines <- summary(indiv_moverate$movrate)[c(1,3,6)] -->
 
-indiv_moverate %>%
-  ggplot(., aes(x = movrate, y = 0.002)) +
-  geom_point(size = 3, alpha = 0.8) +
-  geom_point(data = fam_moverate, aes(x = movrate, y = 0.004),size = 3, alpha = 0.8, color = my.cols1[4]) +
-  stat_function(fun = dlnorm, args = list(meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),
-                color = "black", alpha = 0.8, size = 1) +
-  labs(x = "Movement Rate (meters/minute)", y = "Density",
-       title = "Lognormal fit to movement rates",
-       subtitle = "Each dot is an individual") +
-  geom_vline(xintercept = vlines, color = my.cols1[4], size = 1, lty = 2) +
-  scale_x_continuous(limits = c(0, 70), breaks = c(0, vlines[1], 20, vlines[2], 40, vlines[3], 60),
-                     labels = c(0, "Min.", 20, "Median.", 40, "Max.", 60)) +
-  #scale_x_discrete(labels = c(0, vlines[1], 20, vlines[2], 40, vlines[3], 60)) +
-  theme_bw()
+<!-- indiv_moverate %>% -->
+<!--   ggplot(., aes(x = movrate, y = 0.002)) + -->
+<!--   geom_point(size = 3, alpha = 0.8) + -->
+<!--   geom_point(data = fam_moverate, aes(x = movrate, y = 0.004),size = 3, alpha = 0.8, color = my.cols1[4]) + -->
+<!--   stat_function(fun = dlnorm, args = list(meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]), -->
+<!--                 color = "black", alpha = 0.8, size = 1) + -->
+<!--   labs(x = "Movement Rate (meters/minute)", y = "Density", -->
+<!--        title = "Lognormal fit to movement rates", -->
+<!--        subtitle = "Each dot is an individual") + -->
+<!--   geom_vline(xintercept = vlines, color = my.cols1[4], size = 1, lty = 2) + -->
+<!--   scale_x_continuous(limits = c(0, 70), breaks = c(0, vlines[1], 20, vlines[2], 40, vlines[3], 60), -->
+<!--                      labels = c(0, "Min.", 20, "Median.", 40, "Max.", 60)) + -->
+<!--   #scale_x_discrete(labels = c(0, vlines[1], 20, vlines[2], 40, vlines[3], 60)) + -->
+<!--   theme_bw() -->
 
-# ggsave2(filename = "Ch1_movement_rates/Figures/logfit_cp.png")
-```
+<!-- # ggsave2(filename = "Ch1_movement_rates/Figures/logfit_cp.png") -->
+<!-- ``` -->
 
-```{r include=FALSE}
-# The average movement rate for this sample of the population (the 12 individuals) is the average of the movement rate for each individual:
+<!-- ```{r include=FALSE} -->
+<!-- # The average movement rate for this sample of the population (the 12 individuals) is the average of the movement rate for each individual: -->
 
-# mean(indiv_moverate$movrate)
-# 27.94211 meters/minute
+<!-- # mean(indiv_moverate$movrate) -->
+<!-- # 27.94211 meters/minute -->
 
-# In a complete pooling approach, we take this average movement rate and use it as the parameter for our exponential distribution, from which we draw the movement distance at each time step.
+<!-- # In a complete pooling approach, we take this average movement rate and use it as the parameter for our exponential distribution, from which we draw the movement distance at each time step. -->
 
-## Compare exponential movement distances to full dataset ----------------------------------
+<!-- ## Compare exponential movement distances to full dataset ---------------------------------- -->
 
-movrate_cp <- mean(indiv_moverate$movrate)
-movrate_cp_ln <- as.numeric(exp(logfit$estimate[1]))
+<!-- movrate_cp <- mean(indiv_moverate$movrate) -->
+<!-- movrate_cp_ln <- as.numeric(exp(logfit$estimate[1])) -->
 
-# test <- data.frame(mpm = rexp(500, rate = 1/movrate_cp))
-#
-# test %>%
-#   ggplot(., aes(x = mpm)) +
-#   geom_histogram(aes(y = ..density..)) +
-#   stat_function(fun = dexp, args = list(rate = 1/movrate_cp), color = "red")
+<!-- # test <- data.frame(mpm = rexp(500, rate = 1/movrate_cp)) -->
+<!-- # -->
+<!-- # test %>% -->
+<!-- #   ggplot(., aes(x = mpm)) + -->
+<!-- #   geom_histogram(aes(y = ..density..)) + -->
+<!-- #   stat_function(fun = dexp, args = list(rate = 1/movrate_cp), color = "red") -->
 
-ptpl %>%
-  ggplot(., aes(x = mpm)) +
-  geom_histogram(aes(y = ..density..)) +
-  stat_function(fun = dexp, args = list(rate = 1/movrate_cp), color = my.cols1[4], size = 1) +
-  stat_function(fun = dexp, args = list(rate = 1/movrate_cp_ln), color = my.cols1[3], size = 1, alpha = 0.8) +
-  labs(title = "Histogram of movement distances per minute from data set",
-       x = "Movement distance per minute",
-       y = "Density",
-       caption = "Orange line is exponential density using average movement rate for population \n
-       Yellow line shows exponential density using mean estimate from lognormal fit to movement rates") +
-  theme_bw()
+<!-- ptpl %>% -->
+<!--   ggplot(., aes(x = mpm)) + -->
+<!--   geom_histogram(aes(y = ..density..)) + -->
+<!--   stat_function(fun = dexp, args = list(rate = 1/movrate_cp), color = my.cols1[4], size = 1) + -->
+<!--   stat_function(fun = dexp, args = list(rate = 1/movrate_cp_ln), color = my.cols1[3], size = 1, alpha = 0.8) + -->
+<!--   labs(title = "Histogram of movement distances per minute from data set", -->
+<!--        x = "Movement distance per minute", -->
+<!--        y = "Density", -->
+<!--        caption = "Orange line is exponential density using average movement rate for population \n -->
+<!--        Yellow line shows exponential density using mean estimate from lognormal fit to movement rates") + -->
+<!--   theme_bw() -->
 
-```
-
-
-
-```{r include=FALSE}
-## Visualize mov rates ---------------
-pp_1 <- sort(round(fam_moverate$movrate,3))
-
-### Compare lognorm fits CP and PP -----------
-
-logfit_fam <- fitdist(pp_1, distr = 'lnorm')
-# normfit <- fitdist(indiv_moverate$movrate, distr = "norm")
-
-# Mean using the fit
-# exp(logfit_fam$estimate[1])
-
-```
-
-```{r}
-# Visualize distribution and data points
-vlines_fam <- summary(fam_moverate$movrate)[c(1,3,6)]
-
-indiv_moverate %>%
-  ggplot(., aes(x = movrate, y = 0.002)) +
-  # stat_function(fun = dlnorm, args = list(meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),
-  #               color = "black", alpha = 0.8, size = 1) +
-  # geom_point(size = 3, alpha = 0.8) +
-  # geom_vline(xintercept = vlines, color = "black", size = 1, lty = 2) +
-  # scale_x_continuous(limits = c(0, 70), breaks = c(0, vlines[1], 20, vlines[2], 40, vlines[3], 60),
-  #                    labels = c(0, "Min.", 20, "Median.", 40, "Max.", 60)) +
-  stat_function(fun = dlnorm, args = list(meanlog = logfit_fam$estimate[1], sdlog = logfit_fam$estimate[2]),
-                color = my.cols1[4], alpha = 0.8, size = 1) +
-  geom_point(data = fam_moverate, aes(x = movrate, y = 0.004),size = 3, alpha = 0.8, color = my.cols1[4]) +
-  geom_vline(xintercept = vlines_fam, color = my.cols1[4], size = 1, lty = 2) +
-  scale_x_continuous(limits = c(0, 70), breaks = c(0, vlines_fam[1], 20, vlines_fam[2], vlines_fam[3], 60),
-                     labels = c(0, "Min.", 20, "Median.", "Max.", 60)) +
-  labs(x = "Movement Rate (meters/minute)", y = "Density",
-       title = "Lognormal fit to family group movement rates") +
-  theme_bw()
-
-# ggsave2(filename = "Ch1_movement_rates/Figures/logfit_pp.png")
-
-```
-
-```{r include=FALSE}
-## Visualize mov rates ---------------
-pp_1 <- sort(round(fam_moverate$movrate,3))
-
-### Compare lognorm fits CP and PP -----------
-
-logfit_fam <- fitdist(fam_moverate$movrate, distr = 'lnorm')
-# normfit <- fitdist(indiv_moverate$movrate, distr = "norm")
-
-# Mean using the fit
-exp(logfit_fam$estimate[1])
-
-```
-
-```{r}
-# Visualize distribution and data points
-vlines_fam <- summary(fam_moverate$movrate)[c(1,3,6)]
-
-indiv_moverate %>%
-  ggplot(., aes(x = movrate, y = 0.002)) +
-  stat_function(fun = dlnorm, args = list(meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),
-                color = "black", alpha = 0.8, size = 1) +
-  geom_point(size = 3, alpha = 0.8) +
-  geom_vline(xintercept = vlines, color = "black", size = 1, lty = 2) +
-  scale_x_continuous(limits = c(0, 70), breaks = c(0, vlines[1], 20, vlines[2], 40, vlines[3], 60),
-                     labels = c(0, "Min.", 20, "Median.", 40, "Max.", 60)) +
-  # stat_function(fun = dlnorm, args = list(meanlog = logfit_fam$estimate[1], sdlog = logfit_fam$estimate[2]),
-  #               color = my.cols1[4], alpha = 0.8, size = 1) +
-  geom_point(data = fam_moverate, aes(x = movrate, y = 0.004),size = 3, alpha = 0.8, color = my.cols1[4]) +
-  # geom_vline(xintercept = vlines_fam, color = my.cols1[4], size = 1, lty = 2) +
-  labs(x = "Movement Rate (meters/minute)",
-       # title = "Average movement rates lognormal fits",
-       y = "Density") +
-  theme_bw()
-```
-
-```{r}
-## PP w/fam moverates ---------------------------------------
-# Meaning, we use the average movement rate for each family group as the parameter for an exponential from which we draw movement distances for the simulation.
-
-fam_moverate %>%
-  arrange(., movrate) -> fam_moverate
-
-fam_moverate %>%
-  ggplot(., aes(x = movrate, y = 0, color = movrate)) +
-  geom_point(size = 3) +
-  stat_function(fun = dlnorm, args = list(meanlog = logfit_fam$estimate[1], sdlog = logfit_fam$estimate[2]),
-                color = my.cols1[4], alpha = 0.8, size = 1) +
-  xlim(0, 60) +
-  labs(title = "Lognormal fitted to family group",
-       x = "Movement rate",
-       y = "Density") +
-  scale_color_viridis_c() +
-  theme_bw() +
-  theme(legend.position = "none") -> pp_logfit
-
-mycols2 <- viridisLite::viridis(7)
-expcurves_pp1 <- purrr::map(seq(1:7), function(y)
-  stat_function(fun = dexp, args = list(rate = 1/fam_moverate$movrate[y]), color = mycols2[y], alpha = 0.8))
-
-ggplot() +
-  expcurves_pp1 +
-  xlim(-1, 125) +
-  labs(title = "Movement distance exponential draws", x = 'Movement Distance', y = "Density") +
-  theme_bw() -> pp_expdraws
-
-
-cowplot::plot_grid(pp_logfit, pp_expdraws)
-# ggsave2(filename = "Ch1_movement_rates/Figures/pp_logfit_plus_exp.png")
-```
+<!-- ``` -->
 
 
 
-```{r include=FALSE}
-# This one looks at individual variation.
-# We will sample 20 individuals, 3 times from the lognormal distribution that describes movement rates for the population
-logfit <- fitdist(indiv_moverate$movrate, distr = 'lnorm')
+<!-- ```{r include=FALSE} -->
+<!-- ## Visualize mov rates --------------- -->
+<!-- pp_1 <- sort(round(fam_moverate$movrate,3)) -->
 
-n.individuals <- 20
-m_1 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),3))
-m_2 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),3))
-m_3 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),3))
+<!-- ### Compare lognorm fits CP and PP ----------- -->
 
-logfitdraw <- data.frame(indv = 1:20, m_1 = m_1, m_2 = m_2, m_3 = m_3)
+<!-- logfit_fam <- fitdist(pp_1, distr = 'lnorm') -->
+<!-- # normfit <- fitdist(indiv_moverate$movrate, distr = "norm") -->
 
-indiv_moverate %>%
-  ggplot(., aes(x = movrate, y = 0)) +
-  geom_point(size = 5) +
-  stat_function(fun = dlnorm, args = list(meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]), color = "black", alpha = 0.8) +
-  geom_point(data = logfitdraw, aes(x = m_1, color = factor(indv), y = 0.005), size = 3) +
-  geom_point(data = logfitdraw, aes(x = m_2, color = factor(indv), y = 0.006), size = 3) +
-  geom_point(data = logfitdraw, aes(x = m_3, color = factor(indv), y = 0.007), size = 3) +
-  # scale_color_viridis_d(option="magma") +
-  scale_color_viridis_d() +
-  xlim(0, 60) +
-  labs(title = "Sampling individuals from lognormal",
-       x = "Movement rate",
-       y = "Density") +
-  theme_bw() +
-  theme(legend.position = "none") -> plot.logfitdraw
+<!-- # Mean using the fit -->
+<!-- # exp(logfit_fam$estimate[1]) -->
 
-plot.logfitdraw
+<!-- ``` -->
 
-mycols <- viridisLite::viridis(20)
+<!-- ```{r} -->
+<!-- # Visualize distribution and data points -->
+<!-- vlines_fam <- summary(fam_moverate$movrate)[c(1,3,6)] -->
 
-expcurves_m1 <- purrr::map(seq(1:n.individuals), function(y)
-  stat_function(fun = dexp, args = list(rate = 1/logfitdraw$m_1[y]), color = mycols[y], alpha = 0.8))
+<!-- indiv_moverate %>% -->
+<!--   ggplot(., aes(x = movrate, y = 0.002)) + -->
+<!--   # stat_function(fun = dlnorm, args = list(meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]), -->
+<!--   #               color = "black", alpha = 0.8, size = 1) + -->
+<!--   # geom_point(size = 3, alpha = 0.8) + -->
+<!--   # geom_vline(xintercept = vlines, color = "black", size = 1, lty = 2) + -->
+<!--   # scale_x_continuous(limits = c(0, 70), breaks = c(0, vlines[1], 20, vlines[2], 40, vlines[3], 60), -->
+<!--   #                    labels = c(0, "Min.", 20, "Median.", 40, "Max.", 60)) + -->
+<!--   stat_function(fun = dlnorm, args = list(meanlog = logfit_fam$estimate[1], sdlog = logfit_fam$estimate[2]), -->
+<!--                 color = my.cols1[4], alpha = 0.8, size = 1) + -->
+<!--   geom_point(data = fam_moverate, aes(x = movrate, y = 0.004),size = 3, alpha = 0.8, color = my.cols1[4]) + -->
+<!--   geom_vline(xintercept = vlines_fam, color = my.cols1[4], size = 1, lty = 2) + -->
+<!--   scale_x_continuous(limits = c(0, 70), breaks = c(0, vlines_fam[1], 20, vlines_fam[2], vlines_fam[3], 60), -->
+<!--                      labels = c(0, "Min.", 20, "Median.", "Max.", 60)) + -->
+<!--   labs(x = "Movement Rate (meters/minute)", y = "Density", -->
+<!--        title = "Lognormal fit to family group movement rates") + -->
+<!--   theme_bw() -->
 
-expcurves_m2 <- purrr::map(seq(1:n.individuals), function(y)
-  stat_function(fun = dexp, args = list(rate = 1/logfitdraw$m_2[y]), color = mycols[y], alpha = 0.8))
+<!-- # ggsave2(filename = "Ch1_movement_rates/Figures/logfit_pp.png") -->
 
-expcurves_m3 <- purrr::map(seq(1:n.individuals), function(y)
-  stat_function(fun = dexp, args = list(rate = 1/logfitdraw$m_3[y]), color = mycols[y], alpha = 0.8))
+<!-- ``` -->
 
-logfitdraw %>%
-  ggplot() +
-  expcurves_m1 +
-  expcurves_m2 +
-  expcurves_m3 +
-  xlim(-1, 125) +
-  labs(title = "Movement distance Exponential Draws", x = 'Movement Distance', y = "Density") +
-  theme_bw() -> expdraws
-expdraws
+<!-- ```{r include=FALSE} -->
+<!-- ## Visualize mov rates --------------- -->
+<!-- pp_1 <- sort(round(fam_moverate$movrate,3)) -->
 
-```
+<!-- ### Compare lognorm fits CP and PP ----------- -->
 
-```{r}
+<!-- logfit_fam <- fitdist(fam_moverate$movrate, distr = 'lnorm') -->
+<!-- # normfit <- fitdist(indiv_moverate$movrate, distr = "norm") -->
 
-cowplot::plot_grid(plot.logfitdraw, expdraws)
+<!-- # Mean using the fit -->
+<!-- exp(logfit_fam$estimate[1]) -->
+
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- # Visualize distribution and data points -->
+<!-- vlines_fam <- summary(fam_moverate$movrate)[c(1,3,6)] -->
+
+<!-- indiv_moverate %>% -->
+<!--   ggplot(., aes(x = movrate, y = 0.002)) + -->
+<!--   stat_function(fun = dlnorm, args = list(meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]), -->
+<!--                 color = "black", alpha = 0.8, size = 1) + -->
+<!--   geom_point(size = 3, alpha = 0.8) + -->
+<!--   geom_vline(xintercept = vlines, color = "black", size = 1, lty = 2) + -->
+<!--   scale_x_continuous(limits = c(0, 70), breaks = c(0, vlines[1], 20, vlines[2], 40, vlines[3], 60), -->
+<!--                      labels = c(0, "Min.", 20, "Median.", 40, "Max.", 60)) + -->
+<!--   # stat_function(fun = dlnorm, args = list(meanlog = logfit_fam$estimate[1], sdlog = logfit_fam$estimate[2]), -->
+<!--   #               color = my.cols1[4], alpha = 0.8, size = 1) + -->
+<!--   geom_point(data = fam_moverate, aes(x = movrate, y = 0.004),size = 3, alpha = 0.8, color = my.cols1[4]) + -->
+<!--   # geom_vline(xintercept = vlines_fam, color = my.cols1[4], size = 1, lty = 2) + -->
+<!--   labs(x = "Movement Rate (meters/minute)", -->
+<!--        # title = "Average movement rates lognormal fits", -->
+<!--        y = "Density") + -->
+<!--   theme_bw() -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- ## PP w/fam moverates --------------------------------------- -->
+<!-- # Meaning, we use the average movement rate for each family group as the parameter for an exponential from which we draw movement distances for the simulation. -->
+
+<!-- fam_moverate %>% -->
+<!--   arrange(., movrate) -> fam_moverate -->
+
+<!-- fam_moverate %>% -->
+<!--   ggplot(., aes(x = movrate, y = 0, color = movrate)) + -->
+<!--   geom_point(size = 3) + -->
+<!--   stat_function(fun = dlnorm, args = list(meanlog = logfit_fam$estimate[1], sdlog = logfit_fam$estimate[2]), -->
+<!--                 color = my.cols1[4], alpha = 0.8, size = 1) + -->
+<!--   xlim(0, 60) + -->
+<!--   labs(title = "Lognormal fitted to family group", -->
+<!--        x = "Movement rate", -->
+<!--        y = "Density") + -->
+<!--   scale_color_viridis_c() + -->
+<!--   theme_bw() + -->
+<!--   theme(legend.position = "none") -> pp_logfit -->
+
+<!-- mycols2 <- viridisLite::viridis(7) -->
+<!-- expcurves_pp1 <- purrr::map(seq(1:7), function(y) -->
+<!--   stat_function(fun = dexp, args = list(rate = 1/fam_moverate$movrate[y]), color = mycols2[y], alpha = 0.8)) -->
+
+<!-- ggplot() + -->
+<!--   expcurves_pp1 + -->
+<!--   xlim(-1, 125) + -->
+<!--   labs(title = "Movement distance exponential draws", x = 'Movement Distance', y = "Density") + -->
+<!--   theme_bw() -> pp_expdraws -->
 
 
-# ggsave2(filename = "Ch1_movement_rates/Figures/Sampling_indivs_lnorm.png")
-```
+<!-- cowplot::plot_grid(pp_logfit, pp_expdraws) -->
+<!-- # ggsave2(filename = "Ch1_movement_rates/Figures/pp_logfit_plus_exp.png") -->
+<!-- ``` -->
+
+
+
+<!-- ```{r include=FALSE} -->
+<!-- # This one looks at individual variation. -->
+<!-- # We will sample 20 individuals, 3 times from the lognormal distribution that describes movement rates for the population -->
+<!-- logfit <- fitdist(indiv_moverate$movrate, distr = 'lnorm') -->
+
+<!-- n.individuals <- 20 -->
+<!-- m_1 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),3)) -->
+<!-- m_2 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),3)) -->
+<!-- m_3 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),3)) -->
+
+<!-- logfitdraw <- data.frame(indv = 1:20, m_1 = m_1, m_2 = m_2, m_3 = m_3) -->
+
+<!-- indiv_moverate %>% -->
+<!--   ggplot(., aes(x = movrate, y = 0)) + -->
+<!--   geom_point(size = 5) + -->
+<!--   stat_function(fun = dlnorm, args = list(meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]), color = "black", alpha = 0.8) + -->
+<!--   geom_point(data = logfitdraw, aes(x = m_1, color = factor(indv), y = 0.005), size = 3) + -->
+<!--   geom_point(data = logfitdraw, aes(x = m_2, color = factor(indv), y = 0.006), size = 3) + -->
+<!--   geom_point(data = logfitdraw, aes(x = m_3, color = factor(indv), y = 0.007), size = 3) + -->
+<!--   # scale_color_viridis_d(option="magma") + -->
+<!--   scale_color_viridis_d() + -->
+<!--   xlim(0, 60) + -->
+<!--   labs(title = "Sampling individuals from lognormal", -->
+<!--        x = "Movement rate", -->
+<!--        y = "Density") + -->
+<!--   theme_bw() + -->
+<!--   theme(legend.position = "none") -> plot.logfitdraw -->
+
+<!-- plot.logfitdraw -->
+
+<!-- mycols <- viridisLite::viridis(20) -->
+
+<!-- expcurves_m1 <- purrr::map(seq(1:n.individuals), function(y) -->
+<!--   stat_function(fun = dexp, args = list(rate = 1/logfitdraw$m_1[y]), color = mycols[y], alpha = 0.8)) -->
+
+<!-- expcurves_m2 <- purrr::map(seq(1:n.individuals), function(y) -->
+<!--   stat_function(fun = dexp, args = list(rate = 1/logfitdraw$m_2[y]), color = mycols[y], alpha = 0.8)) -->
+
+<!-- expcurves_m3 <- purrr::map(seq(1:n.individuals), function(y) -->
+<!--   stat_function(fun = dexp, args = list(rate = 1/logfitdraw$m_3[y]), color = mycols[y], alpha = 0.8)) -->
+
+<!-- logfitdraw %>% -->
+<!--   ggplot() + -->
+<!--   expcurves_m1 + -->
+<!--   expcurves_m2 + -->
+<!--   expcurves_m3 + -->
+<!--   xlim(-1, 125) + -->
+<!--   labs(title = "Movement distance Exponential Draws", x = 'Movement Distance', y = "Density") + -->
+<!--   theme_bw() -> expdraws -->
+<!-- expdraws -->
+
+<!-- ``` -->
+
+<!-- ```{r} -->
+
+<!-- cowplot::plot_grid(plot.logfitdraw, expdraws) -->
+
+
+<!-- # ggsave2(filename = "Ch1_movement_rates/Figures/Sampling_indivs_lnorm.png") -->
+<!-- ``` -->
 
 
 ```{r}
@@ -462,29 +464,32 @@ cowplot::plot_grid(plot.logfitdraw, expdraws)
 load("Ch1_movement_rates/sims_backup/datagen_cp.RData")
 load("Ch1_movement_rates/sims_backup/datagen_pp.RData")
 load("Ch1_movement_rates/sims_backup/datagen_np.RData")
-load("Ch1_movement_rates/sims_backup/datagen_ppi.RData")
+#load("Ch1_movement_rates/sims_backup/datagen_ppi.RData")
 
 load("Ch1_movement_rates/sims_backup/weib_cp.RData")
 load("Ch1_movement_rates/sims_backup/weib_pp.RData")
 load("Ch1_movement_rates/sims_backup/weib_np.RData")
-load("Ch1_movement_rates/sims_backup/weib_ppi.RData")
+#load("Ch1_movement_rates/sims_backup/weib_ppi.RData")
 
 # Dispersion and Dispersal --------------------------------------------------------------------
 
 cp.summ.df %>%
-  dplyr::select(av.disp, dsprsn, popu) %>%
-  mutate(model = "cp") %>%
+  dplyr::select(av.disp, dsprsn, model) %>% 
   bind_rows(., pp.summ.df %>%
-              dplyr::select(av.disp, dsprsn, model) %>% 
-              mutate(model = "pp")) %>%
+              dplyr::select(av.disp, dsprsn, model)) %>%
   bind_rows(., np.summ.df %>%
-              dplyr::select(av.disp, dsprsn, popu) %>%
-              mutate(model = paste0("np_", popu))) %>% 
-  bind_rows(., ppi.summ.df %>% 
-              dplyr::select(av.disp, dsprsn, model) %>% 
-              mutate(model = "ppi")) %>% 
-  mutate(model = factor(model, levels = c("cp", "pp", "ppi","np_1", "np_2", "np_3"))) -> disp_df
+              dplyr::select(av.disp, dsprsn,  model) %>%
+              mutate(model = "np")) %>% 
+  # bind_rows(., ppi.summ.df %>% 
+  #             dplyr::select(av.disp, dsprsn, model) %>% 
+  #             mutate(model = "ppi")) %>% 
+  mutate(model = factor(model, levels = c("cp", "pp",
+                                          #"ppi",
+                                          #"np_1", "np_2", "np_3",
+                                          "np"))) -> disp_df
+```
 
+```{r}
 disp_df %>%
   group_by(., model) %>%
   sample_n(., 100) %>%
@@ -516,25 +521,26 @@ plot_grid(p_dispersal, p_dispersion)
 # Weibull fit ------------------------------------------------------------
 
 weib.boot.cp %>%
-  mutate(model = "cp") %>%
   dplyr::select(., est.shape, est.scale, boot, model) %>%
   bind_rows(., weib.boot.pp %>%
               dplyr::select(., est.shape, est.scale, boot, model)) %>%
-  bind_rows(., weib.boot.ppi %>%
-              # mutate(model = paste0(model, "_", popu)) %>% 
-              dplyr::select(., est.shape, est.scale, boot, model)) %>%
+  # bind_rows(., weib.boot.ppi %>%
+  #             # mutate(model = paste0(model, "_", popu)) %>% 
+  #             dplyr::select(., est.shape, est.scale, boot, model)) %>%
   bind_rows(., weib.boot.np %>%
-              mutate(model = paste0("np_", popu)) %>%
+              mutate(model = "np") %>%
               dplyr::select(., est.shape, est.scale, boot, model)) -> joint_weib
 
 joint_weib %>% 
-  mutate(model = factor(model, levels = c("cp", "pp", "ppi", "np_1", "np_2", "np_3"))) -> joint_weib
+  mutate(model = factor(model, levels = c("cp", "pp",
+                                          # "ppi", "np_1", "np_2", "np_3"
+                                          "np"))) -> joint_weib
 ```
 
 ```{r}
 joint_weib %>%
   group_by(model) %>%
-  sample_n(., 200) %>%
+  sample_n(., 100) %>%
   ggplot(., aes(x = model, y = est.shape)) +
   geom_violin() +
   # scale_color_manual(values = c("black", mycols)) +
@@ -548,7 +554,7 @@ joint_weib %>%
 
 joint_weib %>%
   group_by(model) %>%
-  sample_n(., 200) %>%
+  sample_n(., 100) %>%
   ggplot(., aes(x = model, y = est.scale)) +
   geom_violin() +
   # scale_color_manual(values = c("black", mycols)) +
@@ -563,6 +569,13 @@ joint_weib %>%
 plot_grid(weib_shape, weib_scale)
 
 # ggsave2(filename = "Ch1_movement_rates/Figures/weib_plot.png")
+
+```
+# Table 2 - results  
+
+
+```{r}
+
 
 ```
 
