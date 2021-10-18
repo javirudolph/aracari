@@ -78,10 +78,14 @@ load("data/grt_data.rda")
 
 grt_fit <- fitdist(grt_data$grt, "gamma")
 
+grt_fit$estimate[1]
+grt_fit$estimate[2]
+
+
 # change the seeds function to our parameters
 
 sim_seeds <- function(nseeds = 20, m.prms = NULL,...){
-  grt <- round(rgamma(nseeds, shape = grt_fit$estimate[1], rate = grt_fit$estimate[2]))
+  grt <- round(rgamma(nseeds, shape = 2.05623, rate = 0.07210437))
   t.grt <- max(grt)
 
   df <- sim_movement(m.prms, t = t.grt, plot.it = FALSE, return.data.frame = TRUE)
