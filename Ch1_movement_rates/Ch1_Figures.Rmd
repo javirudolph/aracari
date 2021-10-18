@@ -489,23 +489,28 @@ cp.summ.df %>%
                                           "np"))) -> disp_df
 ```
 
+
+# Figure x - average dispersal and dispersion per run  
+
+Importance of the outliers here
+
 ```{r}
 disp_df %>%
   group_by(., model) %>%
-  sample_n(., 100) %>%
+  sample_n(., 1000) %>%
   ggplot(., aes(y = dsprsn, x = model)) +
   geom_boxplot() +
-  geom_point(color = "grey", alpha = 0.5) +
+  #geom_point(color = "grey", alpha = 0.5) +
   labs(title = "Dispersion", y = "Dispersion in meters", x = "Model") +
   theme_bw() +
   theme(legend.position = "none") -> p_dispersion
 
 disp_df %>%
   group_by(., model) %>%
-  sample_n(., 100) %>%
+  sample_n(., 1000) %>%
   ggplot(., aes(y = av.disp, x = model)) +
   geom_boxplot() +
-  geom_point(color = "grey", alpha = 0.5) +
+  #geom_point(color = "grey", alpha = 0.5) +
   labs(title = "Average dispersal", y = "Dispersal in meters", x = "Model") +
   theme_bw() +
   theme(legend.position = "none") -> p_dispersal
@@ -515,6 +520,10 @@ plot_grid(p_dispersal, p_dispersion)
 # ggsave2(filename = "Ch1_movement_rates/Figures/disp_plot.png")
 
 ```
+
+
+# Figure x - seed dispersal kernel parameters
+Here we are using the distance of each seed
 
 ```{r}
 
@@ -537,6 +546,8 @@ joint_weib %>%
                                           "np"))) -> joint_weib
 ```
 
+## Variation 1 - violin plot with 100 out of 1000 of the parameter fits
+
 ```{r}
 joint_weib %>%
   group_by(model) %>%
@@ -549,7 +560,9 @@ joint_weib %>%
   # stat_summary(fun.data=mean_sdl, mult=1,
   #              geom="pointrange", color="black") +
   geom_jitter(position = position_jitter(0.1)) +
+  geom_hline(aes(yintercept = 1), lty = "dashed") +
   labs(title = "Shape") +
+  #scale_y_continuous(limits = c(0, 2)) +
   theme_bw() -> weib_shape
 
 joint_weib %>%
@@ -571,8 +584,125 @@ plot_grid(weib_shape, weib_scale)
 # ggsave2(filename = "Ch1_movement_rates/Figures/weib_plot.png")
 
 ```
-# Table 2 - results  
 
+
+## Variation 2 - violin plot with all 1000 of the parameter fits
+
+```{r}
+joint_weib %>%
+  group_by(model) %>%
+  sample_n(., 1000) %>%
+  ggplot(., aes(x = model, y = est.shape)) +
+  geom_violin() +
+  # scale_color_manual(values = c("black", mycols)) +
+  # geom_boxplot(width = 0.01) +
+  # geom_point(color = "grey", alpha = 0.5) +
+  # stat_summary(fun.data=mean_sdl, mult=1,
+  #              geom="pointrange", color="black") +
+  geom_jitter(position = position_jitter(0.1)) +
+  geom_hline(aes(yintercept = 1), lty = "dashed") +
+  labs(title = "Shape") +
+  #scale_y_continuous(limits = c(0, 2)) +
+  theme_bw() -> weib_shape
+
+joint_weib %>%
+  group_by(model) %>%
+  sample_n(., 1000) %>%
+  ggplot(., aes(x = model, y = est.scale)) +
+  geom_violin() +
+  # scale_color_manual(values = c("black", mycols)) +
+  # geom_boxplot(width = 0.01) +
+  # geom_point(color = "grey", alpha = 0.5) +
+  # stat_summary(fun.data=mean_sdl, mult=1,
+  #              geom="pointrange", color="black") +
+  geom_jitter(position = position_jitter(0.1)) +
+  labs(title = "Scale") +
+  theme_bw() -> weib_scale
+
+plot_grid(weib_shape, weib_scale)
+
+# ggsave2(filename = "Ch1_movement_rates/Figures/weib_plot.png")
+
+```
+
+## Variation 3 - boxplot with all the fits, 1000
+
+```{r}
+joint_weib %>%
+  group_by(model) %>%
+  sample_n(., 1000) %>%
+  ggplot(., aes(x = model, y = est.shape)) +
+  geom_boxplot() +
+  # geom_violin() +
+  # scale_color_manual(values = c("black", mycols)) +
+  # geom_boxplot(width = 0.01) +
+  # geom_point(color = "grey", alpha = 0.5) +
+  # stat_summary(fun.data=mean_sdl, mult=1,
+  #              geom="pointrange", color="black") +
+  #geom_jitter(position = position_jitter(0.1)) +
+  geom_hline(aes(yintercept = 1), lty = "dashed") +
+  labs(title = "Shape") +
+  #scale_y_continuous(limits = c(0, 2)) +
+  theme_bw() -> weib_shape
+
+joint_weib %>%
+  group_by(model) %>%
+  sample_n(., 1000) %>%
+  ggplot(., aes(x = model, y = est.scale)) +
+  geom_boxplot() +
+  #geom_violin() +
+  # scale_color_manual(values = c("black", mycols)) +
+  # geom_boxplot(width = 0.01) +
+  # geom_point(color = "grey", alpha = 0.5) +
+  # stat_summary(fun.data=mean_sdl, mult=1,
+  #              geom="pointrange", color="black") +
+  #geom_jitter(position = position_jitter(0.1)) +
+  labs(title = "Scale") +
+  theme_bw() -> weib_scale
+
+plot_grid(weib_shape, weib_scale)
+
+# ggsave2(filename = "Ch1_movement_rates/Figures/weib_plot.png")
+
+```
+
+```{r eval=FALSE}
+
+smean.cl.normal(weib.boot.cp$est.shape) -> cp.shape
+smean.cl.normal(weib.boot.cp$est.scale) -> cp.scale
+
+smean.cl.normal(weib.boot.pp$est.shape) -> pp.shape
+smean.cl.normal(weib.boot.pp$est.scale) -> pp.scale
+
+smean.cl.normal(weib.boot.np$est.shape) -> np.shape
+smean.cl.normal(weib.boot.np$est.scale) -> np.scale
+
+
+cp.df %>% 
+  bind_rows(pp.df, np.df) %>% 
+  drop_na(., s.id) %>% 
+  group_by(model) %>% 
+  sample_n(5000) %>% 
+  ggplot(., aes(x = disp)) +
+  geom_histogram(aes(y = ..density..), fill = "lightgray") +
+  stat_function(fun = dweibull, args = list(shape = cp.shape[1], scale = cp.scale[1]), color = "blue") +
+  # stat_function(fun = dweibull, args = list(shape = cp.shape[2], scale = cp.scale[2]), color = "blue", lty = "dashed") +
+  # stat_function(fun = dweibull, args = list(shape = cp.shape[3], scale = cp.scale[3]), color = "blue", lty = "dashed") +
+  stat_function(fun = dweibull, args = list(shape = pp.shape[1], scale = pp.scale[1]), color = "black") +
+  # stat_function(fun = dweibull, args = list(shape = pp.shape[2], scale = pp.scale[2]), color = "black", lty = "dashed") +
+  # stat_function(fun = dweibull, args = list(shape = pp.shape[3], scale = pp.scale[3]), color = "black", lty = "dashed") +
+  stat_function(fun = dweibull, args = list(shape = np.shape[1], scale = np.scale[1]), color = "red") +
+  # stat_function(fun = dweibull, args = list(shape = np.shape[2], scale = np.scale[2]), color = "red", lty = "dashed") +
+  # stat_function(fun = dweibull, args = list(shape = np.shape[3], scale = np.scale[3]), color = "red", lty = "dashed") +
+  theme_bw() +
+  geom_vline(aes(xintercept = 500)) +
+  coord_cartesian(xlim = c(500, 1700), ylim = c(0, 0.0005))
+
+```
+
+
+# Table 2 - results  
+Data for each seed, not per run
 
 ```{r}
 # here::here()
@@ -581,4 +711,6 @@ disp_table <- read.csv("Ch1_movement_rates/Figures/table2.csv")
 knitr::kable(disp_table)
 
 ```
+
+
 

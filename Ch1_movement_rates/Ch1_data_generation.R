@@ -117,6 +117,7 @@ nseeds <- 5
 # We will simulate around 1000 simulation runs per individual
 
 
+# SIMULATED ONLY--------------
 ## CP Simulations -----------------------------------------------------------------------
 # Generate seed dispersal data under a complete pooling scenario
 
@@ -161,23 +162,26 @@ logfit_fam <- fitdist(pp_1, distr = 'lnorm')
 fam_moverate %>%
   arrange(., movrate) -> fam_moverate
 
+n.fams <- 10
+pp_rates <- sort(round(rlnorm(n.fams, meanlog = logfit_fam$estimate[1], sdlog = logfit_fam$estimate[2]),3))
+
 # PP Generate data
 
-kruns <- 5000
+kruns <- 3000
 nseeds <- 5
 
 pp.df <- NULL
 pp.summ.df <- NULL
 
-for(j in 1:7){
+for(j in 1:length(pp_rates)){
   for(k in 1:kruns){
-    a <- sim_seeds(m.prms = fam_moverate$movrate[j], nseeds = nseeds) %>%
-      mutate(fam_g = fam_moverate$fam_g[j],
+    a <- sim_seeds(m.prms = pp_rates[j], nseeds = nseeds) %>%
+      mutate(fam_g = paste0("simfam_", j),
              run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
              model = "pp")
 
     b <- summ_seeds(a) %>%
-      mutate(fam_g = fam_moverate$fam_g[j],
+      mutate(fam_g = paste0("simfam_", j),
              run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
              model = "pp")
 
@@ -233,7 +237,117 @@ for(m in 1:1){
 
 save(np.df, np.summ.df, file = "Ch1_movement_rates/sims_backup/datagen_np.RData")
 
-## PP w/indiv Simulations -----------------------------------------------
+# REAL DATA ---------------
+## CPr Simulations -----------------------------------------------------------------------
+# Generate seed dispersal data under a complete pooling scenario from the fit
+
+movrate_cpr <- logfit$estimate[1]
+
+kruns <- 30000
+nseeds <- 5
+
+cpr.df <- NULL
+cpr.summ.df <- NULL
+
+for(k in 1:kruns){
+  a <- sim_seeds(m.prms = movrate_cpr, nseeds = nseeds) %>%
+    mutate(run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
+           model = "cpr")
+
+  b <- summ_seeds(a) %>%
+    mutate(run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
+           model = "cpr")
+
+  cpr.df <- rbind.data.frame(cpr.df, a)
+  cpr.summ.df <- rbind.data.frame(cpr.summ.df, b)
+  #print("cp_run", k)
+}
+
+save(cpr.df, cpr.summ.df, file = "Ch1_movement_rates/sims_backup/datagen_cpr.RData")
+
+
+## PPr Simulations -----------------------------------------------------------------------
+
+
+ptpl %>%
+  dplyr::select(fam_g, Bird_ID) %>%
+  distinct(Bird_ID, .keep_all = TRUE) %>%
+  group_by(fam_g) %>%
+  summarise(n = n()) %>%
+  right_join(., fam_moverate) %>%
+  mutate(logpar = log(movrate),
+         fitted_sd = logfit$estimate[2]) -> fam_moverate
+
+pp_1 <- sort(round(fam_moverate$movrate,3))
+
+logfit_fam <- fitdist(pp_1, distr = 'lnorm')
+
+fam_moverate %>%
+  arrange(., movrate) -> fam_moverate
+
+# PP Generate data
+
+kruns <- 5000
+nseeds <- 5
+
+ppr.df <- NULL
+ppr.summ.df <- NULL
+
+for(j in 1:7){
+  for(k in 1:kruns){
+    a <- sim_seeds(m.prms = fam_moverate$movrate[j], nseeds = nseeds) %>%
+      mutate(fam_g = fam_moverate$fam_g[j],
+             run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
+             model = "ppr")
+
+    b <- summ_seeds(a) %>%
+      mutate(fam_g = fam_moverate$fam_g[j],
+             run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
+             model = "ppr")
+
+    ppr.df <- rbind.data.frame(ppr.df, a)
+    ppr.summ.df <- rbind.data.frame(ppr.summ.df, b)
+    #print("pp_run", k, "family_", j)
+  }
+}
+
+save(ppr.df, ppr.summ.df, file = "Ch1_movement_rates/sims_backup/datagen_ppr.RData")
+
+## NPr Simulations -----------------------------------------------
+# Use the real values of movement rates for each individual
+
+n.individuals <- 12
+
+# NP Generate data
+r.data <- data.frame(indiv_moverate$movrate)
+kruns <- 2000
+nseeds <- 5
+
+npr.df <- NULL
+npr.summ.df <- NULL
+
+for(j in 1:n.individuals){
+  for(k in 1:kruns){
+    a <- sim_seeds(m.prms = r.data[j,], nseeds = nseeds) %>%
+      mutate(indiv = as.factor(j),
+             run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
+             model = "npr")
+
+    b <- summ_seeds(a) %>%
+      mutate(indiv = as.factor(j),
+             run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
+             model = "npr")
+
+    npr.df <- rbind.data.frame(npr.df, a)
+    npr.summ.df <- rbind.data.frame(npr.summ.df, b)
+    #print("np_run", k, "individual_", j)
+  }
+}
+
+
+save(npr.df, npr.summ.df, file = "Ch1_movement_rates/sims_backup/datagen_npr.RData")
+
+# PPi Simulations -----------------------------------------------
 
 # Have a lognorm for each family group = using the mean from the family group, sd from population
 # Sample 6 adults (That's how many adult aracari are supposed to be in family groups)
