@@ -575,7 +575,10 @@ plot_grid(weib_shape, weib_scale)
 
 
 ```{r}
+# here::here()
+disp_table <- read.csv("Ch1_movement_rates/Figures/table2.csv")
 
+knitr::kable(disp_table)
 
 ```
 
