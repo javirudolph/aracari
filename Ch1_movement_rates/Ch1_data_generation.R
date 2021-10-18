@@ -133,7 +133,7 @@ for(k in 1:kruns){
 
   cp.df <- rbind.data.frame(cp.df, a)
   cp.summ.df <- rbind.data.frame(cp.summ.df, b)
-  print("cp_run", k)
+  #print("cp_run", k)
 }
 
 save(cp.df, cp.summ.df, file = "Ch1_movement_rates/sims_backup/datagen_cp.RData")
@@ -179,7 +179,7 @@ for(j in 1:7){
 
     pp.df <- rbind.data.frame(pp.df, a)
     pp.summ.df <- rbind.data.frame(pp.summ.df, b)
-    print("pp_run", k, "family_", j)
+    #print("pp_run", k, "family_", j)
   }
 }
 
@@ -219,7 +219,7 @@ for(m in 1:1){
 
       np.df <- rbind.data.frame(np.df, a)
       np.summ.df <- rbind.data.frame(np.summ.df, b)
-      print("np_run", k, "individual_", j)
+      #print("np_run", k, "individual_", j)
     }
   }
 }
