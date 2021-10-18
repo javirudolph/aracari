@@ -171,40 +171,54 @@ calc_ldd <- function(df, thresh = 500, ...){
   return(value)
 }
 
-calc_ldd(cp.df)
-calc_ldd(pp.df)
-calc_ldd(np.df)
+cp.seed <- cp.df %>%
+  drop_na(., s.id)
+
+pp.seed <- pp.df %>%
+  drop_na(., s.id)
+
+np.seed <- np.df %>%
+  drop_na(., s.id)
+
+
+
+calc_ldd(cp.seed)
+calc_ldd(pp.seed)
+calc_ldd(np.seed)
 
 
 disp_table <- data.frame(
   Model = c("CP", "PP", "NP"),
-  Mean.dispersal_sd = c(paste0(signif(mean(cp.df$disp), 4),
-                               " (", signif(sd(cp.df$disp), 2), ")"),
-                        paste0(signif(mean(pp.df$disp), 4),
-                               " (", signif(sd(pp.df$disp), 2), ")"),
-                        paste0(signif(mean(np.df$disp), 4),
-                               " (", signif(sd(np.df$disp), 2), ")")),
+  Mean.dispersal_sd = c(paste0(signif(mean(cp.seed$disp), 4),
+                               " (", signif(sd(cp.seed$disp), 2), ")"),
+                        paste0(signif(mean(pp.seed$disp), 4),
+                               " (", signif(sd(pp.seed$disp), 2), ")"),
+                        paste0(signif(mean(np.seed$disp), 4),
+                               " (", signif(sd(np.seed$disp), 2), ")")),
   # Seed.dispersion_sd = c(paste0(signif(mean(null_dispersion$seed_dispersion), 4),
   #                               " (", signif(sd(null_dispersion$seed_dispersion), 2), ")"),
   #                        paste0(signif(mean(indiv_dispersion$seed_dispersion), 4),
   #                               " (", signif(sd(indiv_dispersion$seed_dispersion), 2), ")"),
   #                        paste0(signif(mean(fam_dispersion$seed_dispersion), 4),
   #                               " (", signif(sd(fam_dispersion$seed_dispersion), 2), ")")),
-  kurtosis = c(signif(kurtosis(cp.df$disp), 3),
-               signif(kurtosis(pp.df$disp), 3),
-               signif(kurtosis(np.df$disp), 3)),
-  Max_dispersal = c(signif(max(cp.df$disp), 4),
-                    signif(max(pp.df$disp), 4),
-                    signif(max(np.df$disp), 4)),
+  kurtosis = c(signif(kurtosis(cp.seed$disp), 3),
+               signif(kurtosis(pp.seed$disp), 3),
+               signif(kurtosis(np.seed$disp), 3)),
+  Max_dispersal = c(signif(max(cp.seed$disp), 4),
+                    signif(max(pp.seed$disp), 4),
+                    signif(max(np.seed$disp), 4)),
+  percentile_90 = c(signif(quantile(cp.seed$disp, probs = 0.9), 4),
+                    signif(quantile(pp.seed$disp, probs = 0.9), 4),
+                    signif(quantile(np.seed$disp, probs = 0.9), 4)),
   # Max_dispersal = c(paste0(signif(null_ldd$max_mean, 3), " (", signif(null_ldd$max_sd, 1), ")"),
   #                   paste0(signif(indiv_ldd$max_mean, 3), " (", signif(indiv_ldd$max_sd, 1), ")"),
   #                   paste0(signif(fam_ldd$max_mean, 3), " (", signif(fam_ldd$max_sd, 1), ")")),
-  LDD_500 = c(paste0(signif(calc_ldd(cp.df)*100, 4), "%"),
-          paste0(signif(calc_ldd(pp.df)*100, 4), "%"),
-          paste0(signif(calc_ldd(np.df)*100, 4), "%")),
-  LDD_150 = c(paste0(signif(calc_ldd(cp.df, thresh = 100)*100, 4), "%"),
-            paste0(signif(calc_ldd(pp.df, thresh = 100)*100, 4), "%"),
-            paste0(signif(calc_ldd(np.df, thresh = 100)*100, 4), "%")))
+  LDD_500 = c(paste0(signif(calc_ldd(cp.seed)*100, 4), "%"),
+          paste0(signif(calc_ldd(pp.seed)*100, 4), "%"),
+          paste0(signif(calc_ldd(np.seed)*100, 4), "%")),
+  LDD_150 = c(paste0(signif(calc_ldd(cp.seed, thresh = 100)*100, 4), "%"),
+            paste0(signif(calc_ldd(pp.seed, thresh = 100)*100, 4), "%"),
+            paste0(signif(calc_ldd(np.seed, thresh = 100)*100, 4), "%")))
 
 write.csv(disp_table, "Ch1_movement_rates/Figures/table2.csv")
 
