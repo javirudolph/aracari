@@ -133,7 +133,7 @@ for(k in 1:kruns){
 
   cp.df <- rbind.data.frame(cp.df, a)
   cp.summ.df <- rbind.data.frame(cp.summ.df, b)
-  print("cp_run", i)
+  print("cp_run", k)
 }
 
 save(cp.df, cp.summ.df, file = "Ch1_movement_rates/sims_backup/datagen_cp.RData")
@@ -179,7 +179,7 @@ for(j in 1:7){
 
     pp.df <- rbind.data.frame(pp.df, a)
     pp.summ.df <- rbind.data.frame(pp.summ.df, b)
-    print("pp_run", i, "family_" j)
+    print("pp_run", k, "family_", j)
   }
 }
 
@@ -219,7 +219,7 @@ for(m in 1:1){
 
       np.df <- rbind.data.frame(np.df, a)
       np.summ.df <- rbind.data.frame(np.summ.df, b)
-      print("np_run", i, "individual_", j)
+      print("np_run", k, "individual_", j)
     }
   }
 }
@@ -234,48 +234,48 @@ save(np.df, np.summ.df, file = "Ch1_movement_rates/sims_backup/datagen_np.RData"
 # Have a lognorm for each family group = using the mean from the family group, sd from population
 # Sample 6 adults (That's how many adult aracari are supposed to be in family groups)
 
-n.individuals <- 6
-
-f.data <- data.frame(indiv = 1:n.individuals)
-
-for(i in 1:7){
-  samp <- rlnorm(n.individuals, meanlog = fam_moverate$logpar[i], sdlog = logfit$estimate[2])
-  f.data <- cbind.data.frame(f.data, samp)
-  names(f.data)[i+1] <- paste(fam_moverate$fam_g[i])
-}
-
-f.data <- f.data[2:8]
-
-# NP Generate data
-kruns <- 1000
-nseeds <- 5
-
-ppi.df <- NULL
-ppi.summ.df <- NULL
-
-for(f in 1:7){
-  f.0 <- f.data[f]
-  for(j in 1:n.individuals){
-    for(k in 1:kruns){
-      a <- sim_seeds(m.prms = f.0[j,], nseeds = nseeds) %>%
-        mutate(indiv = as.factor(j),
-               run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
-               model = paste0("ppi_", f))
-
-      b <- summ_seeds(a) %>%
-        mutate(indiv = as.factor(j),
-               run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
-               model = paste0("ppi_", f))
-
-      ppi.df <- rbind.data.frame(ppi.df, a)
-      ppi.summ.df <- rbind.data.frame(ppi.summ.df, b)
-    }
-  }
-}
-
-
-save(ppi.df, ppi.summ.df, file = "Ch1_movement_rates/sims_backup/datagen_ppi.RData")
-
+# n.individuals <- 6
+#
+# f.data <- data.frame(indiv = 1:n.individuals)
+#
+# for(i in 1:7){
+#   samp <- rlnorm(n.individuals, meanlog = fam_moverate$logpar[i], sdlog = logfit$estimate[2])
+#   f.data <- cbind.data.frame(f.data, samp)
+#   names(f.data)[i+1] <- paste(fam_moverate$fam_g[i])
+# }
+#
+# f.data <- f.data[2:8]
+#
+# # NP Generate data
+# kruns <- 1000
+# nseeds <- 5
+#
+# ppi.df <- NULL
+# ppi.summ.df <- NULL
+#
+# for(f in 1:7){
+#   f.0 <- f.data[f]
+#   for(j in 1:n.individuals){
+#     for(k in 1:kruns){
+#       a <- sim_seeds(m.prms = f.0[j,], nseeds = nseeds) %>%
+#         mutate(indiv = as.factor(j),
+#                run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
+#                model = paste0("ppi_", f))
+#
+#       b <- summ_seeds(a) %>%
+#         mutate(indiv = as.factor(j),
+#                run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
+#                model = paste0("ppi_", f))
+#
+#       ppi.df <- rbind.data.frame(ppi.df, a)
+#       ppi.summ.df <- rbind.data.frame(ppi.summ.df, b)
+#     }
+#   }
+# }
+#
+#
+# save(ppi.df, ppi.summ.df, file = "Ch1_movement_rates/sims_backup/datagen_ppi.RData")
+#
 
 
 
