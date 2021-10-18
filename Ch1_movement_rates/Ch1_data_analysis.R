@@ -224,17 +224,23 @@ library(extRemes)
 
 nint <- 100
 r <- c(0, 700)
+nsamps <- 1000
 #*****************************************************************************************
 # CP MODEL
 
 # 1. Determine threshold
-cp_threshplot <- threshrange.plot(cp.df$disp, r = r, type = "GP", nint = nint)
+cp.df %>%
+  drop_na(., s.id) %>%
+  sample_n(., nsamps) -> cp.evd
+
+
+cp_threshplot <- threshrange.plot(cp.evd$disp, r = r, type = "GP", nint = nint)
 as.data.frame(cp_threshplot) %>%
   mutate(u.i = seq(r[1], r[2], length.out = nint)) -> cp_threshplot
 
 
-cp_mrl <- mrlplot(cp.df$disp, nint = nint)
-r_mrl <- range(cp.df$disp, finite=TRUE)
+cp_mrl <- mrlplot(cp.evd$disp, nint = nint)
+r_mrl <- range(cp.evd$disp, finite=TRUE)
 as.data.frame(cp_mrl) %>%
   mutate(u.i_mrl = seq(r_mrl[1], r_mrl[2], length.out = nint),
          slope = `Mean Excess` - lag(`Mean Excess`)) -> cp_mrl
@@ -242,12 +248,16 @@ as.data.frame(cp_mrl) %>%
 # PP MODEL
 # 1. Determine threshold
 
-pp_threshplot <- threshrange.plot(pp.df$disp, r = r, type = "GP", nint = nint)
+pp.df %>%
+  drop_na(., s.id) %>%
+  sample_n(., nsamps) -> pp.evd
+
+pp_threshplot <- threshrange.plot(pp.evd$disp, r = r, type = "GP", nint = nint)
 as.data.frame(pp_threshplot) %>%
   mutate(u.i = seq(r[1], r[2], length.out = nint)) -> pp_threshplot
 
-pp_mrl <- mrlplot(pp.df$disp, nint = nint)
-r_mrl <- range(pp.df$disp, finite=TRUE)
+pp_mrl <- mrlplot(pp.evd$disp, nint = nint)
+r_mrl <- range(pp.evd$disp, finite=TRUE)
 as.data.frame(pp_mrl) %>%
   mutate(u.i_mrl = seq(r_mrl[1], r_mrl[2], length.out = nint),
          slope = `Mean Excess` - lag(`Mean Excess`)) -> pp_mrl
@@ -257,13 +267,17 @@ as.data.frame(pp_mrl) %>%
 # NP MODEL
 # 1. Determine threshold
 
-np_threshplot <- threshrange.plot(np.df$disp, r = r, type = "GP", nint = nint)
+np.df %>%
+  drop_na(., s.id) %>%
+  sample_n(., nsamps) -> np.evd
+
+np_threshplot <- threshrange.plot(np.evd$disp, r = r, type = "GP", nint = nint)
 as.data.frame(np_threshplot) %>%
   mutate(u.i = seq(r[1], r[2], length.out = nint)) -> np_threshplot
 
 
-np_mrl <- mrlplot(np.df$disp, nint = nint)
-r_mrl <- range(np.df$disp, finite=TRUE)
+np_mrl <- mrlplot(np.evd$disp, nint = nint)
+r_mrl <- range(np.evd$disp, finite=TRUE)
 as.data.frame(np_mrl) %>%
   mutate(u.i_mrl = seq(r_mrl[1], r_mrl[2], length.out = nint),
          slope = `Mean Excess` - lag(`Mean Excess`)) -> np_mrl
