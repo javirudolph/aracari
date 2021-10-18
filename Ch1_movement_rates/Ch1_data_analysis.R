@@ -8,6 +8,7 @@ library(ggplot2)
 library(cowplot)
 library(fitdistrplus)
 library(Hmisc)
+library(moments)
 
 set.seed(98)
 
@@ -26,9 +27,9 @@ weib.boot.cp <- NULL
 
 for(j in 1:n.boots){
   s.df <- cp.df %>% drop_na(s.id) %>%
-    filter(disp != 0) %>%
     sample_n(., samp.size) %>%
-    mutate(disp = round(disp, digits = 2))
+    mutate(disp = round(disp, digits = 2))%>%
+    dplyr::filter(., disp > 0)
 
   g <- fitdist(s.df$disp, distr = "weibull", method = 'mle', lower = c(0,0))
 
@@ -47,14 +48,17 @@ n.boots <- 1000
 samp.size <- 100
 weib.boot.pp <- NULL
 
+pp.df %>% drop_na(s.id) %>%
+  dplyr::filter(disp == 0) -> pp.df.zeros
+
 for(j in 1:n.boots){
   s.df <- pp.df %>% drop_na(s.id) %>%
-    filter(disp != 0) %>%
     sample_n(., samp.size) %>%
-    mutate(disp = round(disp, digits = 2))
+    mutate(disp = round(disp, digits = 2)) %>%
+    dplyr::filter(., disp > 0)
 
   g <- fitdist(s.df$disp, distr = "weibull", method = 'mle', lower = c(0,0))
-
+  print(j)
 
   prms.weib <- data.frame(est.shape = as.numeric(g$estimate[1]),
                           est.scale = as.numeric(g$estimate[2]),
@@ -152,14 +156,14 @@ save(weib.boot.np, file = "Ch1_movement_rates/sims_backup/weib_np.RData")
 
 # Long distance dispersal percentage ------------------
 
-calc_ldd <- function(df, ...){
+calc_ldd <- function(df, thresh = 500, ...){
   t.seeds <- df %>%
     drop_na(., s.id) %>%
     count()
 
   n.ldd <- df %>%
     drop_na(., s.id) %>%
-    filter(., disp >= 500) %>%
+    filter(., disp >= thresh) %>%
     count()
 
   value <- n.ldd/t.seeds
@@ -174,38 +178,197 @@ calc_ldd(np.df)
 
 disp_table <- data.frame(
   Model = c("CP", "PP", "NP"),
-  Mean.dispersal_sd = c(paste0(signif(mean(null_dispersal$dispersal), 4),
-                               " (", signif(sd(null_dispersal$dispersal), 2), ")"),
-                        paste0(signif(mean(indiv_dispersal$dispersal), 4),
-                               " (", signif(sd(indiv_dispersal$dispersal), 2), ")"),
-                        paste0(signif(mean(fam_dispersal$dispersal), 4),
-                               " (", signif(sd(fam_dispersal$dispersal), 2), ")")),
-  Seed.dispersion_sd = c(paste0(signif(mean(null_dispersion$seed_dispersion), 4),
-                                " (", signif(sd(null_dispersion$seed_dispersion), 2), ")"),
-                         paste0(signif(mean(indiv_dispersion$seed_dispersion), 4),
-                                " (", signif(sd(indiv_dispersion$seed_dispersion), 2), ")"),
-                         paste0(signif(mean(fam_dispersion$seed_dispersion), 4),
-                                " (", signif(sd(fam_dispersion$seed_dispersion), 2), ")")),
-  kurtosis = c(signif(kurtosis(null_dispersal$dispersal), 3),
-               signif(kurtosis(indiv_dispersal$dispersal), 3),
-               signif(kurtosis(fam_dispersal$dispersal), 3)),
-  Max_dispersal = c(signif(max(null_ldd$global_max), 4),
-                    signif(max(indiv_ldd$global_max), 4),
-                    signif(max(fam_ldd$global_max), 4)),
+  Mean.dispersal_sd = c(paste0(signif(mean(cp.df$disp), 4),
+                               " (", signif(sd(cp.df$disp), 2), ")"),
+                        paste0(signif(mean(pp.df$disp), 4),
+                               " (", signif(sd(pp.df$disp), 2), ")"),
+                        paste0(signif(mean(np.df$disp), 4),
+                               " (", signif(sd(np.df$disp), 2), ")")),
+  # Seed.dispersion_sd = c(paste0(signif(mean(null_dispersion$seed_dispersion), 4),
+  #                               " (", signif(sd(null_dispersion$seed_dispersion), 2), ")"),
+  #                        paste0(signif(mean(indiv_dispersion$seed_dispersion), 4),
+  #                               " (", signif(sd(indiv_dispersion$seed_dispersion), 2), ")"),
+  #                        paste0(signif(mean(fam_dispersion$seed_dispersion), 4),
+  #                               " (", signif(sd(fam_dispersion$seed_dispersion), 2), ")")),
+  kurtosis = c(signif(kurtosis(cp.df$disp), 3),
+               signif(kurtosis(pp.df$disp), 3),
+               signif(kurtosis(np.df$disp), 3)),
+  Max_dispersal = c(signif(max(cp.df$disp), 4),
+                    signif(max(pp.df$disp), 4),
+                    signif(max(np.df$disp), 4)),
   # Max_dispersal = c(paste0(signif(null_ldd$max_mean, 3), " (", signif(null_ldd$max_sd, 1), ")"),
   #                   paste0(signif(indiv_ldd$max_mean, 3), " (", signif(indiv_ldd$max_sd, 1), ")"),
   #                   paste0(signif(fam_ldd$max_mean, 3), " (", signif(fam_ldd$max_sd, 1), ")")),
-  LDD = c(paste0(signif(null_ldd$prcnt_ldd, 3), " (", signif(null_ldd$sd_ldd*100, 2), ")", "%"),
-          paste0(signif(indiv_ldd$prcnt_ldd, 3), " (", signif(indiv_ldd$sd_ldd*100, 2), ")", "%"),
-          paste0(signif(fam_ldd$prcnt_ldd, 3), " (", signif(fam_ldd$sd_ldd*100, 2), ")", "%")))
+  LDD_500 = c(paste0(signif(calc_ldd(cp.df)*100, 4), "%"),
+          paste0(signif(calc_ldd(pp.df)*100, 4), "%"),
+          paste0(signif(calc_ldd(np.df)*100, 4), "%")),
+  LDD_150 = c(paste0(signif(calc_ldd(cp.df, thresh = 100)*100, 4), "%"),
+            paste0(signif(calc_ldd(pp.df, thresh = 100)*100, 4), "%"),
+            paste0(signif(calc_ldd(np.df, thresh = 100)*100, 4), "%")))
 
-weibull_table <- data.frame(
-  Weibull_Shape = c(paste0(signif(null_weibull$estimate[1], 4), " (", signif(null_weibull$sd[1], 2), ")"),
-                    paste0(signif(indiv_weibull$estimate[1], 4), " (", signif(indiv_weibull$sd[1], 2), ")"),
-                    paste0(signif(fam_weibull$estimate[1], 4), " (", signif(fam_weibull$sd[1], 2), ")")),
-  Weibull_Scale = c(paste0(signif(null_weibull$estimate[2], 4), " (", signif(null_weibull$sd[2], 2), ")"),
-                    paste0(signif(indiv_weibull$estimate[2], 4), " (", signif(indiv_weibull$sd[2], 2), ")"),
-                    paste0(signif(fam_weibull$estimate[2], 4), " (", signif(fam_weibull$sd[2], 2), ")"))
-)
+write.csv(disp_table, "Ch1_movement_rates/Figures/table2.csv")
+
+# weibull_table <- data.frame(
+#   Weibull_Shape = c(paste0(signif(null_weibull$estimate[1], 4), " (", signif(null_weibull$sd[1], 2), ")"),
+#                     paste0(signif(indiv_weibull$estimate[1], 4), " (", signif(indiv_weibull$sd[1], 2), ")"),
+#                     paste0(signif(fam_weibull$estimate[1], 4), " (", signif(fam_weibull$sd[1], 2), ")")),
+#   Weibull_Scale = c(paste0(signif(null_weibull$estimate[2], 4), " (", signif(null_weibull$sd[2], 2), ")"),
+#                     paste0(signif(indiv_weibull$estimate[2], 4), " (", signif(indiv_weibull$sd[2], 2), ")"),
+#                     paste0(signif(fam_weibull$estimate[2], 4), " (", signif(fam_weibull$sd[2], 2), ")"))
+# )
 
 
+# EVD -------------------------------------------------------------
+
+library(extRemes)
+
+nint <- 100
+r <- c(0, 700)
+#*****************************************************************************************
+# CP MODEL
+
+# 1. Determine threshold
+cp_threshplot <- threshrange.plot(cp.df$disp, r = r, type = "GP", nint = nint)
+as.data.frame(cp_threshplot) %>%
+  mutate(u.i = seq(r[1], r[2], length.out = nint)) -> cp_threshplot
+
+
+cp_mrl <- mrlplot(cp.df$disp, nint = nint)
+r_mrl <- range(cp.df$disp, finite=TRUE)
+as.data.frame(cp_mrl) %>%
+  mutate(u.i_mrl = seq(r_mrl[1], r_mrl[2], length.out = nint),
+         slope = `Mean Excess` - lag(`Mean Excess`)) -> cp_mrl
+
+# PP MODEL
+# 1. Determine threshold
+
+pp_threshplot <- threshrange.plot(pp.df$disp, r = r, type = "GP", nint = nint)
+as.data.frame(pp_threshplot) %>%
+  mutate(u.i = seq(r[1], r[2], length.out = nint)) -> pp_threshplot
+
+pp_mrl <- mrlplot(pp.df$disp, nint = nint)
+r_mrl <- range(pp.df$disp, finite=TRUE)
+as.data.frame(pp_mrl) %>%
+  mutate(u.i_mrl = seq(r_mrl[1], r_mrl[2], length.out = nint),
+         slope = `Mean Excess` - lag(`Mean Excess`)) -> pp_mrl
+
+
+
+# NP MODEL
+# 1. Determine threshold
+
+np_threshplot <- threshrange.plot(np.df$disp, r = r, type = "GP", nint = nint)
+as.data.frame(np_threshplot) %>%
+  mutate(u.i = seq(r[1], r[2], length.out = nint)) -> np_threshplot
+
+
+np_mrl <- mrlplot(np.df$disp, nint = nint)
+r_mrl <- range(np.df$disp, finite=TRUE)
+as.data.frame(np_mrl) %>%
+  mutate(u.i_mrl = seq(r_mrl[1], r_mrl[2], length.out = nint),
+         slope = `Mean Excess` - lag(`Mean Excess`)) -> np_mrl
+
+
+
+# Plots
+
+threshplot_fx <- function(thresh_data, th, title = NULL){
+
+  thresh_data %>%
+    ggplot(., aes(y = t.scale, x = u.i)) +
+    geom_point(shape = 1, size = 2) +
+    # geom_line(linetype = "dashed") +
+    geom_linerange(aes(x = u.i, ymin = low.t.scale, ymax = up.t.scale)) +
+    labs(title = title, x = "Threshold", y = "Scale") +
+    theme_bw() +
+    geom_vline(xintercept = th, color = "red", linetype = "dashed") +
+    scale_x_continuous(limits = c(0, 700), n.breaks = 7 ) +
+    # scale_x_continuous(name = NULL, labels = NULL, breaks = NULL) +
+    # theme(axis.title.x = element_blank(),
+    #       axis.ticks.x = element_blank(),
+    #       axis.text.x = element_blank()) +
+    # coord_cartesian(xlim = c(200, 550)) +
+    NULL -> thresh_scale
+
+  thresh_data %>%
+    ggplot(., aes(y = shape, x = u.i)) +
+    geom_point(shape = 1, size = 2) +
+    geom_linerange(aes(x = u.i, ymin = low.shape, ymax = up.shape)) +
+    labs(x = "Threshold", y = "Shape") +
+    theme_bw() +
+    geom_vline(xintercept = th, color = "red", linetype = "dashed") +
+    scale_x_continuous(limits = c(0, 700), n.breaks = 7 ) +
+    # coord_cartesian(xlim = c(200, 550)) +
+    NULL -> thresh_shape
+
+  plot_grid(thresh_scale, thresh_shape, nrow = 2)
+
+}
+
+mrl_plot <- function(mrl_data, title = NULL){
+
+  mrl_data %>%
+    ggplot(., aes(x = u.i_mrl, y = `Mean Excess`)) +
+    geom_line() +
+    geom_line(aes(y = `95% lower`), linetype = "dashed", color = "black") +
+    geom_line(aes(y = `95% upper`), linetype = "dashed", color = "black") +
+    labs(title = title, x = "Threshold values") +
+    scale_x_continuous(n.breaks = ceiling(round(max(mrl_data$u.i_mrl))/100)) +
+    theme_bw()
+}
+
+aligned_plots <- function(mrl_data, thresh_data, threshold, title = NULL){
+  title <- ggdraw() +
+    draw_label(
+      title,
+      fontface = 'bold',
+      x = 0,
+      hjust = 0
+    ) +
+    theme(
+      # add margin on the left of the drawing canvas,
+      # so title is aligned with left edge of first plot
+      plot.margin = margin(0, 0, 0, 7)
+    )
+
+
+  plot_grid(mrl_plot(mrl_data) +
+              #coord_equal() +
+              geom_vline(xintercept = threshold, color = "red", linetype = "dashed"),
+            threshplot_fx(thresh_data, threshold),
+            nrow = 2,
+            rel_heights = c(2,3),
+            labels = "auto") -> actual_plots
+
+  plot_grid(title,
+            actual_plots,
+            ncol = 1,
+            rel_heights = c(0.1,1))
+}
+
+# CP
+cp_thresh <- round(cp_mrl$u.i_mrl[15])
+mrl_plot(cp_mrl, title = "CP mean excess plot") +
+  coord_equal() +
+  geom_vline(xintercept = null_thresh, color = "red", linetype = "dashed")
+threshplot_fx(cp_threshplot, cp_thresh, title = "CP threshold plots")
+
+# PP
+pp_thresh <- round(pp_mrl$u.i_mrl[15])
+mrl_plot(pp_mrl) +
+  coord_equal()+
+  geom_vline(xintercept = pp_thresh, color = "red", linetype = "dotted")
+threshplot_fx(pp_threshplot, pp_thresh, title = "PP threshold plots")
+
+
+# NP
+np_thresh <- round(np_mrl$u.i_mrl[15])
+mrl_plot(np_mrl) +
+  coord_equal()+
+  geom_vline(xintercept = np_thresh, color = "red", linetype = "dotted")
+threshplot_fx(np_threshplot, np_thresh, title = "NP threshold plots")
+
+
+aligned_plots(cp_mrl, cp_threshplot, cp_thresh, title = "CP model")
+aligned_plots(pp_mrl, pp_threshplot, pp_thresh, title = "PP model")
+aligned_plots(np_mrl, np_threshplot, np_thresh, title = "NP model")
