@@ -28,18 +28,18 @@ sim_movement <- function(prm, t = 1000, plot.it = TRUE, return.data.frame = FALS
   }
 }
 
-sim_seeds <- function(nseeds = 20, m.prms = NULL,...){
-  grt <- round(rgamma(nseeds, shape = 4, scale = 5))
-  t.grt <- max(grt)
-
-  df <- sim_movement(m.prms, t = t.grt, plot.it = FALSE, return.data.frame = TRUE)
-
-  df %>%
-    left_join(., data.frame(s.id = 1:nseeds, time = grt), by = "time") %>%
-    mutate(disp = sqrt(xloc^2+yloc^2)) -> df
-
-  return(df)
-}
+# sim_seeds <- function(nseeds = 20, m.prms = NULL,...){
+#   grt <- round(rgamma(nseeds, shape = 4, scale = 5) + 7)
+#   t.grt <- max(grt)
+#
+#   df <- sim_movement(m.prms, t = t.grt, plot.it = FALSE, return.data.frame = TRUE)
+#
+#   df %>%
+#     left_join(., data.frame(s.id = 1:nseeds, time = grt), by = "time") %>%
+#     mutate(disp = sqrt(xloc^2+yloc^2)) -> df
+#
+#   return(df)
+# }
 
 summ_seeds <- function(df = NULL){
   df %>%
@@ -72,35 +72,58 @@ fam_moverate <- ptpl %>%
 
 ids <- ptpl %>% distinct(., Bird_ID, fam_g)
 
+# Gut retention time
+load("data/grt_data.rda")
+
+
+grt_fit <- fitdist(grt_data$grt, "gamma")
+
+# change the seeds function to our parameters
+
+sim_seeds <- function(nseeds = 20, m.prms = NULL,...){
+  grt <- round(rgamma(nseeds, shape = grt_fit$estimate[1], rate = grt_fit$estimate[2]))
+  t.grt <- max(grt)
+
+  df <- sim_movement(m.prms, t = t.grt, plot.it = FALSE, return.data.frame = TRUE)
+
+  df %>%
+    left_join(., data.frame(s.id = 1:nseeds, time = grt), by = "time") %>%
+    mutate(disp = sqrt(xloc^2+yloc^2)) -> df
+
+  return(df)
+}
+
 # Color palette ----------------------------------------
 my.cols1 <- c("#23262f","#717492","#b3a82a","#c94f21","#980012","#0d907a","#b9bec3")
 
 
 logfit <- fitdist(indiv_moverate$movrate, distr = 'lnorm')
 
-movrate_cp <- mean(indiv_moverate$movrate)
-movrate_cp_ln <- as.numeric(exp(logfit$estimate[1]))
-# Which estimate to use?
-# So, we are saying here that complete pooling takes the average of all the data as one. We took all the data, then fitted a lognormal distribution. So, the parameter we use, is the average movement rate that the lognormal gives us. Since we are assuming that the lognormal distribution will describe this population's movement rates across individuals. So, we use the expected value (mean) of the fit to describe the average movement rate of the population.
-
-movrate_cp_ln
+movrate_cp <- mean(ptpl$mpm)
+# For complete pooling we use the average distance moved per movement bout across all individuals over the tracking sessions.
 
 # How many seeds to use? Landon used 100 because he was taking averages.
-# I guess we are focusing on a very short time frame: what does the bird do after it eats those seeds at one tree, and how does it move until it drops them all? So, only use 5 seeds.
+# I guess we are focusing on a very short time frame: what does the bird do after it eats those seeds at one tree, and how does it move until it drops them all? So, only use 5 seeds, based on the empirical data.
 
 nseeds <- 5
+
+# The reasoning for the number of simulation runs goes as follows:
+# Ideally, we would see 30 individuals sampled if you go to the field.
+# On average we see 6 individuals per social group
+# We will simulate around 1000 simulation runs per individual
+
 
 ## CP Simulations -----------------------------------------------------------------------
 # Generate seed dispersal data under a complete pooling scenario
 
-kruns <- 10000
+kruns <- 30000
 nseeds <- 5
 
 cp.df <- NULL
 cp.summ.df <- NULL
 
 for(k in 1:kruns){
-  a <- sim_seeds(m.prms = movrate_cp_ln, nseeds = nseeds) %>%
+  a <- sim_seeds(m.prms = movrate_cp, nseeds = nseeds) %>%
     mutate(run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
            model = "cp")
 
@@ -110,6 +133,7 @@ for(k in 1:kruns){
 
   cp.df <- rbind.data.frame(cp.df, a)
   cp.summ.df <- rbind.data.frame(cp.summ.df, b)
+  print("cp_run", i)
 }
 
 save(cp.df, cp.summ.df, file = "Ch1_movement_rates/sims_backup/datagen_cp.RData")
@@ -135,7 +159,7 @@ fam_moverate %>%
 
 # PP Generate data
 
-kruns <- 1500
+kruns <- 5000
 nseeds <- 5
 
 pp.df <- NULL
@@ -155,6 +179,7 @@ for(j in 1:7){
 
     pp.df <- rbind.data.frame(pp.df, a)
     pp.summ.df <- rbind.data.frame(pp.summ.df, b)
+    print("pp_run", i, "family_" j)
   }
 }
 
@@ -164,20 +189,21 @@ save(pp.df, pp.summ.df, file = "Ch1_movement_rates/sims_backup/datagen_pp.RData"
 
 logfit <- fitdist(indiv_moverate$movrate, distr = 'lnorm')
 
-n.individuals <- 20
+n.individuals <- 30
 m_1 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),3))
 m_2 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),3))
 m_3 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),3))
 
 # NP Generate data
-m.data <- data.frame(m_1, m_2, m_3)
-kruns <- 1000
+# m.data <- data.frame(m_1, m_2, m_3)
+m.data <- data.frame(m_1)
+kruns <- 2000
 nseeds <- 5
 
 np.df <- NULL
 np.summ.df <- NULL
 
-for(m in 1:3){
+for(m in 1:1){
   m.0 <- m.data[m]
   for(j in 1:n.individuals){
     for(k in 1:kruns){
@@ -193,6 +219,7 @@ for(m in 1:3){
 
       np.df <- rbind.data.frame(np.df, a)
       np.summ.df <- rbind.data.frame(np.summ.df, b)
+      print("np_run", i, "individual_", j)
     }
   }
 }
