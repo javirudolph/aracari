@@ -172,4 +172,40 @@ calc_ldd(pp.df)
 calc_ldd(np.df)
 
 
+disp_table <- data.frame(
+  Model = c("CP", "PP", "NP"),
+  Mean.dispersal_sd = c(paste0(signif(mean(null_dispersal$dispersal), 4),
+                               " (", signif(sd(null_dispersal$dispersal), 2), ")"),
+                        paste0(signif(mean(indiv_dispersal$dispersal), 4),
+                               " (", signif(sd(indiv_dispersal$dispersal), 2), ")"),
+                        paste0(signif(mean(fam_dispersal$dispersal), 4),
+                               " (", signif(sd(fam_dispersal$dispersal), 2), ")")),
+  Seed.dispersion_sd = c(paste0(signif(mean(null_dispersion$seed_dispersion), 4),
+                                " (", signif(sd(null_dispersion$seed_dispersion), 2), ")"),
+                         paste0(signif(mean(indiv_dispersion$seed_dispersion), 4),
+                                " (", signif(sd(indiv_dispersion$seed_dispersion), 2), ")"),
+                         paste0(signif(mean(fam_dispersion$seed_dispersion), 4),
+                                " (", signif(sd(fam_dispersion$seed_dispersion), 2), ")")),
+  kurtosis = c(signif(kurtosis(null_dispersal$dispersal), 3),
+               signif(kurtosis(indiv_dispersal$dispersal), 3),
+               signif(kurtosis(fam_dispersal$dispersal), 3)),
+  Max_dispersal = c(signif(max(null_ldd$global_max), 4),
+                    signif(max(indiv_ldd$global_max), 4),
+                    signif(max(fam_ldd$global_max), 4)),
+  # Max_dispersal = c(paste0(signif(null_ldd$max_mean, 3), " (", signif(null_ldd$max_sd, 1), ")"),
+  #                   paste0(signif(indiv_ldd$max_mean, 3), " (", signif(indiv_ldd$max_sd, 1), ")"),
+  #                   paste0(signif(fam_ldd$max_mean, 3), " (", signif(fam_ldd$max_sd, 1), ")")),
+  LDD = c(paste0(signif(null_ldd$prcnt_ldd, 3), " (", signif(null_ldd$sd_ldd*100, 2), ")", "%"),
+          paste0(signif(indiv_ldd$prcnt_ldd, 3), " (", signif(indiv_ldd$sd_ldd*100, 2), ")", "%"),
+          paste0(signif(fam_ldd$prcnt_ldd, 3), " (", signif(fam_ldd$sd_ldd*100, 2), ")", "%")))
+
+weibull_table <- data.frame(
+  Weibull_Shape = c(paste0(signif(null_weibull$estimate[1], 4), " (", signif(null_weibull$sd[1], 2), ")"),
+                    paste0(signif(indiv_weibull$estimate[1], 4), " (", signif(indiv_weibull$sd[1], 2), ")"),
+                    paste0(signif(fam_weibull$estimate[1], 4), " (", signif(fam_weibull$sd[1], 2), ")")),
+  Weibull_Scale = c(paste0(signif(null_weibull$estimate[2], 4), " (", signif(null_weibull$sd[2], 2), ")"),
+                    paste0(signif(indiv_weibull$estimate[2], 4), " (", signif(indiv_weibull$sd[2], 2), ")"),
+                    paste0(signif(fam_weibull$estimate[2], 4), " (", signif(fam_weibull$sd[2], 2), ")"))
+)
+
 
