@@ -18,6 +18,11 @@ load("Ch1_movement_rates/sims_backup/datagen_pp.RData")
 #load("Ch1_movement_rates/sims_backup/datagen_ppi.RData")
 load("Ch1_movement_rates/sims_backup/datagen_np.RData")
 
+load("Ch1_movement_rates/sims_backup/datagen_cpr.RData")
+load("Ch1_movement_rates/sims_backup/datagen_ppr.RData")
+#load("Ch1_movement_rates/sims_backup/datagen_ppi.RData")
+load("Ch1_movement_rates/sims_backup/datagen_npr.RData")
+
 # Weibull Seed Dispersal Kernels --------------------------------------------------------
 ## CP Kernel ------------------------------------------------------------
 # sample with replacement groups of 100 seeds and fit weibull
