@@ -103,7 +103,7 @@ my.cols1 <- c("#23262f","#717492","#b3a82a","#c94f21","#980012","#0d907a","#b9be
 
 logfit <- fitdist(indiv_moverate$movrate, distr = 'lnorm')
 
-movrate_cp <- mean(ptpl$mpm)
+movrate_cp <- as.numeric(exp(logfit$estimate[1]))
 # For complete pooling we use the average distance moved per movement bout across all individuals over the tracking sessions.
 
 # How many seeds to use? Landon used 100 because he was taking averages.
@@ -241,7 +241,7 @@ save(np.df, np.summ.df, file = "Ch1_movement_rates/sims_backup/datagen_np.RData"
 ## CPr Simulations -----------------------------------------------------------------------
 # Generate seed dispersal data under a complete pooling scenario from the fit
 
-movrate_cpr <- logfit$estimate[1]
+movrate_cpr <- mean(ptpl$mpm)
 
 kruns <- 30000
 nseeds <- 5
