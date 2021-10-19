@@ -1,3 +1,12 @@
+# DATA GENERATION
+# This script is in charge of simulating all the data for seed dispersal
+# We start by importing the real location data from aracaris (Holbrook 2011) and calculate movement rates.
+# Dependin gon the pooling scenario considered, we simulate a different number of movement rates
+
+# the functions for the simulation are currently on this script, but that may change in the future is this project ends up as a package.
+
+
+
 # Script to run simulations using parameters from aracari movement rates
 # LIBRARIES --------------------------------------------------------------------------------
 
@@ -11,6 +20,11 @@ library(Hmisc)
 set.seed(927)
 
 # Functions --------------------------------------------------------------------------
+
+# Fist we write the function to simulate animal movement only. Plot.it=TRUE will use base R to plot the simulated trajectory.
+# prm = parameter used for the movement rate
+# This functions simulates movement at every time step by assingning a random angle drawn from a uniform distribution, and a movement distance randomly sampled from an exponential distribution.
+
 sim_movement <- function(prm, t = 1000, plot.it = TRUE, return.data.frame = FALSE){
   tru.rate <- round(prm, 3)
   movedist <- rexp(t, rate = 1/tru.rate)
@@ -28,18 +42,25 @@ sim_movement <- function(prm, t = 1000, plot.it = TRUE, return.data.frame = FALS
   }
 }
 
-# sim_seeds <- function(nseeds = 20, m.prms = NULL,...){
-#   grt <- round(rgamma(nseeds, shape = 4, scale = 5) + 7)
-#   t.grt <- max(grt)
+# Simulate gut retention time for seeds
+# The default parameters are based on the gamma distribution suggested in Morales & Carlo 2006
 #
-#   df <- sim_movement(m.prms, t = t.grt, plot.it = FALSE, return.data.frame = TRUE)
-#
-#   df %>%
-#     left_join(., data.frame(s.id = 1:nseeds, time = grt), by = "time") %>%
-#     mutate(disp = sqrt(xloc^2+yloc^2)) -> df
-#
-#   return(df)
-# }
+sim_seeds <- function(nseeds = 20, m.prms = NULL,gamma.shape = 4, gamma.scale = 5, gamma.shift = 0,...){
+  grt <- round(rgamma(nseeds, shape = gamma.shape, scale = gamma.scale) + gamma.shift)
+  t.grt <- max(grt)
+
+  df <- sim_movement(m.prms, t = t.grt, plot.it = FALSE, return.data.frame = TRUE)
+
+  df %>%
+    left_join(., data.frame(s.id = 1:nseeds, time = grt), by = "time") %>%
+    mutate(disp = sqrt(xloc^2+yloc^2)) -> df
+
+  return(df)
+}
+
+
+# This function takes the simulated data and gives back the summary on seed dispersal
+# It includes the average seed location, dispersal per run, and dispersion per run
 
 summ_seeds <- function(df = NULL){
   df %>%
@@ -57,9 +78,9 @@ summ_seeds <- function(df = NULL){
 
 # LOAD the data ------------------------------------------------------------------------
 
-load("Ch1_movement_rates/ptpl.RData")
+# point location data
 
-null_moverate <- data.frame(Bird_ID = unique(ptpl$Bird_ID), movrate = mean(ptpl$mpm))
+load("Ch1_movement_rates/ptpl.RData")
 
 indiv_moverate <- ptpl %>%
   group_by(Bird_ID, fam_g) %>%
@@ -77,25 +98,8 @@ load("data/grt_data.rda")
 
 
 grt_fit <- fitdist(grt_data$grt, "gamma")
-
-grt_fit$estimate[1]
-grt_fit$estimate[2]
-
-
-# change the seeds function to our parameters
-
-sim_seeds <- function(nseeds = 20, m.prms = NULL,...){
-  grt <- round(rgamma(nseeds, shape = 2.05623, rate = 0.07210437))
-  t.grt <- max(grt)
-
-  df <- sim_movement(m.prms, t = t.grt, plot.it = FALSE, return.data.frame = TRUE)
-
-  df %>%
-    left_join(., data.frame(s.id = 1:nseeds, time = grt), by = "time") %>%
-    mutate(disp = sqrt(xloc^2+yloc^2)) -> df
-
-  return(df)
-}
+gamma.shape <- grt_fit$estimate[1]
+gamma.scale <- 1/grt_fit$estimate[2]
 
 # Color palette ----------------------------------------
 my.cols1 <- c("#23262f","#717492","#b3a82a","#c94f21","#980012","#0d907a","#b9bec3")
@@ -103,7 +107,9 @@ my.cols1 <- c("#23262f","#717492","#b3a82a","#c94f21","#980012","#0d907a","#b9be
 
 logfit <- fitdist(indiv_moverate$movrate, distr = 'lnorm')
 
-movrate_cp <- as.numeric(exp(logfit$estimate[1]))
+# Estimating the expected value from the fit
+
+movrate_cp <- as.numeric(exp(logfit$estimate[1] + logfit$estimate[2]^2/2))
 # For complete pooling we use the average distance moved per movement bout across all individuals over the tracking sessions.
 
 # How many seeds to use? Landon used 100 because he was taking averages.
