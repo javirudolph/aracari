@@ -209,12 +209,12 @@ for(j in 1:nrow(movrate_pp)){
   for(k in 1:kruns){
     a <- sim_seeds(m.prms = movrate_pp$movrate[j], nseeds = nseeds,
                    gamma.shape = gamma.shape, gamma.scale = gamma.scale) %>%
-      mutate(fam_g = paste0("simfam_", j),
+      mutate(id = movrate_pp$id[j],
              run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
              model = "pp")
 
     b <- summ_seeds(a) %>%
-      mutate(fam_g = paste0("simfam_", j),
+      mutate(id = movrate_pp$id[j],
              run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
              model = "pp")
 
