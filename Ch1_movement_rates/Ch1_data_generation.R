@@ -224,7 +224,7 @@ for(j in 1:nrow(movrate_pp)){
   }
 }
 
-save(pp.df, pp.summ.df, file = "Ch1_movement_rates/sims_backup/datagen_pp.RData")
+save(pp.df, pp.summ.df, file = build.filename("datagen_pp"))
 
 ## NP Simulations -----------------------------------------------
 
