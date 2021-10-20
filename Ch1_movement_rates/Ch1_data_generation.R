@@ -198,16 +198,17 @@ save(cp.df, cp.summ.df, file = build.filename("datagen_cp"))
 
 ## PP Simulations -----------------------------------------------------------------------
 
-
-kruns <- 3000
+# number of runs per individual (7 families, each with 6 individuals = 42 individuals)
+kruns <- round(total.kruns/42)
 nseeds <- 5
 
 pp.df <- NULL
 pp.summ.df <- NULL
 
-for(j in 1:length(pp_rates)){
+for(j in 1:nrow(movrate_pp)){
   for(k in 1:kruns){
-    a <- sim_seeds(m.prms = pp_rates[j], nseeds = nseeds) %>%
+    a <- sim_seeds(m.prms = movrate_pp$movrate[j], nseeds = nseeds,
+                   gamma.shape = gamma.shape, gamma.scale = gamma.scale) %>%
       mutate(fam_g = paste0("simfam_", j),
              run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
              model = "pp")
