@@ -166,9 +166,8 @@ build.filename <- function(rdata.name){
 nseeds <- 5
 
 # Total number of simulation runs we want per scenario (cp, pp, np)
-# Overall, I am aiming for over 200k simulation runs, so per scenario we will aim at 70,000
 
-total.kruns <- 70000
+total.kruns <- 50000
 
 
 # SIMULATED ONLY--------------
