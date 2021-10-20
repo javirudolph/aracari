@@ -108,11 +108,41 @@ gamma.scale <- 1/grtfit$estimate[2]
 
 logfit <- fitdist(indiv_moverate$movrate, distr = 'lnorm')
 logfit.mu <- logfit$estimate[1]
-logfit.sigma <- logfit$estimate[2]
+logfit.sigma <- as.numeric(logfit$estimate[2])
 
-#
+## Movement rates -----------------------------------------------------
+### Complete pooling movrate -------------------
+# For the complete pooling scenario we use the expected value of the lognormal distribution we fit to the data
 
-movrate_cp <- as.numeric(exp(logfit$estimate[1] + logfit$estimate[2]^2/2))
+movrate_cp <- as.numeric(exp(logfit$estimate[1] + (logfit$estimate[2]^2)/2))
+
+### Partial pooling movrate -----------------------------------------
+# For the partial pooling scenario, since we don't have enough data, we can't fit a lognormal to each family group and then draw movement rates from it. Instead, we use the average movement rate for each social group as the expected value of a lognormal, and use the variance from the complete pooling scenario.
+
+# Estimate the mu's for each family group based on their movement rate.
+
+get_mu <- function(movrate, sigma = logfit.sigma){
+  mu <- log(movrate)-((sigma^2)/2)
+  return(mu)
+}
+
+fam_mus <- get_mu(fam_moverate$movrate)
+
+# Now that each family has a specific mu, we sample individuals from each family
+# From field data, we know that social group size is around 6, so we will sample that
+
+movrate_pp <- NULL
+
+for(i in 1:length(fam_mus)){
+  i.movrate <- rlnorm(6, meanlog = fam_mus[i], sdlog = logfit.sigma)
+  mus.df <- data.frame(fam_g = rep(i, 6), id = paste0("f", i, "_", 1:6), movrate = i.movrate)
+  movrate_pp <- rbind.data.frame(movrate_pp, mus.df)
+}
+
+
+### No pooling movrate
+
+
 
 # For complete pooling we use the average distance moved per movement bout across all individuals over the tracking sessions.
 
