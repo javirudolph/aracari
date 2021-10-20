@@ -140,21 +140,21 @@ for(i in 1:length(fam_mus)){
 }
 
 
-### No pooling movrate
+### No pooling movrate --------------------------------------------
+
+n.individuals <- 30
+movrate_np <- rlnorm(n.individuals, meanlog = logfit.mu, sdlog = logfit.sigma)
 
 
+## Other Simulation parameters ---------------------------------
 
-# For complete pooling we use the average distance moved per movement bout across all individuals over the tracking sessions.
-
-# How many seeds to use? Landon used 100 because he was taking averages.
-# I guess we are focusing on a very short time frame: what does the bird do after it eats those seeds at one tree, and how does it move until it drops them all? So, only use 5 seeds, based on the empirical data.
-
+# number of seeds we give every individual
 nseeds <- 5
 
-# The reasoning for the number of simulation runs goes as follows:
-# Ideally, we would see 30 individuals sampled if you go to the field.
-# On average we see 6 individuals per social group
-# We will simulate around 1000 simulation runs per individual
+# Total number of simulation runs we want per scenario (cp, pp, np)
+# Overall, I am aiming for over 200k simulation runs, so per scenario we will aim at 70,000
+
+total.kruns <- 70000
 
 
 # SIMULATED ONLY--------------
