@@ -76,7 +76,7 @@ summ_seeds <- function(df = NULL){
 }
 
 
-# LOAD the data ------------------------------------------------------------------------
+# Load the data ------------------------------------------------------------------------
 
 # point location data
 
@@ -96,20 +96,24 @@ ids <- ptpl %>% distinct(., Bird_ID, fam_g)
 # Gut retention time
 load("data/grt_data.rda")
 
+# Estimate parameters --------------------------------------------------------------
 
-grt_fit <- fitdist(grt_data$grt, "gamma")
-gamma.shape <- grt_fit$estimate[1]
-gamma.scale <- 1/grt_fit$estimate[2]
+# Estimate gut retention time parameters
 
-# Color palette ----------------------------------------
-my.cols1 <- c("#23262f","#717492","#b3a82a","#c94f21","#980012","#0d907a","#b9bec3")
+grtfit <- fitdist(grt_data$grt, "gamma")
+gamma.shape <- grtfit$estimate[1]
+gamma.scale <- 1/grtfit$estimate[2]
 
+# Estimating parameters for movement rates
 
 logfit <- fitdist(indiv_moverate$movrate, distr = 'lnorm')
+logfit.mu <- logfit$estimate[1]
+logfit.sigma <- logfit$estimate[2]
 
-# Estimating the expected value from the fit
+#
 
 movrate_cp <- as.numeric(exp(logfit$estimate[1] + logfit$estimate[2]^2/2))
+
 # For complete pooling we use the average distance moved per movement bout across all individuals over the tracking sessions.
 
 # How many seeds to use? Landon used 100 because he was taking averages.
