@@ -194,7 +194,7 @@ for(k in 1:kruns){
   #print("cp_run", k)
 }
 
-save(cp.df, cp.summ.df, file = build.filename("datage_cp"))
+save(cp.df, cp.summ.df, file = build.filename("datagen_cp"))
 
 ## PP Simulations -----------------------------------------------------------------------
 
