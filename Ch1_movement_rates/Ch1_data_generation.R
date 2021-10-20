@@ -235,28 +235,6 @@ nseeds <- 5
 np.df <- NULL
 np.summ.df <- NULL
 
-for(m in 1:1){
-  m.0 <- m.data[m]
-  for(j in 1:n.individuals){
-    for(k in 1:kruns){
-      a <- sim_seeds(m.prms = m.0[j,], nseeds = nseeds) %>%
-        mutate(indiv = as.factor(j),
-               run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
-               model = paste0("np_", m))
-
-      b <- summ_seeds(a) %>%
-        mutate(indiv = as.factor(j),
-               run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
-               model = paste0("np_", m))
-
-      np.df <- rbind.data.frame(np.df, a)
-      np.summ.df <- rbind.data.frame(np.summ.df, b)
-      #print("np_run", k, "individual_", j)
-    }
-  }
-}
-
-
 for(j in 1:length(movrate_np)){
   for(k in 1:kruns){
     a <- sim_seeds(m.prms = movrate_np[j], nseeds = nseeds,
