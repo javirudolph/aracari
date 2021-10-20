@@ -148,6 +148,20 @@ movrate_np <- rlnorm(n.individuals, meanlog = logfit.mu, sdlog = logfit.sigma)
 
 ## Other Simulation parameters ---------------------------------
 
+
+# Set folder destination within the project:
+if(dir.exists(here::here("Ch1_movement_rates", "sims_backup")) == FALSE){
+  dir.create(here::here("Ch1_movement_rates", "sims_backup"))
+}
+
+# Function to save data with proper name and date
+
+build.filename <- function(rdata.name){
+  rdata.name <- paste0(as.character(rdata.name), ".RData")
+
+  here::here("Ch1_movement_rates", "sims_backup", rdata.name)
+}
+
 # number of seeds we give every individual
 nseeds <- 5
 
@@ -161,8 +175,7 @@ total.kruns <- 70000
 ## CP Simulations -----------------------------------------------------------------------
 # Generate seed dispersal data under a complete pooling scenario
 
-kruns <- 30000
-nseeds <- 5
+kruns <- total.kruns
 
 cp.df <- NULL
 cp.summ.df <- NULL
@@ -181,7 +194,7 @@ for(k in 1:kruns){
   #print("cp_run", k)
 }
 
-save(cp.df, cp.summ.df, file = "Ch1_movement_rates/sims_backup/datagen_cp.RData")
+save(cp.df, cp.summ.df, file = build.filename("datage_cp"))
 
 ## PP Simulations -----------------------------------------------------------------------
 
