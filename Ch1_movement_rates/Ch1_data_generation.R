@@ -228,16 +228,7 @@ save(pp.df, pp.summ.df, file = build.filename("datagen_pp"))
 
 ## NP Simulations -----------------------------------------------
 
-logfit <- fitdist(indiv_moverate$movrate, distr = 'lnorm')
 
-n.individuals <- 30
-m_1 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),3))
-m_2 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),3))
-m_3 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),3))
-
-# NP Generate data
-# m.data <- data.frame(m_1, m_2, m_3)
-m.data <- data.frame(m_1)
 kruns <- 2000
 nseeds <- 5
 
