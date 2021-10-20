@@ -244,12 +244,12 @@ for(j in 1:length(movrate_np)){
              model = "pp")
 
     b <- summ_seeds(a) %>%
-      mutate(id = psate0("i_", j),
+      mutate(id = paste0("i_", j),
              run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
              model = "pp")
 
-    pp.df <- rbind.data.frame(pp.df, a)
-    pp.summ.df <- rbind.data.frame(pp.summ.df, b)
+    np.df <- rbind.data.frame(np.df, a)
+    np.summ.df <- rbind.data.frame(np.summ.df, b)
     #print("pp_run", k, "family_", j)
   }
 }
