@@ -199,27 +199,6 @@ save(cp.df, cp.summ.df, file = build.filename("datagen_cp"))
 ## PP Simulations -----------------------------------------------------------------------
 
 
-ptpl %>%
-  dplyr::select(fam_g, Bird_ID) %>%
-  distinct(Bird_ID, .keep_all = TRUE) %>%
-  group_by(fam_g) %>%
-  summarise(n = n()) %>%
-  right_join(., fam_moverate) %>%
-  mutate(logpar = log(movrate),
-         fitted_sd = logfit$estimate[2]) -> fam_moverate
-
-pp_1 <- sort(round(fam_moverate$movrate,3))
-
-logfit_fam <- fitdist(pp_1, distr = 'lnorm')
-
-fam_moverate %>%
-  arrange(., movrate) -> fam_moverate
-
-n.fams <- 10
-pp_rates <- sort(round(rlnorm(n.fams, meanlog = logfit_fam$estimate[1], sdlog = logfit_fam$estimate[2]),3))
-
-# PP Generate data
-
 kruns <- 3000
 nseeds <- 5
 
