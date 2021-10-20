@@ -180,7 +180,7 @@ cp.df <- NULL
 cp.summ.df <- NULL
 
 for(k in 1:kruns){
-  a <- sim_seeds(m.prms = movrate_cp, nseeds = nseeds) %>%
+  a <- sim_seeds(m.prms = movrate_cp, nseeds = nseeds, gamma.shape = gamma.shape, gamma.scale = gamma.scale) %>%
     mutate(run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
            model = "cp")
 
