@@ -228,8 +228,8 @@ save(pp.df, pp.summ.df, file = build.filename("datagen_pp"))
 
 ## NP Simulations -----------------------------------------------
 
-
-kruns <- 2000
+# There's 30 individuals here:
+kruns <- round(total.kruns/30)
 nseeds <- 5
 
 np.df <- NULL
@@ -257,7 +257,24 @@ for(m in 1:1){
 }
 
 
+for(j in 1:length(movrate_np)){
+  for(k in 1:kruns){
+    a <- sim_seeds(m.prms = movrate_np[j], nseeds = nseeds,
+                   gamma.shape = gamma.shape, gamma.scale = gamma.scale) %>%
+      mutate(id = paste0("i_", j),
+             run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
+             model = "pp")
 
+    b <- summ_seeds(a) %>%
+      mutate(id = psate0("i_", j),
+             run = factor(paste0("r_", k), levels = paste0("r_", 1:kruns)),
+             model = "pp")
+
+    pp.df <- rbind.data.frame(pp.df, a)
+    pp.summ.df <- rbind.data.frame(pp.summ.df, b)
+    #print("pp_run", k, "family_", j)
+  }
+}
 
 save(np.df, np.summ.df, file = "Ch1_movement_rates/sims_backup/datagen_np.RData")
 
