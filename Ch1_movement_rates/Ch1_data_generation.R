@@ -15,6 +15,7 @@ library(tidyr)
 library(ggplot2)
 library(cowplot)
 library(fitdistrplus)
+library(MASS)
 library(Hmisc)
 
 set.seed(927)
@@ -80,7 +81,7 @@ summ_seeds <- function(df = NULL){
 
 # point location data
 
-load("Ch1_movement_rates/ptpl.RData")
+load("data/ptpl.rda")
 
 indiv_moverate <- ptpl %>%
   group_by(Bird_ID, fam_g) %>%
