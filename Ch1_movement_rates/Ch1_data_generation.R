@@ -168,7 +168,7 @@ nseeds <- 5
 
 # Total number of simulation runs we want per scenario (cp, pp, np)
 
-total.kruns <- 50000
+total.kruns <- 100000
 
 
 # SIMULATED ONLY--------------
