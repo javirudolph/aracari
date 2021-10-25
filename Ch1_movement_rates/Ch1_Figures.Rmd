@@ -257,7 +257,7 @@ fam_moverate %>%
 
 movratedf %>% 
   ggplot(., aes(x = movrate, y = factor(scenario, levels = c("pp", "np", "cp")), color = as.character(group))) +
-  geom_point(size = 3, alpha = 0.8) +
+  geom_jitter(size = 3, alpha = 0.8, height = 0.1) +
   scale_color_manual(values = cols.fig2) +
   scale_x_continuous(limits = c(0, 70)) +
   labs(x = "Movement Rate (meters/minute)", y = "Model scenario",
@@ -268,6 +268,8 @@ movratedf %>%
   theme_bw() +
   #theme(legend.position = "none") +
   NULL-> movrates_used
+
+movrates_used
 
 ```
 
