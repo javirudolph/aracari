@@ -47,8 +47,8 @@ n.boots <- 1000
 samp.size <- 100
 weib.boot.pp <- NULL
 
-pp.df %>% drop_na(s.id) %>%
-  dplyr::filter(disp == 0) -> pp.df.zeros
+# pp.df %>% drop_na(s.id) %>%
+#   dplyr::filter(disp == 0) -> pp.df.zeros
 
 for(j in 1:n.boots){
   s.df <- pp.df %>% drop_na(s.id) %>%
@@ -57,7 +57,7 @@ for(j in 1:n.boots){
     dplyr::filter(., disp > 0)
 
   g <- fitdist(s.df$disp, distr = "weibull", method = 'mle', lower = c(0,0))
-  print(j)
+  # print(j)
 
   prms.weib <- data.frame(est.shape = as.numeric(g$estimate[1]),
                           est.scale = as.numeric(g$estimate[2]),
@@ -76,37 +76,19 @@ weib.boot.np <- NULL
 
 for(j in 1:n.boots){
   s.df <- np.df %>% drop_na(s.id) %>%
-    #group_by(popu) %>%
     sample_n(., samp.size) %>%
-    mutate(disp = round(disp, digits = 2))
+    mutate(disp = round(disp, digits = 2)) %>%
+    dplyr::filter(., disp > 0)
 
-  # s.df %>%
-  #   ggplot(., aes(x = disp, fill = popu)) +
-  #   geom_histogram()
+  g <- fitdist(s.df$disp, distr = "weibull", method = 'mle', lower = c(0,0))
+  # print(j)
 
-  # s.df <- df %>% drop_na(s.id)
-
-  weib.fits <- NULL
-
-  for(i in 1:1){
-    dat <- s.df %>%
-      #filter(popu == i) %>%
-      filter(disp != 0)
-
-    g <- fitdist(dat$disp, distr = "weibull", method = 'mle', lower = c(0,0))
-    #g <- fitdistr(dat$disp, densfun = "weibull", lower = c(0,0))
-    prms.weib <- data.frame(est.shape = as.numeric(g$estimate[1]),
-                            est.scale = as.numeric(g$estimate[2]),
-                            loglik = g$loglik,
-                            popu = i,
-                            model = paste0("np_", i))
-    weib.fits <- rbind.data.frame(weib.fits, prms.weib)
-    # plot(g)
-  }
-
-  weib.boot.np <- rbind.data.frame(weib.boot.np, weib.fits %>% mutate(boot = j))
+  prms.weib <- data.frame(est.shape = as.numeric(g$estimate[1]),
+                          est.scale = as.numeric(g$estimate[2]),
+                          loglik = g$loglik,
+                          model = "np")
+  weib.boot.np <- rbind.data.frame(weib.boot.np, prms.weib %>% mutate(boot = j))
 }
-
 
 save(weib.boot.np, file = "Ch1_movement_rates/sims_backup/weib_np.RData")
 
