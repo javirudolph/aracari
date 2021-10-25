@@ -343,7 +343,7 @@ cp.summ.df %>%
 ```
 
 
-# Figure x - average dispersal and dispersion per run  
+# Figure 4 - average dispersal and dispersion per run  
 
 Importance of the outliers here
 
@@ -370,34 +370,8 @@ disp_df %>%
 
 plot_grid(p_dispersal, p_dispersion)
 
-# ggsave2(filename = "Ch1_movement_rates/Figures/disp_plot.png")
+# ggsave2(filename = "Ch1_movement_rates/Figures/Figure4.png")
 
-```
-
-### With the real data
-
-```{r}
-disp_r_df %>%
-  group_by(., model) %>%
-  sample_n(., 1000) %>%
-  ggplot(., aes(y = dsprsn, x = model)) +
-  geom_boxplot() +
-  #geom_point(color = "grey", alpha = 0.5) +
-  labs(title = "Dispersion", y = "Dispersion in meters", x = "Model") +
-  theme_bw() +
-  theme(legend.position = "none") -> pr_dispersion
-
-disp_r_df %>%
-  group_by(., model) %>%
-  sample_n(., 1000) %>%
-  ggplot(., aes(y = av.disp, x = model)) +
-  geom_boxplot() +
-  #geom_point(color = "grey", alpha = 0.5) +
-  labs(title = "Average dispersal", y = "Dispersal in meters", x = "Model") +
-  theme_bw() +
-  theme(legend.position = "none") -> pr_dispersal
-
-plot_grid(pr_dispersal, pr_dispersion)
 ```
 
 
