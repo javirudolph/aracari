@@ -20,8 +20,8 @@ load("Ch1_movement_rates/sims_backup/datagen_np.RData")
 # Weibull Seed Dispersal Kernels --------------------------------------------------------
 ## CP Kernel ------------------------------------------------------------
 # sample with replacement groups of 100 seeds and fit weibull
-n.boots <- 1000
-samp.size <- 100
+n.boots <- 100
+samp.size <- 10
 weib.boot.cp <- NULL
 
 for(j in 1:n.boots){
@@ -43,8 +43,8 @@ for(j in 1:n.boots){
 save(weib.boot.cp, file = "Ch1_movement_rates/sims_backup/weib_cp.RData")
 
 ## PP Kernel ---------------------------------------------------------------------
-n.boots <- 1000
-samp.size <- 100
+n.boots <- 100
+samp.size <- 10
 weib.boot.pp <- NULL
 
 # pp.df %>% drop_na(s.id) %>%
@@ -70,8 +70,8 @@ save(weib.boot.pp, file = "Ch1_movement_rates/sims_backup/weib_pp.RData")
 
 
 ## NP Kernel ------------------------------------------------------------------
-n.boots <- 1000
-samp.size <- 100
+n.boots <- 100
+samp.size <- 10
 weib.boot.np <- NULL
 
 for(j in 1:n.boots){
