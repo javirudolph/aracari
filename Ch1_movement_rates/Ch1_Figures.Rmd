@@ -471,6 +471,18 @@ load("Ch1_movement_rates/sims_backup/weib_pp.RData")
 load("Ch1_movement_rates/sims_backup/weib_np.RData")
 #load("Ch1_movement_rates/sims_backup/weib_ppi.RData")
 
+# Real data --------------------------------------
+load("Ch1_movement_rates/sims_backup/datagen_cpr.RData")
+load("Ch1_movement_rates/sims_backup/datagen_ppr.RData")
+load("Ch1_movement_rates/sims_backup/datagen_npr.RData")
+
+load("Ch1_movement_rates/sims_backup/weib_cpr.RData")
+load("Ch1_movement_rates/sims_backup/weib_ppr.RData")
+load("Ch1_movement_rates/sims_backup/weib_npr.RData")
+
+```
+
+```{r}
 # Dispersion and Dispersal --------------------------------------------------------------------
 
 cp.summ.df %>%
@@ -487,6 +499,16 @@ cp.summ.df %>%
                                           #"ppi",
                                           #"np_1", "np_2", "np_3",
                                           "np"))) -> disp_df
+
+cpr.summ.df %>%
+  dplyr::select(av.disp, dsprsn, model) %>% 
+  bind_rows(., ppr.summ.df %>%
+              dplyr::select(av.disp, dsprsn, model)) %>%
+  bind_rows(., npr.summ.df %>%
+              dplyr::select(av.disp, dsprsn,  model) %>%
+              mutate(model = "npr")) %>% 
+  mutate(model = factor(model, levels = c("cpr", "ppr",
+                                          "npr"))) -> disp_r_df
 ```
 
 
@@ -521,6 +543,32 @@ plot_grid(p_dispersal, p_dispersion)
 
 ```
 
+### With the real data
+
+```{r}
+disp_r_df %>%
+  group_by(., model) %>%
+  sample_n(., 1000) %>%
+  ggplot(., aes(y = dsprsn, x = model)) +
+  geom_boxplot() +
+  #geom_point(color = "grey", alpha = 0.5) +
+  labs(title = "Dispersion", y = "Dispersion in meters", x = "Model") +
+  theme_bw() +
+  theme(legend.position = "none") -> pr_dispersion
+
+disp_r_df %>%
+  group_by(., model) %>%
+  sample_n(., 1000) %>%
+  ggplot(., aes(y = av.disp, x = model)) +
+  geom_boxplot() +
+  #geom_point(color = "grey", alpha = 0.5) +
+  labs(title = "Average dispersal", y = "Dispersal in meters", x = "Model") +
+  theme_bw() +
+  theme(legend.position = "none") -> pr_dispersal
+
+plot_grid(pr_dispersal, pr_dispersion)
+```
+
 
 # Figure x - seed dispersal kernel parameters
 Here we are using the distance of each seed
@@ -544,6 +592,19 @@ joint_weib %>%
   mutate(model = factor(model, levels = c("cp", "pp",
                                           # "ppi", "np_1", "np_2", "np_3"
                                           "np"))) -> joint_weib
+
+weib.boot.cpr %>%
+  dplyr::select(., est.shape, est.scale, boot, model) %>%
+  bind_rows(., weib.boot.ppr %>%
+              dplyr::select(., est.shape, est.scale, boot, model)) %>%
+  bind_rows(., weib.boot.npr %>%
+              mutate(model = "npr") %>%
+              dplyr::select(., est.shape, est.scale, boot, model)) -> joint_r_weib
+
+joint_r_weib %>% 
+  mutate(model = factor(model, levels = c("cpr", "ppr",
+                                          # "ppi", "np_1", "np_2", "np_3"
+                                          "npr"))) -> joint_r_weib
 ```
 
 ## Variation 1 - violin plot with 100 out of 1000 of the parameter fits
@@ -583,6 +644,45 @@ plot_grid(weib_shape, weib_scale)
 
 # ggsave2(filename = "Ch1_movement_rates/Figures/weib_plot.png")
 
+```
+
+
+Real data 
+
+```{r}
+joint_r_weib %>%
+  group_by(model) %>%
+  sample_n(., 100) %>%
+  ggplot(., aes(x = model, y = est.shape)) +
+  geom_violin() +
+  # scale_color_manual(values = c("black", mycols)) +
+  # geom_boxplot(width = 0.01) +
+  # geom_point(color = "grey", alpha = 0.5) +
+  # stat_summary(fun.data=mean_sdl, mult=1,
+  #              geom="pointrange", color="black") +
+  geom_jitter(position = position_jitter(0.1)) +
+  geom_hline(aes(yintercept = 1), lty = "dashed") +
+  labs(title = "Shape") +
+  #scale_y_continuous(limits = c(0, 2)) +
+  theme_bw() -> weib_r_shape
+
+joint_r_weib %>%
+  group_by(model) %>%
+  sample_n(., 100) %>%
+  ggplot(., aes(x = model, y = est.scale)) +
+  geom_violin() +
+  # scale_color_manual(values = c("black", mycols)) +
+  # geom_boxplot(width = 0.01) +
+  # geom_point(color = "grey", alpha = 0.5) +
+  # stat_summary(fun.data=mean_sdl, mult=1,
+  #              geom="pointrange", color="black") +
+  geom_jitter(position = position_jitter(0.1)) +
+  labs(title = "Scale") +
+  theme_bw() -> weib_r_scale
+
+plot_grid(weib_r_shape, weib_r_scale)
+
+# ggsave2(filename = "Ch1_movement_rates/Figures/weib_plot.png")
 ```
 
 
