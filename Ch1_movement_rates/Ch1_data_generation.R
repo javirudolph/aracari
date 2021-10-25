@@ -148,6 +148,7 @@ n.individuals <- 30
 movrate_np <- rlnorm(n.individuals, meanlog = logfit.mu, sdlog = logfit.sigma)
 
 
+
 ## Other Simulation parameters ---------------------------------
 
 
@@ -163,6 +164,10 @@ build.filename <- function(rdata.name){
 
   here::here("Ch1_movement_rates", "sims_backup", rdata.name)
 }
+
+# Save the movement rates
+
+save(movrate_cp, movrate_np, movrate_pp, file = build.filename("movrates"))
 
 # number of seeds we give every individual
 nseeds <- 5
