@@ -464,21 +464,11 @@ grt_data %>%
 load("Ch1_movement_rates/sims_backup/datagen_cp.RData")
 load("Ch1_movement_rates/sims_backup/datagen_pp.RData")
 load("Ch1_movement_rates/sims_backup/datagen_np.RData")
-#load("Ch1_movement_rates/sims_backup/datagen_ppi.RData")
 
 load("Ch1_movement_rates/sims_backup/weib_cp.RData")
 load("Ch1_movement_rates/sims_backup/weib_pp.RData")
 load("Ch1_movement_rates/sims_backup/weib_np.RData")
-#load("Ch1_movement_rates/sims_backup/weib_ppi.RData")
 
-# Real data --------------------------------------
-load("Ch1_movement_rates/sims_backup/datagen_cpr.RData")
-load("Ch1_movement_rates/sims_backup/datagen_ppr.RData")
-load("Ch1_movement_rates/sims_backup/datagen_npr.RData")
-
-load("Ch1_movement_rates/sims_backup/weib_cpr.RData")
-load("Ch1_movement_rates/sims_backup/weib_ppr.RData")
-load("Ch1_movement_rates/sims_backup/weib_npr.RData")
 
 ```
 
