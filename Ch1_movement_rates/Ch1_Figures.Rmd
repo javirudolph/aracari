@@ -190,9 +190,11 @@ knitr::kable(table1)
 
 # Figure 2   
 
-```{r}
+```{r fig.height=12}
 # Visualize distribution and data points
-#vlines <- summary(indiv_moverate$movrate)[c(1,3,6)]
+
+load("Ch1_movement_rates/sims_backup/movrates.RData")
+
 cols.fig2 <- c("#23262f","#717492","#b3a82a","#c94f21","#980012","#0d907a","#b9bec3")
 
 indiv_moverate %>%
@@ -210,10 +212,45 @@ indiv_moverate %>%
   guides(color = guide_legend(title = "Social Group",
                               ncol = 2)) +
   theme_bw() +
-  theme(legend.position = c(0.8, 0.6))
+  theme(legend.position = c(0.8, 0.6)) -> logfit_plot
 
-# ggsave2(filename = "Ch1_movement_rates/Figures/logfit_cp.png")
+
+# Estimate the mu's for each family group based on their movement rate.
+logfit.sigma <- logfit$estimate[2]
+get_mu <- function(movrate, sigma = logfit.sigma){
+  mu <- log(movrate)-((sigma^2)/2)
+  return(mu)
+}
+
+fam_mus <- get_mu(fam_moverate$movrate)
+
+glines <- purrr::map(1:7, function(y)
+    stat_function(fun = dlnorm, args = list(meanlog = fam_mus[y], sdlog = logfit.sigma), color = cols.fig2[y]))
+
+
+fam_moverate %>%
+  ggplot(., aes(x = movrate, y = -0.002, color = fam_g)) +
+  geom_point(size = 3, alpha = 0.8) +
+  glines +
+  scale_color_manual(values = cols.fig2) +
+  labs(x = "Movement Rate (meters/minute)", y = "Density",
+       title = "Distribution for social group movement rates") +
+  #geom_vline(xintercept = vlines, color = my.cols1[4], size = 1, lty = 2) +
+  scale_x_continuous(limits = c(0, 70)) +
+  #scale_x_discrete(labels = c(0, vlines[1], 20, vlines[2], 40, vlines[3], 60)) +
+  guides(color = guide_legend(title = "Social Group",
+                              ncol = 2)) +
+  theme_bw() +
+  theme(legend.position = c(0.8, 0.6)) -> social_group_curves
+
+
+plot_grid(logfit_plot, social_group_curves, nrow = 2)
+
+# ggsave2(filename = "Ch1_movement_rates/Figures/Figure2.png")
+
 ```
+
+
 
 ```{r include=FALSE}
 # The average movement rate for this sample of the population (the 12 individuals) is the average of the movement rate for each individual:
