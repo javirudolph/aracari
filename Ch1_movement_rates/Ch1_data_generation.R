@@ -111,7 +111,6 @@ logfit <- fitdist(indiv_moverate$movrate, distr = 'lnorm')
 logfit.mu <- logfit$estimate[1]
 logfit.sigma <- as.numeric(logfit$estimate[2])
 
-x
 
 ## Movement rates -----------------------------------------------------
 ### Complete pooling movrate -------------------
