@@ -224,7 +224,7 @@ indiv_moverate %>%
   guides(color = guide_legend(title = "Social Group",
                               ncol = 2)) +
   theme_bw() +
-  #theme(legend.position = "none") +
+  theme(legend.position = "none") +
   NULL -> logfit_plot
 
 # Estimate the mu's for each family group based on their movement rate.
@@ -266,10 +266,8 @@ movratedf %>%
   guides(color = guide_legend(title = "Social Group",
                               ncol = 2)) +
   theme_bw() +
-  #theme(legend.position = "none") +
+  theme(legend.position = "none") +
   NULL-> movrates_used
-
-movrates_used
 
 ```
 
@@ -277,7 +275,7 @@ movrates_used
 plot_grid(logfit_plot, social_group_curves, movrates_used, nrow = 3, rel_heights = c(2,2,1))
 
 
-ggsave2(filename = "Ch1_movement_rates/Figures/Figure2.png")
+# ggsave2(filename = "Ch1_movement_rates/Figures/Figure2.png")
 
 ```
 
@@ -340,25 +338,8 @@ cp.summ.df %>%
   bind_rows(., pp.summ.df %>%
               dplyr::select(av.disp, dsprsn, model)) %>%
   bind_rows(., np.summ.df %>%
-              dplyr::select(av.disp, dsprsn,  model) %>%
-              mutate(model = "np")) %>% 
-  # bind_rows(., ppi.summ.df %>% 
-  #             dplyr::select(av.disp, dsprsn, model) %>% 
-  #             mutate(model = "ppi")) %>% 
-  mutate(model = factor(model, levels = c("cp", "pp",
-                                          #"ppi",
-                                          #"np_1", "np_2", "np_3",
-                                          "np"))) -> disp_df
-
-cpr.summ.df %>%
-  dplyr::select(av.disp, dsprsn, model) %>% 
-  bind_rows(., ppr.summ.df %>%
-              dplyr::select(av.disp, dsprsn, model)) %>%
-  bind_rows(., npr.summ.df %>%
-              dplyr::select(av.disp, dsprsn,  model) %>%
-              mutate(model = "npr")) %>% 
-  mutate(model = factor(model, levels = c("cpr", "ppr",
-                                          "npr"))) -> disp_r_df
+              dplyr::select(av.disp, dsprsn,  model)) %>% 
+  mutate(model = factor(model, levels = c("cp", "pp","np"))) -> disp_df
 ```
 
 
