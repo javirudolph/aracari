@@ -199,9 +199,9 @@ cols.fig2 <- c("#23262f","#717492","#b3a82a","#c94f21","#980012","#0d907a","#b9b
 
 # Movement rates used for each scenario
 
-movrate_cp
-movrate_np
-movrate_pp
+# movrate_cp
+# movrate_np
+# movrate_pp
 
 movratedf <- data.frame(scenario = "cp", group = NA, movrate = movrate_cp) %>% 
   bind_rows(., data.frame(scenario = rep("pp", 42), group = movrate_pp$fam_g, movrate = movrate_pp$movrate)) %>% 
@@ -224,7 +224,8 @@ indiv_moverate %>%
   guides(color = guide_legend(title = "Social Group",
                               ncol = 2)) +
   theme_bw() +
-  theme(legend.position = "none") -> logfit_plot
+  #theme(legend.position = "none") +
+  NULL -> logfit_plot
 
 # Estimate the mu's for each family group based on their movement rate.
 logfit.sigma <- logfit$estimate[2]
@@ -265,7 +266,8 @@ movratedf %>%
   guides(color = guide_legend(title = "Social Group",
                               ncol = 2)) +
   theme_bw() +
-  theme(legend.position = "none") -> movrates_used
+  #theme(legend.position = "none") +
+  NULL-> movrates_used
 
 ```
 
