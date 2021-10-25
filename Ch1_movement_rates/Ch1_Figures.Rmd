@@ -350,7 +350,7 @@ Importance of the outliers here
 ```{r}
 disp_df %>%
   group_by(., model) %>%
-  sample_n(., 1000) %>%
+  sample_n(., 5000) %>%
   ggplot(., aes(y = dsprsn, x = model)) +
   geom_boxplot() +
   #geom_point(color = "grey", alpha = 0.5) +
@@ -360,7 +360,7 @@ disp_df %>%
 
 disp_df %>%
   group_by(., model) %>%
-  sample_n(., 1000) %>%
+  sample_n(., 5000) %>%
   ggplot(., aes(y = av.disp, x = model)) +
   geom_boxplot() +
   #geom_point(color = "grey", alpha = 0.5) +
