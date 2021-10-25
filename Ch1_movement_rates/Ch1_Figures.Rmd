@@ -190,12 +190,24 @@ knitr::kable(table1)
 
 # Figure 2   
 
-```{r fig.height=12}
+```{r}
 # Visualize distribution and data points
 
 load("Ch1_movement_rates/sims_backup/movrates.RData")
 
 cols.fig2 <- c("#23262f","#717492","#b3a82a","#c94f21","#980012","#0d907a","#b9bec3")
+
+# Movement rates used for each scenario
+
+movrate_cp
+movrate_np
+movrate_pp
+
+movratedf <- data.frame(scenario = "cp", group = NA, movrate = movrate_cp) %>% 
+  bind_rows(., data.frame(scenario = rep("pp", 42), group = movrate_pp$fam_g, movrate = movrate_pp$movrate)) %>% 
+  bind_rows(., data.frame(scenario = rep("np", 30), group = NA, movrate = movrate_np))
+
+# Logfit plot
 
 indiv_moverate %>%
   ggplot(., aes(x = movrate, y = 0.002, color = fam_g)) +
@@ -212,8 +224,7 @@ indiv_moverate %>%
   guides(color = guide_legend(title = "Social Group",
                               ncol = 2)) +
   theme_bw() +
-  theme(legend.position = c(0.8, 0.6)) -> logfit_plot
-
+  theme(legend.position = "none") -> logfit_plot
 
 # Estimate the mu's for each family group based on their movement rate.
 logfit.sigma <- logfit$estimate[2]
@@ -243,227 +254,31 @@ fam_moverate %>%
   theme_bw() +
   theme(legend.position = c(0.8, 0.6)) -> social_group_curves
 
-
-plot_grid(logfit_plot, social_group_curves, nrow = 2)
-
-# ggsave2(filename = "Ch1_movement_rates/Figures/Figure2.png")
-
-```
-
-
-
-```{r include=FALSE}
-# The average movement rate for this sample of the population (the 12 individuals) is the average of the movement rate for each individual:
-
-# mean(indiv_moverate$movrate)
-# 27.94211 meters/minute
-
-# In a complete pooling approach, we take this average movement rate and use it as the parameter for our exponential distribution, from which we draw the movement distance at each time step.
-
-## Compare exponential movement distances to full dataset ----------------------------------
-
-movrate_cp <- mean(indiv_moverate$movrate)
-movrate_cp_ln <- as.numeric(exp(logfit$estimate[1]))
-
-# test <- data.frame(mpm = rexp(500, rate = 1/movrate_cp))
-#
-# test %>%
-#   ggplot(., aes(x = mpm)) +
-#   geom_histogram(aes(y = ..density..)) +
-#   stat_function(fun = dexp, args = list(rate = 1/movrate_cp), color = "red")
-
-ptpl %>%
-  ggplot(., aes(x = mpm)) +
-  geom_histogram(aes(y = ..density..)) +
-  stat_function(fun = dexp, args = list(rate = 1/movrate_cp), color = my.cols1[4], size = 1) +
-  stat_function(fun = dexp, args = list(rate = 1/movrate_cp_ln), color = my.cols1[3], size = 1, alpha = 0.8) +
-  labs(title = "Histogram of movement distances per minute from data set",
-       x = "Movement distance per minute",
-       y = "Density",
-       caption = "Orange line is exponential density using average movement rate for population \n
-       Yellow line shows exponential density using mean estimate from lognormal fit to movement rates") +
-  theme_bw()
-
-```
-
-
-
-```{r include=FALSE}
-## Visualize mov rates ---------------
-pp_1 <- sort(round(fam_moverate$movrate,3))
-
-### Compare lognorm fits CP and PP -----------
-
-logfit_fam <- fitdist(pp_1, distr = 'lnorm')
-# normfit <- fitdist(indiv_moverate$movrate, distr = "norm")
-
-# Mean using the fit
-# exp(logfit_fam$estimate[1])
-
-```
-
-```{r}
-# Visualize distribution and data points
-vlines_fam <- summary(fam_moverate$movrate)[c(1,3,6)]
-
-indiv_moverate %>%
-  ggplot(., aes(x = movrate, y = 0.002)) +
-  # stat_function(fun = dlnorm, args = list(meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),
-  #               color = "black", alpha = 0.8, size = 1) +
-  # geom_point(size = 3, alpha = 0.8) +
-  # geom_vline(xintercept = vlines, color = "black", size = 1, lty = 2) +
-  # scale_x_continuous(limits = c(0, 70), breaks = c(0, vlines[1], 20, vlines[2], 40, vlines[3], 60),
-  #                    labels = c(0, "Min.", 20, "Median.", 40, "Max.", 60)) +
-  stat_function(fun = dlnorm, args = list(meanlog = logfit_fam$estimate[1], sdlog = logfit_fam$estimate[2]),
-                color = my.cols1[4], alpha = 0.8, size = 1) +
-  geom_point(data = fam_moverate, aes(x = movrate, y = 0.004),size = 3, alpha = 0.8, color = my.cols1[4]) +
-  geom_vline(xintercept = vlines_fam, color = my.cols1[4], size = 1, lty = 2) +
-  scale_x_continuous(limits = c(0, 70), breaks = c(0, vlines_fam[1], 20, vlines_fam[2], vlines_fam[3], 60),
-                     labels = c(0, "Min.", 20, "Median.", "Max.", 60)) +
-  labs(x = "Movement Rate (meters/minute)", y = "Density",
-       title = "Lognormal fit to family group movement rates") +
-  theme_bw()
-
-# ggsave2(filename = "Ch1_movement_rates/Figures/logfit_pp.png")
-
-```
-
-```{r include=FALSE}
-## Visualize mov rates ---------------
-pp_1 <- sort(round(fam_moverate$movrate,3))
-
-### Compare lognorm fits CP and PP -----------
-
-logfit_fam <- fitdist(fam_moverate$movrate, distr = 'lnorm')
-# normfit <- fitdist(indiv_moverate$movrate, distr = "norm")
-
-# Mean using the fit
-exp(logfit_fam$estimate[1])
-
-```
-
-```{r}
-# Visualize distribution and data points
-vlines_fam <- summary(fam_moverate$movrate)[c(1,3,6)]
-
-indiv_moverate %>%
-  ggplot(., aes(x = movrate, y = 0.002)) +
-  stat_function(fun = dlnorm, args = list(meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),
-                color = "black", alpha = 0.8, size = 1) +
+movratedf %>% 
+  ggplot(., aes(x = movrate, y = factor(scenario, levels = c("pp", "np", "cp")), color = as.character(group))) +
   geom_point(size = 3, alpha = 0.8) +
-  geom_vline(xintercept = vlines, color = "black", size = 1, lty = 2) +
-  scale_x_continuous(limits = c(0, 70), breaks = c(0, vlines[1], 20, vlines[2], 40, vlines[3], 60),
-                     labels = c(0, "Min.", 20, "Median.", 40, "Max.", 60)) +
-  # stat_function(fun = dlnorm, args = list(meanlog = logfit_fam$estimate[1], sdlog = logfit_fam$estimate[2]),
-  #               color = my.cols1[4], alpha = 0.8, size = 1) +
-  geom_point(data = fam_moverate, aes(x = movrate, y = 0.004),size = 3, alpha = 0.8, color = my.cols1[4]) +
-  # geom_vline(xintercept = vlines_fam, color = my.cols1[4], size = 1, lty = 2) +
-  labs(x = "Movement Rate (meters/minute)",
-       # title = "Average movement rates lognormal fits",
-       y = "Density") +
-  theme_bw()
-```
-
-```{r}
-## PP w/fam moverates ---------------------------------------
-# Meaning, we use the average movement rate for each family group as the parameter for an exponential from which we draw movement distances for the simulation.
-
-fam_moverate %>%
-  arrange(., movrate) -> fam_moverate
-
-fam_moverate %>%
-  ggplot(., aes(x = movrate, y = 0, color = movrate)) +
-  geom_point(size = 3) +
-  stat_function(fun = dlnorm, args = list(meanlog = logfit_fam$estimate[1], sdlog = logfit_fam$estimate[2]),
-                color = my.cols1[4], alpha = 0.8, size = 1) +
-  xlim(0, 60) +
-  labs(title = "Lognormal fitted to family group",
-       x = "Movement rate",
-       y = "Density") +
-  scale_color_viridis_c() +
+  scale_color_manual(values = cols.fig2) +
+  scale_x_continuous(limits = c(0, 70)) +
+  labs(x = "Movement Rate (meters/minute)", y = "Model scenario",
+       title = "Sampled movement rates for each simulated scenario") +
+  #scale_x_discrete(labels = c(0, vlines[1], 20, vlines[2], 40, vlines[3], 60)) +
+  guides(color = guide_legend(title = "Social Group",
+                              ncol = 2)) +
   theme_bw() +
-  theme(legend.position = "none") -> pp_logfit
+  theme(legend.position = "none") -> movrates_used
 
-mycols2 <- viridisLite::viridis(7)
-expcurves_pp1 <- purrr::map(seq(1:7), function(y)
-  stat_function(fun = dexp, args = list(rate = 1/fam_moverate$movrate[y]), color = mycols2[y], alpha = 0.8))
+```
 
-ggplot() +
-  expcurves_pp1 +
-  xlim(-1, 125) +
-  labs(title = "Movement distance exponential draws", x = 'Movement Distance', y = "Density") +
-  theme_bw() -> pp_expdraws
+```{r fig.height=12}
+plot_grid(logfit_plot, social_group_curves, movrates_used, nrow = 3, rel_heights = c(2,2,1))
 
 
-cowplot::plot_grid(pp_logfit, pp_expdraws)
-# ggsave2(filename = "Ch1_movement_rates/Figures/pp_logfit_plus_exp.png")
+ggsave2(filename = "Ch1_movement_rates/Figures/Figure2.png")
+
 ```
 
 
 
-```{r include=FALSE}
-# This one looks at individual variation.
-# We will sample 20 individuals, 3 times from the lognormal distribution that describes movement rates for the population
-logfit <- fitdist(indiv_moverate$movrate, distr = 'lnorm')
-
-n.individuals <- 20
-m_1 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),3))
-m_2 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),3))
-m_3 <- sort(round(rlnorm(n.individuals, meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),3))
-
-logfitdraw <- data.frame(indv = 1:20, m_1 = m_1, m_2 = m_2, m_3 = m_3)
-
-indiv_moverate %>%
-  ggplot(., aes(x = movrate, y = 0)) +
-  geom_point(size = 5) +
-  stat_function(fun = dlnorm, args = list(meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]), color = "black", alpha = 0.8) +
-  geom_point(data = logfitdraw, aes(x = m_1, color = factor(indv), y = 0.005), size = 3) +
-  geom_point(data = logfitdraw, aes(x = m_2, color = factor(indv), y = 0.006), size = 3) +
-  geom_point(data = logfitdraw, aes(x = m_3, color = factor(indv), y = 0.007), size = 3) +
-  # scale_color_viridis_d(option="magma") +
-  scale_color_viridis_d() +
-  xlim(0, 60) +
-  labs(title = "Sampling individuals from lognormal",
-       x = "Movement rate",
-       y = "Density") +
-  theme_bw() +
-  theme(legend.position = "none") -> plot.logfitdraw
-
-plot.logfitdraw
-
-mycols <- viridisLite::viridis(20)
-
-expcurves_m1 <- purrr::map(seq(1:n.individuals), function(y)
-  stat_function(fun = dexp, args = list(rate = 1/logfitdraw$m_1[y]), color = mycols[y], alpha = 0.8))
-
-expcurves_m2 <- purrr::map(seq(1:n.individuals), function(y)
-  stat_function(fun = dexp, args = list(rate = 1/logfitdraw$m_2[y]), color = mycols[y], alpha = 0.8))
-
-expcurves_m3 <- purrr::map(seq(1:n.individuals), function(y)
-  stat_function(fun = dexp, args = list(rate = 1/logfitdraw$m_3[y]), color = mycols[y], alpha = 0.8))
-
-logfitdraw %>%
-  ggplot() +
-  expcurves_m1 +
-  expcurves_m2 +
-  expcurves_m3 +
-  xlim(-1, 125) +
-  labs(title = "Movement distance Exponential Draws", x = 'Movement Distance', y = "Density") +
-  theme_bw() -> expdraws
-expdraws
-
-```
-
-```{r}
-
-cowplot::plot_grid(plot.logfitdraw, expdraws)
-
-
-# ggsave2(filename = "Ch1_movement_rates/Figures/Sampling_indivs_lnorm.png")
-```
-
-
-In process
 
 # Figure 3 - gut retention times:  
 
