@@ -168,6 +168,8 @@ plot_grid(A, B, C, D, labels = "AUTO")
 
 # ggsave2(filename = "Ch1_movement_rates/Figures/Figure1.png")
 ```
+
+
 **Figure1** - Simulation process overview and seed dispersal measures.  Panels A through C represent one simulation run, whereas panel D shows the results from 100 simulation runs. A) An animal starts at the origin (coordinates (0,0) represented by the teal dot) where it ingests five seeds. The animal moves in the landscape (grey trajectory path) and drops seeds (black diamonds) as it reaches their gut retention time. B) The mean seed location per run is calculated and shown in the orange square. The distance of each seed to the mean location is used to calculate seed dispersion as described in the main text. C) Average seed dispersal per run (black dashed line) is calculated as the distance from the origin (teal dot) to the mean seed location (orange square). Seed dispersal distance for each seed (teal dashed lines) are calculated as the distance of each seed from the origin. D) Seed dispersal distances for each seed in 100 simulation runs are used to generate a seed dispersal distance histogram. A Weibull distribution is fit to the data to describe the seed dispersal kernel.
 
 # Table 1  
@@ -271,11 +273,11 @@ movratedf %>%
 
 ```
 
-```{r fig.height=12}
+```{r fig.height=12, fig.width=6}
 plot_grid(logfit_plot, social_group_curves, movrates_used, nrow = 3, rel_heights = c(2,2,1))
 
 
-# ggsave2(filename = "Ch1_movement_rates/Figures/Figure2.png")
+ggsave2(filename = "Ch1_movement_rates/Figures/Figure2.png")
 
 ```
 
@@ -386,38 +388,21 @@ weib.boot.cp %>%
   dplyr::select(., est.shape, est.scale, boot, model) %>%
   bind_rows(., weib.boot.pp %>%
               dplyr::select(., est.shape, est.scale, boot, model)) %>%
-  # bind_rows(., weib.boot.ppi %>%
-  #             # mutate(model = paste0(model, "_", popu)) %>% 
-  #             dplyr::select(., est.shape, est.scale, boot, model)) %>%
   bind_rows(., weib.boot.np %>%
-              mutate(model = "np") %>%
               dplyr::select(., est.shape, est.scale, boot, model)) -> joint_weib
 
 joint_weib %>% 
   mutate(model = factor(model, levels = c("cp", "pp",
-                                          # "ppi", "np_1", "np_2", "np_3"
                                           "np"))) -> joint_weib
 
-weib.boot.cpr %>%
-  dplyr::select(., est.shape, est.scale, boot, model) %>%
-  bind_rows(., weib.boot.ppr %>%
-              dplyr::select(., est.shape, est.scale, boot, model)) %>%
-  bind_rows(., weib.boot.npr %>%
-              mutate(model = "npr") %>%
-              dplyr::select(., est.shape, est.scale, boot, model)) -> joint_r_weib
-
-joint_r_weib %>% 
-  mutate(model = factor(model, levels = c("cpr", "ppr",
-                                          # "ppi", "np_1", "np_2", "np_3"
-                                          "npr"))) -> joint_r_weib
 ```
 
-## Variation 1 - violin plot with 100 out of 1000 of the parameter fits
+## Variation 1 - violin plot with 200 out of 1000 of the parameter fits
 
 ```{r}
 joint_weib %>%
   group_by(model) %>%
-  sample_n(., 100) %>%
+  sample_n(., 200) %>%
   ggplot(., aes(x = model, y = est.shape)) +
   geom_violin() +
   # scale_color_manual(values = c("black", mycols)) +
@@ -433,7 +418,7 @@ joint_weib %>%
 
 joint_weib %>%
   group_by(model) %>%
-  sample_n(., 100) %>%
+  sample_n(., 200) %>%
   ggplot(., aes(x = model, y = est.scale)) +
   geom_violin() +
   # scale_color_manual(values = c("black", mycols)) +
@@ -451,44 +436,6 @@ plot_grid(weib_shape, weib_scale)
 
 ```
 
-
-Real data 
-
-```{r}
-joint_r_weib %>%
-  group_by(model) %>%
-  sample_n(., 100) %>%
-  ggplot(., aes(x = model, y = est.shape)) +
-  geom_violin() +
-  # scale_color_manual(values = c("black", mycols)) +
-  # geom_boxplot(width = 0.01) +
-  # geom_point(color = "grey", alpha = 0.5) +
-  # stat_summary(fun.data=mean_sdl, mult=1,
-  #              geom="pointrange", color="black") +
-  geom_jitter(position = position_jitter(0.1)) +
-  geom_hline(aes(yintercept = 1), lty = "dashed") +
-  labs(title = "Shape") +
-  #scale_y_continuous(limits = c(0, 2)) +
-  theme_bw() -> weib_r_shape
-
-joint_r_weib %>%
-  group_by(model) %>%
-  sample_n(., 100) %>%
-  ggplot(., aes(x = model, y = est.scale)) +
-  geom_violin() +
-  # scale_color_manual(values = c("black", mycols)) +
-  # geom_boxplot(width = 0.01) +
-  # geom_point(color = "grey", alpha = 0.5) +
-  # stat_summary(fun.data=mean_sdl, mult=1,
-  #              geom="pointrange", color="black") +
-  geom_jitter(position = position_jitter(0.1)) +
-  labs(title = "Scale") +
-  theme_bw() -> weib_r_scale
-
-plot_grid(weib_r_shape, weib_r_scale)
-
-# ggsave2(filename = "Ch1_movement_rates/Figures/weib_plot.png")
-```
 
 
 ## Variation 2 - violin plot with all 1000 of the parameter fits
@@ -600,8 +547,9 @@ cp.df %>%
   # stat_function(fun = dweibull, args = list(shape = np.shape[2], scale = np.scale[2]), color = "red", lty = "dashed") +
   # stat_function(fun = dweibull, args = list(shape = np.shape[3], scale = np.scale[3]), color = "red", lty = "dashed") +
   theme_bw() +
-  geom_vline(aes(xintercept = 500)) +
-  coord_cartesian(xlim = c(500, 1700), ylim = c(0, 0.0005))
+  # geom_vline(aes(xintercept = 500)) +
+  # coord_cartesian(xlim = c(500, 1700), ylim = c(0, 0.0005)) +
+  NULL
 
 ```
 
