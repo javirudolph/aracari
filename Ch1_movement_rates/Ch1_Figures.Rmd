@@ -402,7 +402,6 @@ joint_weib %>%
 
 ```
 
-## Variation 1 - violin plot with 200 out of 1000 of the parameter fits
 
 ```{r}
 joint_weib %>%
@@ -437,7 +436,7 @@ joint_weib %>%
 
 plot_grid(weib_shape, weib_scale)
 
-# ggsave2(filename = "Ch1_movement_rates/Figures/weib_plot.png")
+#ggsave2(filename = "Ch1_movement_rates/Figures/Figure5.png")
 
 ```
 
