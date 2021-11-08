@@ -218,15 +218,17 @@ indiv_moverate %>%
   stat_function(fun = dlnorm, args = list(meanlog = logfit$estimate[1], sdlog = logfit$estimate[2]),
                 color = "black", alpha = 0.8, size = 1) +
   scale_color_manual(values = cols.fig2) +
-  labs(x = "Movement Rate (meters/minute)", y = "Density",
-       title = "Lognormal fit to individual movement rates") +
+  labs(x = "Movement Rate (meters/minute)",
+       y = "Density",
+       subtitle = "Lognormal fit to individual movement rates") +
   #geom_vline(xintercept = vlines, color = my.cols1[4], size = 1, lty = 2) +
   scale_x_continuous(limits = c(0, 70)) +
   #scale_x_discrete(labels = c(0, vlines[1], 20, vlines[2], 40, vlines[3], 60)) +
   guides(color = guide_legend(title = "Social Group",
                               ncol = 2)) +
   theme_bw() +
-  theme(legend.position = "none") +
+  theme(legend.position = "none",
+        axis.title.x = element_blank()) +
   NULL -> logfit_plot
 
 # Estimate the mu's for each family group based on their movement rate.
@@ -247,23 +249,25 @@ fam_moverate %>%
   geom_point(size = 3, alpha = 0.8) +
   glines +
   scale_color_manual(values = cols.fig2) +
-  labs(x = "Movement Rate (meters/minute)", y = "Density",
-       title = "Distribution for social group movement rates") +
+  labs(x = "Movement Rate (meters/minute)", 
+       y = "Density",
+       subtitle = "Distribution for social group movement rates") +
   #geom_vline(xintercept = vlines, color = my.cols1[4], size = 1, lty = 2) +
   scale_x_continuous(limits = c(0, 70)) +
   #scale_x_discrete(labels = c(0, vlines[1], 20, vlines[2], 40, vlines[3], 60)) +
   guides(color = guide_legend(title = "Social Group",
                               ncol = 2)) +
   theme_bw() +
-  theme(legend.position = c(0.8, 0.6)) -> social_group_curves
+  theme(legend.position = c(0.8, 0.6),
+        axis.title.x = element_blank()) -> social_group_curves
 
 movratedf %>% 
   ggplot(., aes(x = movrate, y = factor(scenario, levels = c("pp", "np", "cp")), color = as.character(group))) +
   geom_jitter(size = 3, alpha = 0.8, height = 0.1) +
   scale_color_manual(values = cols.fig2) +
   scale_x_continuous(limits = c(0, 70)) +
-  labs(x = "Movement Rate (meters/minute)", y = "Model scenario",
-       title = "Sampled movement rates for each simulated scenario") +
+  labs(x = "Movement Rate (meters/minute)", y = "Scenario",
+       subtitle = "Sampled movement rates for each simulated scenario") +
   #scale_x_discrete(labels = c(0, vlines[1], 20, vlines[2], 40, vlines[3], 60)) +
   guides(color = guide_legend(title = "Social Group",
                               ncol = 2)) +
@@ -273,8 +277,8 @@ movratedf %>%
 
 ```
 
-```{r fig.height=12, fig.width=6}
-plot_grid(logfit_plot, social_group_curves, movrates_used, nrow = 3, rel_heights = c(2,2,1))
+```{r fig.height=7, fig.width=5}
+plot_grid(logfit_plot, social_group_curves, movrates_used, nrow = 3, rel_heights = c(2,2,1), labels = "AUTO")
 
 
 ggsave2(filename = "Ch1_movement_rates/Figures/Figure2.png")
@@ -349,6 +353,7 @@ cp.summ.df %>%
 
 Importance of the outliers here
 
+
 ```{r}
 disp_df %>%
   group_by(., model) %>%
@@ -377,7 +382,7 @@ plot_grid(p_dispersal, p_dispersion)
 ```
 
 
-# Figure x - seed dispersal kernel parameters
+# Figure 5 - seed dispersal kernel parameters
 Here we are using the distance of each seed
 
 ```{r}
@@ -437,86 +442,6 @@ plot_grid(weib_shape, weib_scale)
 ```
 
 
-
-## Variation 2 - violin plot with all 1000 of the parameter fits
-
-```{r}
-joint_weib %>%
-  group_by(model) %>%
-  sample_n(., 1000) %>%
-  ggplot(., aes(x = model, y = est.shape)) +
-  geom_violin() +
-  # scale_color_manual(values = c("black", mycols)) +
-  # geom_boxplot(width = 0.01) +
-  # geom_point(color = "grey", alpha = 0.5) +
-  # stat_summary(fun.data=mean_sdl, mult=1,
-  #              geom="pointrange", color="black") +
-  geom_jitter(position = position_jitter(0.1)) +
-  geom_hline(aes(yintercept = 1), lty = "dashed") +
-  labs(title = "Shape") +
-  #scale_y_continuous(limits = c(0, 2)) +
-  theme_bw() -> weib_shape
-
-joint_weib %>%
-  group_by(model) %>%
-  sample_n(., 1000) %>%
-  ggplot(., aes(x = model, y = est.scale)) +
-  geom_violin() +
-  # scale_color_manual(values = c("black", mycols)) +
-  # geom_boxplot(width = 0.01) +
-  # geom_point(color = "grey", alpha = 0.5) +
-  # stat_summary(fun.data=mean_sdl, mult=1,
-  #              geom="pointrange", color="black") +
-  geom_jitter(position = position_jitter(0.1)) +
-  labs(title = "Scale") +
-  theme_bw() -> weib_scale
-
-plot_grid(weib_shape, weib_scale)
-
-# ggsave2(filename = "Ch1_movement_rates/Figures/weib_plot.png")
-
-```
-
-## Variation 3 - boxplot with all the fits, 1000
-
-```{r}
-joint_weib %>%
-  group_by(model) %>%
-  sample_n(., 1000) %>%
-  ggplot(., aes(x = model, y = est.shape)) +
-  geom_boxplot() +
-  # geom_violin() +
-  # scale_color_manual(values = c("black", mycols)) +
-  # geom_boxplot(width = 0.01) +
-  # geom_point(color = "grey", alpha = 0.5) +
-  # stat_summary(fun.data=mean_sdl, mult=1,
-  #              geom="pointrange", color="black") +
-  #geom_jitter(position = position_jitter(0.1)) +
-  geom_hline(aes(yintercept = 1), lty = "dashed") +
-  labs(title = "Shape") +
-  #scale_y_continuous(limits = c(0, 2)) +
-  theme_bw() -> weib_shape
-
-joint_weib %>%
-  group_by(model) %>%
-  sample_n(., 1000) %>%
-  ggplot(., aes(x = model, y = est.scale)) +
-  geom_boxplot() +
-  #geom_violin() +
-  # scale_color_manual(values = c("black", mycols)) +
-  # geom_boxplot(width = 0.01) +
-  # geom_point(color = "grey", alpha = 0.5) +
-  # stat_summary(fun.data=mean_sdl, mult=1,
-  #              geom="pointrange", color="black") +
-  #geom_jitter(position = position_jitter(0.1)) +
-  labs(title = "Scale") +
-  theme_bw() -> weib_scale
-
-plot_grid(weib_shape, weib_scale)
-
-# ggsave2(filename = "Ch1_movement_rates/Figures/weib_plot.png")
-
-```
 
 ```{r eval=FALSE}
 
