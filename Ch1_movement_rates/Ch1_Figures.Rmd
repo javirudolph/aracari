@@ -357,7 +357,7 @@ Importance of the outliers here
 ```{r}
 disp_df %>%
   group_by(., model) %>%
-  sample_n(., 5000) %>%
+  #sample_n(., 5000) %>%
   ggplot(., aes(y = dsprsn, x = model)) +
   geom_boxplot() +
   #geom_point(color = "grey", alpha = 0.5) +
@@ -367,7 +367,7 @@ disp_df %>%
 
 disp_df %>%
   group_by(., model) %>%
-  sample_n(., 5000) %>%
+  #sample_n(., 5000) %>%
   ggplot(., aes(y = av.disp, x = model)) +
   geom_boxplot() +
   #geom_point(color = "grey", alpha = 0.5) +
@@ -380,6 +380,46 @@ plot_grid(p_dispersal, p_dispersion)
 # ggsave2(filename = "Ch1_movement_rates/Figures/Figure4.png")
 
 ```
+
+
+# Idea for dispersal and dispersion
+Too many points, since we have 500k seeds, take 2%
+
+```{r fig.height=12}
+
+
+points_plot <- function(seed.data, s.size = 1000, xylims=1250, lalpha = 0.3){
+  seed.data %>% 
+    drop_na(s.id) %>% 
+    mutate(ov500 = ifelse(disp <500, "non", "ldd")) %>% 
+    sample_n(s.size) %>% 
+      ggplot(., aes(x = xloc, y = yloc, color = ov500)) +
+      geom_point(alpha = lalpha) +
+      coord_equal(xlim = c(-xylims, xylims), ylim = c(-xylims, xylims)) +
+      theme_bw()
+  
+}
+
+A <- points_plot(seed.data = cp.df)
+B <- points_plot(seed.data = pp.df)
+C <- points_plot(seed.data = np.df)
+
+plot_grid(A, B, C, nrow = 3)
+
+
+# To do:
+# Remove xy labels
+# change colors so only over 500 shows blue
+# remove legends
+# Add boxplots for dispersion next to it
+# Am I adding dispersal?
+# For final figure increase sample size to 50,000 so we have 10% of the data visualized.
+
+
+```
+
+
+
 
 
 # Figure 5 - seed dispersal kernel parameters
@@ -437,6 +477,46 @@ joint_weib %>%
 plot_grid(weib_shape, weib_scale)
 
 #ggsave2(filename = "Ch1_movement_rates/Figures/Figure5.png")
+
+```
+
+```{r}
+library(kde1d)
+
+
+# Kernel density estimation:
+
+cp.shape.kde <- kde1d(weib.boot.cp$est.shape)
+pp.shape.kde <- kde1d(weib.boot.pp$est.shape)
+np.shape.kde <- kde1d(weib.boot.np$est.shape)
+
+cp.scale.kde <- kde1d(weib.boot.cp$est.scale)
+pp.scale.kde <- kde1d(weib.boot.pp$est.scale)
+np.scale.kde <- kde1d(weib.boot.np$est.scale)
+
+
+CIs.cp.shape <- qkde1d(p=c(0.025,0.5, 0.975), cp.shape.kde)
+CIs.pp.shape <- qkde1d(p=c(0.025,0.5, 0.975), pp.shape.kde)
+CIs.np.shape <- qkde1d(p=c(0.025,0.5, 0.975), np.shape.kde)
+
+CIs.cp.scale <- qkde1d(p=c(0.025,0.5, 0.975), cp.scale.kde)
+CIs.pp.scale <- qkde1d(p=c(0.025,0.5, 0.975), pp.scale.kde)
+CIs.np.scale <- qkde1d(p=c(0.025,0.5, 0.975), np.scale.kde)
+
+# The proportion of shape parameter values above the sampling distribution is 
+prop.above1.10.cp.shape <- 1-pkde1d(q=1.10, cp.shape.kde)
+prop.above1.10.pp.shape <- 1-pkde1d(q=1.10, pp.shape.kde)
+prop.above1.10.np.shape <- 1-pkde1d(q=1.10, np.shape.kde)
+
+
+plot(cp.shape.kde$grid_points, cp.shape.kde$values, type="l", lwd=2, bty="l", col="red", ylim = c(0,4))
+lines(pp.shape.kde$grid_points, pp.shape.kde$values, col="blue")
+lines(np.shape.kde$grid_points, np.shape.kde$values, col="black")
+
+plot(cp.scale.kde$grid_points, cp.scale.kde$values, type="l", lwd=2, bty="l", col="red", ylim = c(0,0.04))
+lines(pp.scale.kde$grid_points, pp.scale.kde$values, col="blue")
+lines(np.scale.kde$grid_points, np.scale.kde$values, col="black")
+
 
 ```
 
