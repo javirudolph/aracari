@@ -40,7 +40,7 @@ for(j in 1:n.boots){
   weib.boot.cp <- rbind.data.frame(weib.boot.cp, prms.weib %>% mutate(boot = j))
 }
 
-save(weib.boot.cp, file = "Ch1_movement_rates/sims_backup/weib_cp.RData")
+#save(weib.boot.cp, file = "Ch1_movement_rates/sims_backup/weib_cp.RData")
 
 ## PP Kernel ---------------------------------------------------------------------
 n.boots <- 1000
@@ -66,7 +66,7 @@ for(j in 1:n.boots){
   weib.boot.pp <- rbind.data.frame(weib.boot.pp, prms.weib %>% mutate(boot = j))
 }
 
-save(weib.boot.pp, file = "Ch1_movement_rates/sims_backup/weib_pp.RData")
+#save(weib.boot.pp, file = "Ch1_movement_rates/sims_backup/weib_pp.RData")
 
 
 ## NP Kernel ------------------------------------------------------------------
@@ -90,7 +90,7 @@ for(j in 1:n.boots){
   weib.boot.np <- rbind.data.frame(weib.boot.np, prms.weib %>% mutate(boot = j))
 }
 
-save(weib.boot.np, file = "Ch1_movement_rates/sims_backup/weib_np.RData")
+#save(weib.boot.np, file = "Ch1_movement_rates/sims_backup/weib_np.RData")
 
 
 # Long distance dispersal percentage ------------------
@@ -159,7 +159,7 @@ disp_table <- data.frame(
             paste0(signif(calc_ldd(pp.seed, thresh = 100)*100, 4), "%"),
             paste0(signif(calc_ldd(np.seed, thresh = 100)*100, 4), "%")))
 
-write.csv(disp_table, "Ch1_movement_rates/Figures/table2.csv")
+#write.csv(disp_table, "Ch1_movement_rates/Figures/table2.csv")
 
 # weibull_table <- data.frame(
 #   Weibull_Shape = c(paste0(signif(null_weibull$estimate[1], 4), " (", signif(null_weibull$sd[1], 2), ")"),
