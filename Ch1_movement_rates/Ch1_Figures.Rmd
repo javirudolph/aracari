@@ -345,91 +345,98 @@ cp.summ.df %>%
               dplyr::select(av.disp, dsprsn, model)) %>%
   bind_rows(., np.summ.df %>%
               dplyr::select(av.disp, dsprsn,  model)) %>% 
-  mutate(model = factor(model, levels = c("cp", "pp","np"))) -> disp_df
+  mutate(model = toupper(model),
+         model = factor(model, levels = c("CP", "PP","NP"))) -> disp_df
 ```
 
 
 # Figure 4 - average dispersal and dispersion per run  
 
-Importance of the outliers here
+Build a table with quantiles or summary stats for the dispersal and dispersion per run. Dispersion tells us how spread appart the seeds are from each other during a simulation. I would expect that for individuals with higher movement rates dispersion might be higher for their simulation runs too. This because a higher movement rate would extend the tail of the exponential distribution for movement distances, and thus have a larger range for movement distances, with a higher probability larger movement distances. So, during a simulation, a bird would see itself taking larger steps if they have a larger movement rate. Thus, their seeds would potentially be distributed more far apart. 
 
 
 ```{r}
-disp_df %>%
-  group_by(., model) %>%
-  sample_n(., 50000) %>%
-  ggplot(., aes(y = dsprsn, x = model)) +
-  geom_boxplot() +
-  #geom_point(color = "grey", alpha = 0.5) +
-  labs(title = "Dispersion", y = "Dispersion in meters", x = "Model") +
-  theme_bw() +
-  theme(legend.position = "none") -> p_dispersion
+disp_df %>% 
+  group_by(model) %>% 
+  summarise(av.disp = round(quantile(av.disp, c(0, 0.25, 0.5, 0.75, 0.9, 1)), digits = 1),
+            dsprsn = round(quantile(dsprsn, c(0, 0.25, 0.5, 0.75, 0.9, 1)),digits = 1),
+            q = c("min", 0.25, 0.5, 0.75, 0.9, "max")) %>% 
+  pivot_longer(cols = c(av.disp, dsprsn), names_to = "property", values_to = "value") %>% 
+  pivot_wider(., names_from = q, values_from = value) %>% 
+  arrange(., property) -> qtable_models
 
-disp_df %>%
-  group_by(., model) %>%
-  sample_n(., 50000) %>%
-  ggplot(., aes(y = av.disp, x = model)) +
-  geom_boxplot() +
-  #geom_point(color = "grey", alpha = 0.5) +
-  labs(title = "Average dispersal", y = "Dispersal in meters", x = "Model") +
-  theme_bw() +
-  theme(legend.position = "none") -> p_dispersal
-
-plot_grid(p_dispersal, p_dispersion)
-
-# ggsave2(filename = "Ch1_movement_rates/Figures/Figure4.png")
-
+qtable_models
 ```
 
 
-# Idea for dispersal and dispersion
-Too many points, since we have 500k seeds, take 2%
+### Idea for dispersal and dispersion 
 
-```{r}
+Too many points, since we have 500k seeds, show only a percentage.
 
-points_plot <- function(seed.data, summ.data, s.size = 25, xylims=1250, lalpha = 0.5){
+
+```{r fig.width=9, fig.height=3.5}
+
+points_plot <- function(seed.data, summ.data, s.size = 1000, xylims=1250, lalpha = 0.5, scenario = NULL){
+  
   seed.data %>% 
     drop_na(s.id) %>% 
-    #mutate(dispcat = ifelse(disp <500, "non", "ldd")) %>% 
-    slice_head(., n = s.size) %>% 
-    #sample_n(s.size) %>% 
-      ggplot(., aes(x = xloc, y = yloc, color = run)) +
+    mutate(dispcat = ifelse(disp <500, "non", "ldd")) %>% 
+    #slice_head(., n = s.size) %>% 
+    sample_n(s.size) %>% 
+      ggplot(., aes(x = xloc, y = yloc, color = dispcat)) +
       geom_point(alpha = lalpha) +
-      #scale_color_manual(values = c(my.cols1[6], my.cols1[7])) +
+      labs(subtitle = scenario) +
+      scale_color_manual(values = c(my.cols1[6], my.cols1[7])) +
       coord_equal(xlim = c(-xylims, xylims), ylim = c(-xylims, xylims)) +
       theme_bw() +
       theme(legend.position = "none",
             axis.title = element_blank()) +
        NULL -> seedlocplot
 
-  summ.data %>%
-    #cp.summ.df %>%
-    #sample_n(s.size) %>%
-    slice_head(., n = s.size/5) %>%
-    #pivot_longer(., cols = c(dsprsn, av.disp)) %>%
-    #ggplot(., aes(x = name, y = value)) +
-    ggplot(., aes(y = dsprsn)) +
-    #geom_violin() +
-    #geom_jitter(position = position_jitter(0.1), alpha = lalpha) +
-    #geom_boxplot(width = 0.1) +
-    geom_point(aes(x=0, color = run)) +
-    lims(y = c(0, 650)) +
-    labs(y = "Dispersion in meters") +
-    theme_bw() +
-    NULL -> dispersionplot
-
-  plot_grid(seedlocplot, dispersionplot, ncol=2, rel_widths = c(2,1))
+  # summ.data %>%
+  #   #cp.summ.df %>%
+  #   sample_n(s.size) %>%
+  #   #slice_head(., n = s.size/5) %>%
+  #   #pivot_longer(., cols = c(dsprsn, av.disp)) %>%
+  #   #ggplot(., aes(x = name, y = value)) +
+  #   ggplot(., aes(y = dsprsn)) +
+  #   #geom_violin() +
+  #   #geom_jitter(position = position_jitter(0.1), alpha = lalpha) +
+  #   geom_boxplot(width = 0.1) +
+  #   #geom_point(aes(x=0, color = run)) +
+  #   lims(y = c(0, 650)) +
+  #   labs(y = "Dispersion in meters") +
+  #   theme_bw() +
+  #   NULL -> dispersionplot
+  # 
+  # summ.data %>%
+  #   #cp.summ.df %>%
+  #   sample_n(s.size) %>%
+  #   #slice_head(., n = s.size/5) %>%
+  #   #pivot_longer(., cols = c(dsprsn, av.disp)) %>%
+  #   #ggplot(., aes(x = name, y = value)) +
+  #   ggplot(., aes(y = av.disp)) +
+  #   #geom_violin() +
+  #   #geom_jitter(position = position_jitter(0.1), alpha = lalpha) +
+  #   geom_boxplot(width = 0.1) +
+  #   #geom_point(aes(x=0, color = run)) +
+  #   lims(y = c(0, 1300)) +
+  #   labs(y = "Dispersal in meters") +
+  #   theme_bw() +
+  #   NULL -> dispersalplot
+  # 
+  # plot_grid(seedlocplot, dispersalplot, dispersionplot, ncol=3, rel_widths = c(2,1,1))
   # 
 }
 
-A <- points_plot(seed.data = cp.df, summ.data = cp.summ.df)
+A <- points_plot(seed.data = cp.df, summ.data = cp.summ.df, scenario = "CP")
 
-A
+#A
 
-# B <- points_plot(seed.data = pp.df, summ.data = pp.summ.df)
-# C <- points_plot(seed.data = np.df, summ.data = np.summ.df)
-# 
-# plot_grid(A, B, C, ncol = 3)
+B <- points_plot(seed.data = pp.df, summ.data = pp.summ.df, scenario = "PP")
+C <- points_plot(seed.data = np.df, summ.data = np.summ.df, scenario = "NP")
+
+seedplots2d <- plot_grid(A, B, C, ncol = 3)
 
 
 # To do:
@@ -443,6 +450,72 @@ A
 
 ```
 
+```{r fig.width=9, fig.height=4}
+
+disp_df %>%
+  group_by(., model) %>%
+  sample_n(., 50000) %>%
+  #mutate(dispcat = ifelse(disp <500, "non", "ldd")) %>%
+  ggplot(., aes(y = dsprsn, x = model)) +
+  geom_boxplot() +
+  #geom_point(color = "grey", alpha = 0.5) +
+  #scale_color_manual(values = c(my.cols1[6], my.cols1[7])) +
+  labs(y = "Dispersion in meters") +
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.title = element_blank()) -> p_dispersion
+
+disp_df %>%
+  group_by(., model) %>%
+  sample_n(., 50000) %>%
+  mutate(dispcat = ifelse(av.disp <500, "non", "ldd")) %>%
+  ggplot(., aes(y = av.disp, x = model, color = dispcat)) +
+  geom_boxplot() +
+  geom_point(color = "grey", alpha = 0.5) +
+  scale_color_manual(values = c(my.cols1[6], my.cols1[7])) +
+  labs(y = "Average dispersal in meters") +
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.title = element_blank()) -> p_dispersal
+
+plot_grid(p_dispersal, p_dispersion)
+
+# ggsave2(filename = "Ch1_movement_rates/Figures/Figure4.png")
+
+```
+
+
+
+
+
+
+```{r}
+cp.df %>% 
+  drop_na(s.id) %>% 
+  left_join(., cp.summ.df) -> testdata
+
+testdata %>% 
+  sample_n(1000) %>% 
+  ggplot(., aes(x = xloc, y = yloc, color = dsprsn)) +
+  geom_point() +
+  scale_color_viridis_c(direction = -1) +
+  theme_bw()
+
+cp.summ.df %>% 
+  sample_n(1000) %>% 
+  ggplot(., aes(y = dsprsn, x = av.disp)) +
+  geom_point()
+
+
+cp.summ.df %>% 
+  sample_n(100) %>% 
+  ggplot(., aes(x = x, y = y, color = dsprsn)) +
+  scale_color_gradient(low = "green", high = "blue") +
+  geom_point(alpha = 0.8) +
+  coord_equal() +
+  theme_bw()
+
+```
 
 
 
