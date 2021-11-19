@@ -376,7 +376,7 @@ Too many points, since we have 500k seeds, show only a percentage.
 
 ```{r fig.width=9, fig.height=3.5}
 
-points_plot <- function(seed.data, summ.data, s.size = 1000, xylims=1250, lalpha = 0.5, scenario = NULL){
+points_plot <- function(seed.data, summ.data, s.size = 5000, xylims=1250, lalpha = 0.5, scenario = NULL, twoplots = FALSE){
   
   seed.data %>% 
     drop_na(s.id) %>% 
@@ -385,67 +385,46 @@ points_plot <- function(seed.data, summ.data, s.size = 1000, xylims=1250, lalpha
     sample_n(s.size) %>% 
       ggplot(., aes(x = xloc, y = yloc, color = dispcat)) +
       geom_point(alpha = lalpha) +
+      scale_color_manual(values = c(my.cols1[6], my.cols1[7])) +
+      geom_text(label = scenario, x = -1000, y = -1000, color = "black") +
+      coord_equal(xlim = c(-xylims, xylims), ylim = c(-xylims, xylims)) +
+      theme_bw() +
+      theme(legend.position = "none",
+            axis.title = element_blank()) +
+       NULL -> seedlocplot
+    
+    if(twoplots == TRUE){
+      
+          summ.data %>% 
+    #drop_na(s.id) %>% 
+    mutate(dispcat = ifelse(av.disp <500, "non", "ldd")) %>% 
+    #slice_head(., n = s.size) %>% 
+    sample_n(s.size*5) %>% 
+      ggplot(., aes(x = x, y = y, color = dispcat)) +
+      geom_point(alpha = lalpha) +
       labs(subtitle = scenario) +
       scale_color_manual(values = c(my.cols1[6], my.cols1[7])) +
       coord_equal(xlim = c(-xylims, xylims), ylim = c(-xylims, xylims)) +
       theme_bw() +
       theme(legend.position = "none",
             axis.title = element_blank()) +
-       NULL -> seedlocplot
-
-  # summ.data %>%
-  #   #cp.summ.df %>%
-  #   sample_n(s.size) %>%
-  #   #slice_head(., n = s.size/5) %>%
-  #   #pivot_longer(., cols = c(dsprsn, av.disp)) %>%
-  #   #ggplot(., aes(x = name, y = value)) +
-  #   ggplot(., aes(y = dsprsn)) +
-  #   #geom_violin() +
-  #   #geom_jitter(position = position_jitter(0.1), alpha = lalpha) +
-  #   geom_boxplot(width = 0.1) +
-  #   #geom_point(aes(x=0, color = run)) +
-  #   lims(y = c(0, 650)) +
-  #   labs(y = "Dispersion in meters") +
-  #   theme_bw() +
-  #   NULL -> dispersionplot
-  # 
-  # summ.data %>%
-  #   #cp.summ.df %>%
-  #   sample_n(s.size) %>%
-  #   #slice_head(., n = s.size/5) %>%
-  #   #pivot_longer(., cols = c(dsprsn, av.disp)) %>%
-  #   #ggplot(., aes(x = name, y = value)) +
-  #   ggplot(., aes(y = av.disp)) +
-  #   #geom_violin() +
-  #   #geom_jitter(position = position_jitter(0.1), alpha = lalpha) +
-  #   geom_boxplot(width = 0.1) +
-  #   #geom_point(aes(x=0, color = run)) +
-  #   lims(y = c(0, 1300)) +
-  #   labs(y = "Dispersal in meters") +
-  #   theme_bw() +
-  #   NULL -> dispersalplot
-  # 
-  # plot_grid(seedlocplot, dispersalplot, dispersionplot, ncol=3, rel_widths = c(2,1,1))
-  # 
+       NULL -> summaryplot
+      
+      plot_grid(seedlocplot, summaryplot, ncol = 2)
+    }
+  
+  else{seedlocplot}
 }
 
+# A <- points_plot(seed.data = cp.df, summ.data = cp.summ.df, scenario = "CP", twoplots = TRUE)
+# A
+
 A <- points_plot(seed.data = cp.df, summ.data = cp.summ.df, scenario = "CP")
-
-#A
-
 B <- points_plot(seed.data = pp.df, summ.data = pp.summ.df, scenario = "PP")
 C <- points_plot(seed.data = np.df, summ.data = np.summ.df, scenario = "NP")
 
-seedplots2d <- plot_grid(A, B, C, ncol = 3)
-
-
-# To do:
-# Remove xy labels
-# change colors so only over 500 shows blue
-# remove legends
-# Add boxplots for dispersion next to it
-# Am I adding dispersal?
-# For final figure increase sample size to 50,000 so we have 10% of the data visualized.
+seedplots2d <- plot_grid(A, B, C, ncol = 3, labels = "A")
+#seedplots2d
 
 
 ```
@@ -454,7 +433,7 @@ seedplots2d <- plot_grid(A, B, C, ncol = 3)
 
 disp_df %>%
   group_by(., model) %>%
-  sample_n(., 50000) %>%
+  sample_n(., 5000) %>%
   #mutate(dispcat = ifelse(disp <500, "non", "ldd")) %>%
   ggplot(., aes(y = dsprsn, x = model)) +
   geom_boxplot() +
@@ -463,22 +442,30 @@ disp_df %>%
   labs(y = "Dispersion in meters") +
   theme_bw() +
   theme(legend.position = "none",
-        axis.title = element_blank()) -> p_dispersion
+        axis.title.x = element_blank()) -> p_dispersion
 
 disp_df %>%
   group_by(., model) %>%
-  sample_n(., 50000) %>%
-  mutate(dispcat = ifelse(av.disp <500, "non", "ldd")) %>%
-  ggplot(., aes(y = av.disp, x = model, color = dispcat)) +
+  sample_n(., 5000) %>%
+  #mutate(dispcat = ifelse(av.disp <500, "non", "ldd")) %>%
+  ggplot(., aes(y = av.disp, x = model
+                #, color = dispcat
+                )) +
   geom_boxplot() +
-  geom_point(color = "grey", alpha = 0.5) +
+  #geom_point(color = "grey", alpha = 0.5) +
   scale_color_manual(values = c(my.cols1[6], my.cols1[7])) +
   labs(y = "Average dispersal in meters") +
   theme_bw() +
   theme(legend.position = "none",
-        axis.title = element_blank()) -> p_dispersal
+        axis.title.x = element_blank()) -> p_dispersal
 
-plot_grid(p_dispersal, p_dispersion)
+disp2_plot <- plot_grid(p_dispersal, p_dispersion, ncol = 2, labels = c("B", "C"))
+#disp2_plot
+
+```
+
+```{r fig.height=9}
+plot_grid(seedplots2d, disp2_plot, nrow = 2)
 
 # ggsave2(filename = "Ch1_movement_rates/Figures/Figure4.png")
 
