@@ -365,7 +365,7 @@ disp_df %>%
   pivot_wider(., names_from = q, values_from = value) %>% 
   arrange(., property) -> qtable_models
 
-qtable_models
+knitr::kable(qtable_models)
 ```
 
 
@@ -464,7 +464,7 @@ disp2_plot <- plot_grid(p_dispersal, p_dispersion, ncol = 2, labels = c("B", "C"
 
 ```
 
-```{r fig.height=9}
+```{r fig.height=7.5, fig.width=9}
 plot_grid(seedplots2d, disp2_plot, nrow = 2)
 
 # ggsave2(filename = "Ch1_movement_rates/Figures/Figure4.png")
