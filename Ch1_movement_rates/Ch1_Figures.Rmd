@@ -53,6 +53,7 @@ ids <- ptpl %>% distinct(., Bird_ID, fam_g)
 
 # Color palette ----------------------------------------
 my.cols1 <- c("#23262f","#717492","#b3a82a","#c94f21","#980012","#0d907a","#b9bec3")
+scales::show_col(my.cols1)
 
 # Fit a lognormal to the distribution of movement rates
 
@@ -376,7 +377,7 @@ Too many points, since we have 500k seeds, show only a percentage.
 
 ```{r fig.width=9, fig.height=3.5}
 
-points_plot <- function(seed.data, summ.data, s.size = 5000, xylims=1250, lalpha = 0.5, scenario = NULL, twoplots = FALSE){
+points_plot <- function(seed.data, summ.data, s.size = 50000, xylims=1250, lalpha = 0.5, scenario = NULL, twoplots = FALSE){
   
   seed.data %>% 
     drop_na(s.id) %>% 
@@ -433,7 +434,7 @@ seedplots2d <- plot_grid(A, B, C, ncol = 3, labels = "A")
 
 disp_df %>%
   group_by(., model) %>%
-  sample_n(., 5000) %>%
+  sample_n(., 10000) %>%
   #mutate(dispcat = ifelse(disp <500, "non", "ldd")) %>%
   ggplot(., aes(y = dsprsn, x = model)) +
   geom_boxplot() +
@@ -446,7 +447,7 @@ disp_df %>%
 
 disp_df %>%
   group_by(., model) %>%
-  sample_n(., 5000) %>%
+  sample_n(., 10000) %>%
   #mutate(dispcat = ifelse(av.disp <500, "non", "ldd")) %>%
   ggplot(., aes(y = av.disp, x = model
                 #, color = dispcat
@@ -474,39 +475,6 @@ plot_grid(seedplots2d, disp2_plot, nrow = 2)
 
 
 
-
-
-```{r}
-cp.df %>% 
-  drop_na(s.id) %>% 
-  left_join(., cp.summ.df) -> testdata
-
-testdata %>% 
-  sample_n(1000) %>% 
-  ggplot(., aes(x = xloc, y = yloc, color = dsprsn)) +
-  geom_point() +
-  scale_color_viridis_c(direction = -1) +
-  theme_bw()
-
-cp.summ.df %>% 
-  sample_n(1000) %>% 
-  ggplot(., aes(y = dsprsn, x = av.disp)) +
-  geom_point()
-
-
-cp.summ.df %>% 
-  sample_n(100) %>% 
-  ggplot(., aes(x = x, y = y, color = dsprsn)) +
-  scale_color_gradient(low = "green", high = "blue") +
-  geom_point(alpha = 0.8) +
-  coord_equal() +
-  theme_bw()
-
-```
-
-
-
-
 # Figure 5 - seed dispersal kernel parameters
 Here we are using the distance of each seed
 
@@ -522,16 +490,18 @@ weib.boot.cp %>%
               dplyr::select(., est.shape, est.scale, boot, model)) -> joint_weib
 
 joint_weib %>% 
-  mutate(model = factor(model, levels = c("cp", "pp",
-                                          "np"))) -> joint_weib
+  mutate(model = toupper(model),
+         model = factor(model, levels = c("CP", "PP","NP"))) -> joint_weib
 
 ```
 
 
+The violin plot here is made with all the data, the jitter points are a random sample of 200
+
 ```{r}
 joint_weib %>%
   group_by(model) %>%
-  sample_n(., 200) %>%
+  #sample_n(., 100) %>%
   ggplot(., aes(x = model, y = est.shape)) +
   geom_violin() +
   # scale_color_manual(values = c("black", mycols)) +
@@ -539,15 +509,20 @@ joint_weib %>%
   # geom_point(color = "grey", alpha = 0.5) +
   # stat_summary(fun.data=mean_sdl, mult=1,
   #              geom="pointrange", color="black") +
-  geom_jitter(position = position_jitter(0.1)) +
+  geom_jitter(data = joint_weib %>% 
+                group_by(model) %>% 
+                sample_n(200),
+              position = position_jitter(0.1)) +
   geom_hline(aes(yintercept = 1), lty = "dashed") +
-  labs(title = "Shape") +
+  labs(y = "Shape") +
   #scale_y_continuous(limits = c(0, 2)) +
-  theme_bw() -> weib_shape
+  theme_bw() +
+  theme(axis.title.x = element_blank()) +
+  NULL -> weib_shape
 
 joint_weib %>%
   group_by(model) %>%
-  sample_n(., 200) %>%
+  #sample_n(., 200) %>%
   ggplot(., aes(x = model, y = est.scale)) +
   geom_violin() +
   # scale_color_manual(values = c("black", mycols)) +
@@ -555,9 +530,14 @@ joint_weib %>%
   # geom_point(color = "grey", alpha = 0.5) +
   # stat_summary(fun.data=mean_sdl, mult=1,
   #              geom="pointrange", color="black") +
-  geom_jitter(position = position_jitter(0.1)) +
-  labs(title = "Scale") +
-  theme_bw() -> weib_scale
+  geom_jitter(data = joint_weib %>% 
+                group_by(model) %>% 
+                sample_n(200),
+              position = position_jitter(0.1)) +
+  labs(y = "Scale") +
+  theme_bw() +
+  theme(axis.title.x = element_blank()) +
+  NULL-> weib_scale
 
 plot_grid(weib_shape, weib_scale)
 
@@ -565,7 +545,10 @@ plot_grid(weib_shape, weib_scale)
 
 ```
 
-```{r}
+
+Kernel density estimation plots with kde1d
+
+```{r fig.width=9, fig.height=3.5}
 library(kde1d)
 
 
@@ -588,19 +571,85 @@ CIs.cp.scale <- qkde1d(p=c(0.025,0.5, 0.975), cp.scale.kde)
 CIs.pp.scale <- qkde1d(p=c(0.025,0.5, 0.975), pp.scale.kde)
 CIs.np.scale <- qkde1d(p=c(0.025,0.5, 0.975), np.scale.kde)
 
+rbind(CIs.cp.shape, CIs.pp.shape, CIs.np.shape, CIs.cp.scale, CIs.pp.scale, CIs.np.scale) %>% 
+  as.data.frame() %>% 
+  rename(low = V1, mean = V2, high = V3) %>%
+  tibble::rownames_to_column("model") %>% 
+  mutate(param = stringr::str_sub(model, start = 8),
+         model =stringr::str_sub(model, start = 5, end = 6),
+         model = toupper(model),
+         model = factor(model, levels = c("CP", "PP", "NP"))) -> CIdata
+
+CIdata %>% 
+  filter(., param == "shape") %>% 
+  ggplot(., aes(x  = model, y = mean)) +
+  geom_point() +
+  geom_segment(aes(y = low, yend = high, x = model, xend = model)) +
+  labs(y = "Value", x = "Shape") +
+  #scale_color_manual(values = my.cols1[c(1,4,6)]) +
+  theme_bw() +
+  theme(legend.title = element_blank(),
+        legend.position = c(0.9, 0.2)) -> ShapeCI
+
+CIdata %>% 
+  filter(., param == "scale") %>% 
+  ggplot(., aes(x  = model, y = mean)) +
+  geom_point() +
+  geom_segment(aes(y = low, yend = high, x = model, xend = model)) +
+  labs(y = "Value", x = "Scale") +
+  #scale_color_manual(values = my.cols1[c(1,4,6)]) +
+  theme_bw() +
+  theme(legend.title = element_blank(),
+        legend.position = c(0.9, 0.2)) -> ScaleCI
+
+plot_grid(ShapeCI, ScaleCI)
+
 # The proportion of shape parameter values above the sampling distribution is 
 prop.above1.10.cp.shape <- 1-pkde1d(q=1.10, cp.shape.kde)
 prop.above1.10.pp.shape <- 1-pkde1d(q=1.10, pp.shape.kde)
 prop.above1.10.np.shape <- 1-pkde1d(q=1.10, np.shape.kde)
 
+```
 
-plot(cp.shape.kde$grid_points, cp.shape.kde$values, type="l", lwd=2, bty="l", col="red", ylim = c(0,4))
-lines(pp.shape.kde$grid_points, pp.shape.kde$values, col="blue")
-lines(np.shape.kde$grid_points, np.shape.kde$values, col="black")
+```{r fig.width=9}
+data.frame(grid_points = cp.shape.kde$grid_points, values = cp.shape.kde$values, model = "CP", param = "shape") %>% 
+  bind_rows(., data.frame(grid_points = pp.shape.kde$grid_points, values = pp.shape.kde$values, model = "PP", param = "shape")) %>% 
+  bind_rows(., data.frame(grid_points = np.shape.kde$grid_points, values = np.shape.kde$values, model = "NP", param = "shape")) %>% 
+  bind_rows(., data.frame(grid_points = cp.scale.kde$grid_points, values = cp.scale.kde$values, model = "CP", param = "scale") %>% 
+  bind_rows(., data.frame(grid_points = pp.scale.kde$grid_points, values = pp.scale.kde$values, model = "PP", param = "scale")) %>% 
+  bind_rows(., data.frame(grid_points = np.scale.kde$grid_points, values = np.scale.kde$values, model = "NP", param = "scale"))) %>% 
+  mutate(model = factor(model, levels = c("CP", "PP", "NP"))) -> kerneldata
 
-plot(cp.scale.kde$grid_points, cp.scale.kde$values, type="l", lwd=2, bty="l", col="red", ylim = c(0,0.04))
-lines(pp.scale.kde$grid_points, pp.scale.kde$values, col="blue")
-lines(np.scale.kde$grid_points, np.scale.kde$values, col="black")
+
+kerneldata %>% 
+  filter(., param == "shape") %>% 
+  ggplot(., aes(x = grid_points, y = values, color = model)) +
+  geom_line() +
+  labs(y = "Density", x = "Shape") +
+  scale_color_manual(values = my.cols1[c(1,4,6)]) +
+  theme_bw() +
+  theme(legend.title = element_blank(),
+        legend.position = c(0.9, 0.2)) -> shapeplot
+
+kerneldata %>% 
+  filter(., param == "scale") %>% 
+  ggplot(., aes(x = grid_points, y = values, color = model)) +
+  geom_line() +
+  labs(y = "Density", x = "Scale") +
+  scale_color_manual(values = my.cols1[c(1,4,6)]) +
+  theme_bw() +
+  theme(legend.title = element_blank(),
+        legend.position = c(0.9, 0.2)) -> scaleplot
+
+plot_grid(shapeplot, scaleplot, ncol = 2)
+
+# plot(cp.shape.kde$grid_points, cp.shape.kde$values, type="l", lwd=2, bty="l", col="red", ylim = c(0,4))
+# lines(pp.shape.kde$grid_points, pp.shape.kde$values, col="blue")
+# lines(np.shape.kde$grid_points, np.shape.kde$values, col="black")
+# 
+# plot(cp.scale.kde$grid_points, cp.scale.kde$values, type="l", lwd=2, bty="l", col="red", ylim = c(0,0.04))
+# lines(pp.scale.kde$grid_points, pp.scale.kde$values, col="blue")
+# lines(np.scale.kde$grid_points, np.scale.kde$values, col="black")
 
 
 ```
