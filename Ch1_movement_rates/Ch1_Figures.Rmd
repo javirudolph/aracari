@@ -357,7 +357,7 @@ Importance of the outliers here
 ```{r}
 disp_df %>%
   group_by(., model) %>%
-  #sample_n(., 5000) %>%
+  sample_n(., 50000) %>%
   ggplot(., aes(y = dsprsn, x = model)) +
   geom_boxplot() +
   #geom_point(color = "grey", alpha = 0.5) +
@@ -367,7 +367,7 @@ disp_df %>%
 
 disp_df %>%
   group_by(., model) %>%
-  #sample_n(., 5000) %>%
+  sample_n(., 50000) %>%
   ggplot(., aes(y = av.disp, x = model)) +
   geom_boxplot() +
   #geom_point(color = "grey", alpha = 0.5) +
@@ -385,26 +385,51 @@ plot_grid(p_dispersal, p_dispersion)
 # Idea for dispersal and dispersion
 Too many points, since we have 500k seeds, take 2%
 
-```{r fig.height=12}
+```{r}
 
-
-points_plot <- function(seed.data, s.size = 1000, xylims=1250, lalpha = 0.3){
+points_plot <- function(seed.data, summ.data, s.size = 25, xylims=1250, lalpha = 0.5){
   seed.data %>% 
     drop_na(s.id) %>% 
-    mutate(ov500 = ifelse(disp <500, "non", "ldd")) %>% 
-    sample_n(s.size) %>% 
-      ggplot(., aes(x = xloc, y = yloc, color = ov500)) +
+    #mutate(dispcat = ifelse(disp <500, "non", "ldd")) %>% 
+    slice_head(., n = s.size) %>% 
+    #sample_n(s.size) %>% 
+      ggplot(., aes(x = xloc, y = yloc, color = run)) +
       geom_point(alpha = lalpha) +
+      #scale_color_manual(values = c(my.cols1[6], my.cols1[7])) +
       coord_equal(xlim = c(-xylims, xylims), ylim = c(-xylims, xylims)) +
-      theme_bw()
-  
+      theme_bw() +
+      theme(legend.position = "none",
+            axis.title = element_blank()) +
+       NULL -> seedlocplot
+
+  summ.data %>%
+    #cp.summ.df %>%
+    #sample_n(s.size) %>%
+    slice_head(., n = s.size/5) %>%
+    #pivot_longer(., cols = c(dsprsn, av.disp)) %>%
+    #ggplot(., aes(x = name, y = value)) +
+    ggplot(., aes(y = dsprsn)) +
+    #geom_violin() +
+    #geom_jitter(position = position_jitter(0.1), alpha = lalpha) +
+    #geom_boxplot(width = 0.1) +
+    geom_point(aes(x=0, color = run)) +
+    lims(y = c(0, 650)) +
+    labs(y = "Dispersion in meters") +
+    theme_bw() +
+    NULL -> dispersionplot
+
+  plot_grid(seedlocplot, dispersionplot, ncol=2, rel_widths = c(2,1))
+  # 
 }
 
-A <- points_plot(seed.data = cp.df)
-B <- points_plot(seed.data = pp.df)
-C <- points_plot(seed.data = np.df)
+A <- points_plot(seed.data = cp.df, summ.data = cp.summ.df)
 
-plot_grid(A, B, C, nrow = 3)
+A
+
+# B <- points_plot(seed.data = pp.df, summ.data = pp.summ.df)
+# C <- points_plot(seed.data = np.df, summ.data = np.summ.df)
+# 
+# plot_grid(A, B, C, ncol = 3)
 
 
 # To do:
