@@ -910,9 +910,11 @@ fit$results
 
 # OR
 
+# To find the probability of exceeding 1000, 5000, or 10,000 meters based on the fitted ged 
 dist_range <- c(1000, 5000, 10000)
 pextRemes(fit, dist_range, lower.tail = FALSE)
 
+# Not sure this is right though. I want the conditional probability that a dispersal distance that is already over the threshold goes beyong 1000, 5000, and 10000 meters. 
 
 
 ```
