@@ -366,7 +366,7 @@ disp_df %>%
   pivot_wider(., names_from = q, values_from = value) %>% 
   arrange(., property) -> qtable_models
 
-knitr::kable(qtable_models)
+qtable_models
 ```
 
 
@@ -751,7 +751,7 @@ prop.above1.10.np.shape <- 1-pkde1d(q=1.10, np.shape.kde)
 
 ```
 
-```{r fig.width=9}
+```{r fig.width=10}
 data.frame(grid_points = cp.shape.kde$grid_points, values = cp.shape.kde$values, model = "CP", param = "shape") %>% 
   bind_rows(., data.frame(grid_points = pp.shape.kde$grid_points, values = pp.shape.kde$values, model = "PP", param = "shape")) %>% 
   bind_rows(., data.frame(grid_points = np.shape.kde$grid_points, values = np.shape.kde$values, model = "NP", param = "shape")) %>% 
@@ -844,4 +844,57 @@ knitr::kable(disp_table)
 ```
 
 
+### EVD generalized pareto results
+
+```{r}
+library(extRemes)
+
+```
+
+```{r fig.show='hide'}
+
+nint <- 70 # number of intervals. how many thresholds to try
+r <- c(0, 700) # range over which to try the thresholds
+nsamps <- 500 # random sample form the distances
+
+cp.df %>%
+  drop_na(., s.id) %>%
+  sample_n(., nsamps) -> cp.evd
+
+
+cp_threshplot <- threshrange.plot(cp.evd$disp, r = r, type = "GP", nint = nint)
+
+```
+
+```{r}
+as.data.frame(cp_threshplot) %>%
+  mutate(u.i = seq(r[1], r[2], length.out = nint)) -> cp_threshplot
+
+
+```
+
+
+```{r}
+a <- read.table("Ch1_movement_rates/dispdistancestest.txt")
+a
+
+
+threshrange.plot(a$V1, type = "GP", nint = 100, r = c(0,700))
+c <- mrlplot(a$V1)
+mrlplot(a$V1)
+
+max(c[,3])
+
+b <- decluster(a$V1, threshold = 170)
+
+threshrange.plot(b)
+
+fevd(b, threshold = 170, type = "GP")
+
+as.data.frame(c) -> d
+
+model <- lm(d$`Mean Excess`~1)
+confint(model, level = 0.9)
+
+```
 
