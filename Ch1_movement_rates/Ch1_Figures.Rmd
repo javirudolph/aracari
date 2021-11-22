@@ -381,13 +381,14 @@ points_plot <- function(seed.data, summ.data, s.size = 50000, xylims=1250, lalph
   
   seed.data %>% 
     drop_na(s.id) %>% 
-    mutate(dispcat = ifelse(disp <500, "non", "ldd")) %>% 
+    mutate(dispcat = ifelse(disp <150, "non", 
+                            ifelse(disp <500, "med", "ldd"))) %>% 
     #slice_head(., n = s.size) %>% 
     sample_n(s.size) %>% 
       ggplot(., aes(x = xloc, y = yloc, color = dispcat)) +
       geom_point(alpha = lalpha) +
-      scale_color_manual(values = c(my.cols1[6], my.cols1[7])) +
-      geom_text(label = scenario, x = -1000, y = -1000, color = "black") +
+      scale_color_manual(values = c(my.cols1[6], my.cols1[7], "black")) +
+      geom_text(label = scenario, x = -1100, y = -1100, color = "black") +
       coord_equal(xlim = c(-xylims, xylims), ylim = c(-xylims, xylims)) +
       theme_bw() +
       theme(legend.position = "none",
@@ -455,7 +456,7 @@ disp_df %>%
   geom_boxplot() +
   #geom_point(color = "grey", alpha = 0.5) +
   scale_color_manual(values = c(my.cols1[6], my.cols1[7])) +
-  labs(y = "Average dispersal in meters") +
+  labs(y = "Average dispersal per run in meters") +
   theme_bw() +
   theme(legend.position = "none",
         axis.title.x = element_blank()) -> p_dispersal
@@ -468,14 +469,15 @@ disp2_plot <- plot_grid(p_dispersal, p_dispersion, ncol = 2, labels = c("B", "C"
 ```{r fig.height=7.5, fig.width=9}
 plot_grid(seedplots2d, disp2_plot, nrow = 2)
 
-# ggsave2(filename = "Ch1_movement_rates/Figures/Figure4.png")
+ggsave2(filename = "Ch1_movement_rates/Figures/Figure4.png")
 
 ```
 
 
 
 
-# Figure 5 - seed dispersal kernel parameters
+# Figure 5 - All about the seed dispersal Kernels - Weibull 
+
 Here we are using the distance of each seed
 
 ```{r}
@@ -493,7 +495,24 @@ joint_weib %>%
   mutate(model = toupper(model),
          model = factor(model, levels = c("CP", "PP","NP"))) -> joint_weib
 
+### Calculate the mean and variance for these weibull distributions based on their estimated parameters
+
+meanvar.weibull <- function(shape, scale){
+  
+  meanweibull <- scale * gamma(1+(1/shape))
+  
+  varweibull <- (scale^2)*(gamma(1+(2/shape))-(gamma(1+(1/shape))^2))
+  
+  return(c(meanweibull, varweibull))
+}
+
+
+joint_weib %>% 
+  mutate(meanweib = est.scale * gamma(1+(1/est.shape)),
+         varweib = (est.scale^2)*(gamma(1+(2/est.shape))-(gamma(1+(1/est.shape))^2))) -> joint_weib
+
 ```
+
 
 
 The violin plot here is made with all the data, the jitter points are a random sample of 200
@@ -539,11 +558,132 @@ joint_weib %>%
   theme(axis.title.x = element_blank()) +
   NULL-> weib_scale
 
-plot_grid(weib_shape, weib_scale)
+
+joint_weib %>%
+  group_by(model) %>%
+  ggplot(., aes(x = model, y = meanweib)) +
+  geom_violin() +
+  geom_jitter(data = joint_weib %>% 
+                group_by(model) %>% 
+                sample_n(200),
+              position = position_jitter(0.1)) +
+  #geom_hline(aes(yintercept = 1), lty = "dashed") +
+  labs(y = "Mean") +
+  theme_bw() +
+  theme(axis.title.x = element_blank()) +
+  NULL -> weib_mean
+
+joint_weib %>%
+  group_by(model) %>%
+  ggplot(., aes(x = model, y = varweib)) +
+  geom_violin() +
+  geom_jitter(data = joint_weib %>% 
+                group_by(model) %>% 
+                sample_n(200),
+              position = position_jitter(0.1)) +
+  labs(y = "Variance") +
+  theme_bw() +
+  theme(axis.title.x = element_blank()) +
+  NULL-> weib_variance
+
+plot_grid(weib_shape, weib_scale, weib_mean, weib_variance, ncol = 4)
 
 #ggsave2(filename = "Ch1_movement_rates/Figures/Figure5.png")
 
 ```
+
+
+```{r}
+z.joint_weib <- joint_weib %>% 
+  mutate(est.shape = scale(est.shape),
+         est.scale = scale(est.scale),
+         meanweib = scale(meanweib),
+         varweib = scale(varweib))
+
+z.joint_weib %>%
+  group_by(model) %>%
+  #sample_n(., 100) %>%
+  ggplot(., aes(x = model, y = est.shape)) +
+  geom_violin() +
+  # scale_color_manual(values = c("black", mycols)) +
+  # geom_boxplot(width = 0.01) +
+  # geom_point(color = "grey", alpha = 0.5) +
+  # stat_summary(fun.data=mean_sdl, mult=1,
+  #              geom="pointrange", color="black") +
+  geom_jitter(data = z.joint_weib %>% 
+                group_by(model) %>% 
+                sample_n(200),
+              position = position_jitter(0.1)) +
+  #geom_hline(aes(yintercept = 1), lty = "dashed") +
+  labs(y = "Shape") +
+  #scale_y_continuous(limits = c(0, 2)) +
+  theme_bw() +
+  theme(axis.title.x = element_blank()) +
+  NULL -> weib_shape
+
+z.joint_weib %>%
+  group_by(model) %>%
+  #sample_n(., 200) %>%
+  ggplot(., aes(x = model, y = est.scale)) +
+  geom_violin() +
+  # scale_color_manual(values = c("black", mycols)) +
+  # geom_boxplot(width = 0.01) +
+  # geom_point(color = "grey", alpha = 0.5) +
+  # stat_summary(fun.data=mean_sdl, mult=1,
+  #              geom="pointrange", color="black") +
+  geom_jitter(data = z.joint_weib %>% 
+                group_by(model) %>% 
+                sample_n(200),
+              position = position_jitter(0.1)) +
+  labs(y = "Scale") +
+  theme_bw() +
+  theme(axis.title.x = element_blank()) +
+  NULL-> weib_scale
+
+
+z.joint_weib %>%
+  group_by(model) %>%
+  ggplot(., aes(x = model, y = meanweib)) +
+  geom_violin() +
+  geom_jitter(data = z.joint_weib %>% 
+                group_by(model) %>% 
+                sample_n(200),
+              position = position_jitter(0.1)) +
+  #geom_hline(aes(yintercept = 1), lty = "dashed") +
+  labs(y = "Mean") +
+  theme_bw() +
+  theme(axis.title.x = element_blank()) +
+  NULL -> weib_mean
+
+z.joint_weib %>%
+  group_by(model) %>%
+  ggplot(., aes(x = model, y = varweib)) +
+  geom_violin() +
+  geom_jitter(data = z.joint_weib %>% 
+                group_by(model) %>% 
+                sample_n(200),
+              position = position_jitter(0.1)) +
+  labs(y = "Variance") +
+  theme_bw() +
+  theme(axis.title.x = element_blank()) +
+  NULL-> weib_variance
+
+plot_grid(weib_shape, weib_scale, weib_mean, weib_variance, ncol = 4)
+
+#ggsave2(filename = "Ch1_movement_rates/Figures/Figure5.png")
+
+```
+
+
+```{r}
+z.joint_weib %>% 
+  pivot_longer(., cols = c(est.shape, est.scale, meanweib, varweib)) %>% 
+  ggplot(., aes(x = name, y = value, color = model)) +
+  geom_boxplot() +
+  theme_bw()
+  
+```
+
 
 
 Kernel density estimation plots with kde1d
