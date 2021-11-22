@@ -846,6 +846,13 @@ knitr::kable(disp_table)
 
 ### EVD generalized pareto results
 
+1. Make threshold plot to figure out threshold
+2. Make associated mean excess plot
+3. Calculate the 95% quantile for mean excess to use as threshold
+4. Make threshplot and show the threshold based on the mean excess
+5. fit a gpd distribution using that threshold and report parameter values
+6. Calculate conditional probabilities over certain distances
+
 ```{r}
 library(extRemes)
 
@@ -885,16 +892,28 @@ mrlplot(a$V1)
 
 max(c[,3])
 
-b <- decluster(a$V1, threshold = 170)
-
-threshrange.plot(b)
-
-fevd(b, threshold = 170, type = "GP")
-
 as.data.frame(c) -> d
 
 model <- lm(d$`Mean Excess`~1)
 confint(model, level = 0.9)
+
+
+b <- decluster(a$V1, threshold = 170)
+
+threshrange.plot(b)
+
+fit <- fevd(b, threshold = 170, type = "GP")
+plot(fit)
+fit$results
+
+1-pevd(1000,threshold = 170, scale= fit$results$par[1], shape = fit$results$par[2], type = "GP")
+
+# OR
+
+dist_range <- c(1000, 5000, 10000)
+pextRemes(fit, dist_range, lower.tail = FALSE)
+
+
 
 ```
 
