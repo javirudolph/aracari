@@ -506,7 +506,7 @@ disp2_plot <- plot_grid(p_dispersal, p_dispersion, ncol = 2, labels = c("B", "C"
 ```{r fig.height=7.5, fig.width=9}
 plot_grid(seedplots2d, NULL, disp2_plot, nrow = 3, rel_heights = c(1,0.2,1))
 
-#ggsave2(filename = "Ch1_movement_rates/Figures/Figure4.png")
+ggsave2(filename = "Ch1_movement_rates/Figures/Figure4.png")
 
 ```
 
