@@ -358,11 +358,12 @@ Build a table with quantiles or summary stats for the dispersal and dispersion p
 
 
 ```{r}
+  
 disp_df %>% 
   group_by(model) %>% 
-  summarise(av.disp = round(quantile(av.disp, c(0, 0.25, 0.5, 0.75, 0.9, 1)), digits = 1),
-            dsprsn = round(quantile(dsprsn, c(0, 0.25, 0.5, 0.75, 0.9, 1)),digits = 1),
-            q = c("min", 0.25, 0.5, 0.75, 0.9, "max")) %>% 
+  summarise(av.disp = c(mean(av.disp), sd(av.disp), n(), round(quantile(av.disp, c(0, 0.25, 0.5, 0.75, 0.9, 1)), digits = 1)),
+            dsprsn = c(mean(dsprsn), sd(dsprsn), n(), round(quantile(dsprsn, c(0, 0.25, 0.5, 0.75, 0.9, 1)),digits = 1)),
+            q = c("mean", "sd", "n", "min", 0.25, 0.5, 0.75, 0.9, "max")) %>% 
   pivot_longer(cols = c(av.disp, dsprsn), names_to = "property", values_to = "value") %>% 
   pivot_wider(., names_from = q, values_from = value) %>% 
   arrange(., property) -> qtable_models
@@ -373,8 +374,44 @@ qtable_models
 
 ### Idea for dispersal and dispersion 
 
-Too many points, since we have 500k seeds, show only a percentage.
 
+```{r fig.width=9, fig.height=3}
+
+disp_df %>%
+  group_by(., model) %>%
+  ggplot(., aes(x = dsprsn, y = factor(model, levels = c("NP", "PP", "CP")))) +
+  geom_violin(color = my.cols1[7], fill = my.cols1[7]) +
+  geom_boxplot(width = 0.1, color = "black") +
+  labs(x = "Dispersion per run (m)") +
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.title.y = element_blank()) -> p_dispersion
+
+disp_df %>%
+  group_by(., model) %>%
+  ggplot(., aes(x = av.disp, y = factor(model, levels = c("NP", "PP", "CP")))) +
+  geom_violin(color = my.cols1[7], fill = my.cols1[7]) +
+  geom_boxplot(width = 0.1, color = "black") +
+  #geom_point(color = "grey", alpha = 0.5) +
+  scale_color_manual(values = c(my.cols1[6], my.cols1[7])) +
+  labs(x = "Average dispersal per run (m)") +
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.title.y = element_blank()) -> p_dispersal
+
+disp2_plot <- plot_grid(p_dispersal, p_dispersion, ncol = 2, labels = c("A)", "B)"), hjust = 0, vjust = 1, label_size = 10)
+
+disp2_plot
+ggsave2(filename = "Ch1_movement_rates/Figures/Figure4.png")
+
+
+
+# Thinking about the long distance or spread: visualize or focus on the 90th percentile data?
+
+```
+
+
+Figure 5 - Dispersal for each seed and dispersal kernels
 
 ```{r fig.width=9, fig.height=3.5}
 
@@ -467,43 +504,7 @@ seedplots2d <- plot_grid(prow, legend, rel_heights = c(1,0.1), ncol = 1)
 ```
 
 
-
-```{r fig.width=9, fig.height=4}
-
-disp_df %>%
-  group_by(., model) %>%
-  sample_n(., 10000) %>%
-  #mutate(dispcat = ifelse(disp <500, "non", "ldd")) %>%
-  ggplot(., aes(y = dsprsn, x = model)) +
-  geom_boxplot() +
-  #geom_point(color = "grey", alpha = 0.5) +
-  #scale_color_manual(values = c(my.cols1[6], my.cols1[7])) +
-  labs(y = "Dispersion in meters") +
-  theme_bw() +
-  theme(legend.position = "none",
-        axis.title.x = element_blank()) -> p_dispersion
-
-disp_df %>%
-  group_by(., model) %>%
-  sample_n(., 10000) %>%
-  #mutate(dispcat = ifelse(av.disp <500, "non", "ldd")) %>%
-  ggplot(., aes(y = av.disp, x = model
-                #, color = dispcat
-                )) +
-  geom_boxplot() +
-  #geom_point(color = "grey", alpha = 0.5) +
-  scale_color_manual(values = c(my.cols1[6], my.cols1[7])) +
-  labs(y = "Average dispersal per run in meters") +
-  theme_bw() +
-  theme(legend.position = "none",
-        axis.title.x = element_blank()) -> p_dispersal
-
-disp2_plot <- plot_grid(p_dispersal, p_dispersion, ncol = 2, labels = c("B", "C"))
-#disp2_plot
-
-```
-
-```{r fig.height=7.5, fig.width=9}
+```{r fig.height=7.5, fig.width=9, eval = FALSE}
 plot_grid(seedplots2d, NULL, disp2_plot, nrow = 3, rel_heights = c(1,0.2,1))
 
 ggsave2(filename = "Ch1_movement_rates/Figures/Figure4.png")
@@ -511,11 +512,6 @@ ggsave2(filename = "Ch1_movement_rates/Figures/Figure4.png")
 ```
 
 
-
-
-# Figure 5 - All about the seed dispersal Kernels - Weibull 
-
-Here we are using the distance of each seed
 
 ```{r}
 
