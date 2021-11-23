@@ -401,8 +401,8 @@ disp_df %>%
 
 disp2_plot <- plot_grid(p_dispersal, p_dispersion, ncol = 2, labels = c("A)", "B)"), hjust = 0, vjust = 1, label_size = 10)
 
-disp2_plot
-ggsave2(filename = "Ch1_movement_rates/Figures/Figure4.png")
+# disp2_plot
+# ggsave2(filename = "Ch1_movement_rates/Figures/Figure4.png")
 
 
 
@@ -410,32 +410,12 @@ ggsave2(filename = "Ch1_movement_rates/Figures/Figure4.png")
 
 ```
 
-
-Figure 5 - Dispersal for each seed and dispersal kernels
-
-```{r fig.width=9, fig.height=3.5}
-
-points_plot <- function(seed.data, summ.data, s.size = 50000, xylims=1250, lalpha = 0.5, scenario = NULL, twoplots = FALSE){
-  
-  # seed.data %>% 
-  #   drop_na(s.id) %>% 
-  #   mutate(dispcat = ifelse(disp <150, "non", 
-  #                           ifelse(disp <500, "med", "ldd"))) %>% 
-  #   #slice_head(., n = s.size) %>% 
-  #   sample_n(s.size) %>% 
-  #     ggplot(., aes(x = xloc, y = yloc, color = dispcat)) +
-  #     geom_point(alpha = lalpha) +
-  #     scale_color_manual(values = c(my.cols1[6], my.cols1[7], "black")) +
-  #     geom_text(label = scenario, x = -1100, y = -1100, color = "black") +
-  #     coord_equal(xlim = c(-xylims, xylims), ylim = c(-xylims, xylims)) +
-  #     theme_bw() +
-  #     theme(legend.position = "none",
-  #           axis.title = element_blank()) +
-  #      NULL -> seedlocplot
+```{r}
+points_plot <- function(seed.data, s.size = 50000, xylims=1250, scenario = NULL, lalpha = 0.5){
   
   seed.data %>% 
     drop_na(s.id) %>% 
-    mutate(LDD = ifelse(disp <500, NA, "Over 500")) %>% 
+    mutate(LDD = ifelse(disp <500, NA, "Over 500m")) %>% 
     sample_n(s.size) %>% 
       ggplot(., aes(x = xloc, 
                     y = yloc
@@ -444,48 +424,35 @@ points_plot <- function(seed.data, summ.data, s.size = 50000, xylims=1250, lalph
       geom_hex()+
       scale_fill_gradient(low = "grey", high = "black") +
       #geom_point(alpha = lalpha) +
-      scale_color_manual(values = c(my.cols1[6], my.cols1[7])) +
+      scale_color_manual(values = my.cols1[6], na.translate = F) +
       geom_text(label = scenario, x = -1100, y = -1100, color = "black") +
       coord_equal(xlim = c(-xylims, xylims), ylim = c(-xylims, xylims)) +
       theme_bw() +
       theme(legend.position = "none",
             axis.title = element_blank()) +
-       NULL -> seedlocplot
-    
-    if(twoplots == TRUE){
-      
-          summ.data %>% 
-    #drop_na(s.id) %>% 
-    mutate(dispcat = ifelse(av.disp <500, "non", "Over 500")) %>% 
-    #slice_head(., n = s.size) %>% 
-    sample_n(s.size*5) %>% 
-      ggplot(., aes(x = x, y = y, color = dispcat)) +
-      geom_point(alpha = lalpha) +
-      labs(subtitle = scenario) +
-      scale_color_manual(values = c(my.cols1[6], my.cols1[7])) +
-      coord_equal(xlim = c(-xylims, xylims), ylim = c(-xylims, xylims)) +
-      theme_bw() +
-      theme(legend.position = "none",
-            axis.title = element_blank()) +
-       NULL -> summaryplot
-      
-      plot_grid(seedlocplot, summaryplot, ncol = 2)
-    }
-  
-  else{seedlocplot}
+       NULL
 }
+```
 
-# A <- points_plot(seed.data = cp.df, summ.data = cp.summ.df, scenario = "CP", twoplots = TRUE)
-# A
-
-A <- points_plot(seed.data = cp.df, summ.data = cp.summ.df, scenario = "CP")
-B <- points_plot(seed.data = pp.df, summ.data = pp.summ.df, scenario = "PP")
-C <- points_plot(seed.data = np.df, summ.data = np.summ.df, scenario = "NP") 
-
-prow <- plot_grid(A, B, C, ncol = 3, labels = "A")
-
-
-legend <- get_legend(C + scale_fill_gradient(low = "grey", high = "black",
+```{r fig.width=9, fig.height=3.5}
+A <- points_plot(seed.data = cp.summ.df %>% 
+              mutate(disp = av.disp,
+                     s.id = run,
+                     xloc = x,
+                     yloc = y), scenario = "CP")
+B <- points_plot(seed.data = pp.summ.df %>% 
+              mutate(disp = av.disp,
+                     s.id = id,
+                     xloc = x,
+                     yloc = y), scenario = "PP")
+C <- points_plot(seed.data = np.summ.df %>% 
+              mutate(disp = av.disp,
+                     s.id = id,
+                     xloc = x,
+                     yloc = y), scenario = "NP")
+prowB <- plot_grid(A, B, C, ncol = 3)
+legend <- get_legend(C + theme(legend.position = "bottom") +
+  scale_fill_gradient(low = "lightgray", high = "black",
                                              name = "Count",
                           guide = guide_colorbar(barwidth = 15, 
                                                 barheight = 0.5,
@@ -493,21 +460,50 @@ legend <- get_legend(C + scale_fill_gradient(low = "grey", high = "black",
                                                 title.vjust = 1.1,
                                                  #label.position = "left",
                                                  nbin = 100)) +
-  scale_color_manual(values = c(LDD = my.cols1[6]), name = "")+
-    guides(color = guide_legend(override.aes = list(fill = my.cols1[6]))) +
-    theme(legend.position = "bottom"))
-
-seedplots2d <- plot_grid(prow, legend, rel_heights = c(1,0.1), ncol = 1)
-#seedplots2d
-
+    guides(color = guide_legend(title = element_blank(),override.aes = list(fill = "lightgray",
+                                                                            size = 5), direction = "horizontal")))
+hexplot <- plot_grid(prowB, legend, rel_heights = c(1,0.1), ncol = 1, labels = c("C)"), hjust = 0, vjust = 1, label_size = 10)
 
 ```
 
 
-```{r fig.height=7.5, fig.width=9, eval = FALSE}
-plot_grid(seedplots2d, NULL, disp2_plot, nrow = 3, rel_heights = c(1,0.2,1))
+```{r fig.height=7.5, fig.width=9}
+plot_grid(disp2_plot, NULL, hexplot, nrow = 3, rel_heights = c(1,0.05,1))
 
 ggsave2(filename = "Ch1_movement_rates/Figures/Figure4.png")
+
+```
+
+
+Figure 5 - Dispersal kernels
+
+```{r fig.width=9, fig.height=3.5, eval = FALSE}
+
+A <- points_plot(seed.data = cp.df, scenario = "CP")
+B <- points_plot(seed.data = pp.df, scenario = "PP")
+C <- points_plot(seed.data = np.df, scenario = "NP") 
+
+prow <- plot_grid(A, B, C, ncol = 3, labels = "A")
+
+
+legend <- get_legend(C + theme(legend.position = "bottom") +
+  scale_fill_gradient(low = "lightgray", high = "black",
+                                             name = "Count",
+                          guide = guide_colorbar(barwidth = 15, 
+                                                barheight = 0.5,
+                                                title.position = "left",
+                                                title.vjust = 1.1,
+                                                 #label.position = "left",
+                                                 nbin = 100)) +
+    guides(color = guide_legend(title = element_blank(),override.aes = list(fill = "lightgray",
+                                                                            size = 5), direction = "horizontal")))
+
+
+
+
+seedplots2d <- plot_grid(prow, legend, rel_heights = c(1,0.1), ncol = 1)
+seedplots2d
+
 
 ```
 
@@ -886,7 +882,7 @@ knitr::kable(disp_table)
 5. fit a gpd distribution using that threshold and report parameter values
 6. Calculate conditional probabilities over certain distances
 
-```{r results='hide'}
+```{r include = FALSE}
 
 # subset data ---------------------------------
 
