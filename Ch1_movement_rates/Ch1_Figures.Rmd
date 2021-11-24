@@ -283,7 +283,7 @@ movratedf %>%
 plot_grid(logfit_plot, social_group_curves, movrates_used, nrow = 3, rel_heights = c(2,2,1), labels = "AUTO")
 
 
-ggsave2(filename = "Ch1_movement_rates/Figures/Figure2.png")
+# ggsave2(filename = "Ch1_movement_rates/Figures/Figure2.png")
 
 ```
 
@@ -470,7 +470,7 @@ hexplot <- plot_grid(prowB, legend, rel_heights = c(1,0.1), ncol = 1, labels = c
 ```{r fig.height=7.5, fig.width=9}
 plot_grid(disp2_plot, NULL, hexplot, nrow = 3, rel_heights = c(1,0.05,1))
 
-ggsave2(filename = "Ch1_movement_rates/Figures/Figure4.png")
+#ggsave2(filename = "Ch1_movement_rates/Figures/Figure4.png")
 
 ```
 
@@ -823,6 +823,55 @@ plot_grid(shapeplot, scaleplot, ncol = 2)
 
 ```
 
+## Figure Dispersal Kernels
+
+```{r}
+cp_lines <- purrr::map(seq(1:1000), function(y)
+  stat_function(fun = dweibull, args = list(scale = weib.boot.cp$est.scale[y], shape = weib.boot.cp$est.shape[y]), color = "lightgray"))
+
+pp_lines <- purrr::map(seq(1:1000), function(y)
+  stat_function(fun = dweibull, args = list(scale = weib.boot.pp$est.scale[y], shape = weib.boot.pp$est.shape[y]), color = "lightgray"))
+
+np_lines <- purrr::map(seq(1:1000), function(y)
+  stat_function(fun = dweibull, args = list(scale = weib.boot.np$est.scale[y], shape = weib.boot.np$est.shape[y]), color = "lightgray"))
+
+
+ggplot() +
+  cp_lines +
+  stat_function(fun = dweibull, args = list(shape = CIs.cp.shape[1], scale = CIs.cp.scale[1]), 
+                color = "black", linetype = "dashed") +
+  stat_function(fun = dweibull, args = list(shape = CIs.cp.shape[2], scale = CIs.cp.scale[2]), color = "black") +
+  stat_function(fun = dweibull, args = list(shape = CIs.cp.shape[3], scale = CIs.cp.scale[3]),
+                color = "black", linetype = "dashed") +
+  lims(x = c(0, 1250)) +
+  theme_bw() -> CPweibdens
+
+ggplot() +
+  pp_lines +
+  stat_function(fun = dweibull, args = list(shape = CIs.pp.shape[1], scale = CIs.pp.scale[1]), 
+                color = "black", linetype = "dashed") +
+  stat_function(fun = dweibull, args = list(shape = CIs.pp.shape[2], scale = CIs.pp.scale[2]), color = "black") +
+  stat_function(fun = dweibull, args = list(shape = CIs.pp.shape[3], scale = CIs.pp.scale[3]),
+                color = "black", linetype = "dashed") +
+  lims(x = c(0, 1250)) +
+  theme_bw() -> PPweibdens
+
+ggplot() +
+  np_lines +
+  stat_function(fun = dweibull, args = list(shape = CIs.np.shape[1], scale = CIs.np.scale[1]), 
+                color = "black", linetype = "dashed") +
+  stat_function(fun = dweibull, args = list(shape = CIs.np.shape[2], scale = CIs.np.scale[2]), color = "black") +
+  stat_function(fun = dweibull, args = list(shape = CIs.np.shape[3], scale = CIs.np.scale[3]),
+                color = "black", linetype = "dashed") +
+  lims(x = c(0, 1250)) +
+  theme_bw() -> NPweibdens
+
+
+plot_grid(CPweibdens, PPweibdens, NPweibdens, nrow = 3)
+
+
+
+```
 
 
 ```{r eval=FALSE}
