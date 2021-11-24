@@ -540,11 +540,35 @@ joint_weib %>%
   mutate(meanweib = est.scale * gamma(1+(1/est.shape)),
          varweib = (est.scale^2)*(gamma(1+(2/est.shape))-(gamma(1+(1/est.shape))^2))) -> joint_weib
 
+z.joint_weib <- joint_weib %>% 
+  mutate(est.shape = scale(est.shape),
+         est.scale = scale(est.scale),
+         meanweib = scale(meanweib),
+         varweib = scale(varweib))
+
 ```
 
 
+```{r}
 
-The violin plot here is made with all the data, the jitter points are a random sample of 200
+fig.5col <- c("#68655a", "#ff814f", "#31aec5")
+
+z.joint_weib %>% 
+  pivot_longer(., cols = c(est.shape, est.scale, meanweib, varweib)) %>% 
+  ggplot(., aes(x = name, y = value, color = model)) +
+  geom_boxplot() +
+  labs(x = "Parameter", y = "Z score") +
+  scale_x_discrete(labels = c("est.scale" = "Scale", "est.shape"="Shape", "meanweib" = "Mean", "varweib"="Variance")) +
+  scale_color_manual(values = fig.5col) +
+  theme_bw() +
+  guides(color = guide_legend(title = "Model")) -> zscoreplot
+
+
+#plot_grid(meanweib, varweib, nrow = 2, labels = c("A)", "B)"), hjust = 0, vjust = 1, label_size = 10)
+
+```
+
+
 
 ```{r}
 joint_weib %>%
@@ -622,104 +646,11 @@ plot_grid(weib_shape, weib_scale, weib_mean, weib_variance, ncol = 4)
 ```
 
 
-```{r}
-z.joint_weib <- joint_weib %>% 
-  mutate(est.shape = scale(est.shape),
-         est.scale = scale(est.scale),
-         meanweib = scale(meanweib),
-         varweib = scale(varweib))
-
-z.joint_weib %>%
-  group_by(model) %>%
-  #sample_n(., 100) %>%
-  ggplot(., aes(x = model, y = est.shape)) +
-  geom_violin() +
-  # scale_color_manual(values = c("black", mycols)) +
-  # geom_boxplot(width = 0.01) +
-  # geom_point(color = "grey", alpha = 0.5) +
-  # stat_summary(fun.data=mean_sdl, mult=1,
-  #              geom="pointrange", color="black") +
-  geom_jitter(data = z.joint_weib %>% 
-                group_by(model) %>% 
-                sample_n(200),
-              position = position_jitter(0.1)) +
-  #geom_hline(aes(yintercept = 1), lty = "dashed") +
-  labs(y = "Shape") +
-  #scale_y_continuous(limits = c(0, 2)) +
-  theme_bw() +
-  theme(axis.title.x = element_blank()) +
-  NULL -> weib_shape
-
-z.joint_weib %>%
-  group_by(model) %>%
-  #sample_n(., 200) %>%
-  ggplot(., aes(x = model, y = est.scale)) +
-  geom_violin() +
-  # scale_color_manual(values = c("black", mycols)) +
-  # geom_boxplot(width = 0.01) +
-  # geom_point(color = "grey", alpha = 0.5) +
-  # stat_summary(fun.data=mean_sdl, mult=1,
-  #              geom="pointrange", color="black") +
-  geom_jitter(data = z.joint_weib %>% 
-                group_by(model) %>% 
-                sample_n(200),
-              position = position_jitter(0.1)) +
-  labs(y = "Scale") +
-  theme_bw() +
-  theme(axis.title.x = element_blank()) +
-  NULL-> weib_scale
-
-
-z.joint_weib %>%
-  group_by(model) %>%
-  ggplot(., aes(x = model, y = meanweib)) +
-  geom_violin() +
-  geom_jitter(data = z.joint_weib %>% 
-                group_by(model) %>% 
-                sample_n(200),
-              position = position_jitter(0.1)) +
-  #geom_hline(aes(yintercept = 1), lty = "dashed") +
-  labs(y = "Mean") +
-  theme_bw() +
-  theme(axis.title.x = element_blank()) +
-  NULL -> weib_mean
-
-z.joint_weib %>%
-  group_by(model) %>%
-  ggplot(., aes(x = model, y = varweib)) +
-  geom_violin() +
-  geom_jitter(data = z.joint_weib %>% 
-                group_by(model) %>% 
-                sample_n(200),
-              position = position_jitter(0.1)) +
-  labs(y = "Variance") +
-  theme_bw() +
-  theme(axis.title.x = element_blank()) +
-  NULL-> weib_variance
-
-plot_grid(weib_shape, weib_scale, weib_mean, weib_variance, ncol = 4)
-
-#ggsave2(filename = "Ch1_movement_rates/Figures/Figure5.png")
-
-```
-
-
-```{r}
-z.joint_weib %>% 
-  pivot_longer(., cols = c(est.shape, est.scale, meanweib, varweib)) %>% 
-  ggplot(., aes(x = name, y = value, color = model)) +
-  geom_boxplot() +
-  theme_bw()
-  
-```
-
-
-
 Kernel density estimation plots with kde1d
 
 ```{r fig.width=9, fig.height=3.5}
 library(kde1d)
-
+  
 
 # Kernel density estimation:
 
@@ -742,13 +673,136 @@ CIs.np.scale <- qkde1d(p=c(0.025,0.5, 0.975), np.scale.kde)
 
 rbind(CIs.cp.shape, CIs.pp.shape, CIs.np.shape, CIs.cp.scale, CIs.pp.scale, CIs.np.scale) %>% 
   as.data.frame() %>% 
-  rename(low = V1, mean = V2, high = V3) %>%
+  rename(low = V1, median = V2, high = V3) %>%
   tibble::rownames_to_column("model") %>% 
   mutate(param = stringr::str_sub(model, start = 8),
          model =stringr::str_sub(model, start = 5, end = 6),
          model = toupper(model),
          model = factor(model, levels = c("CP", "PP", "NP"))) -> CIdata
 
+joint_weib %>% 
+  group_by(., model) %>% 
+  summarise(meanshape = mean(est.shape),
+            meanscale = mean(est.scale)) %>% 
+  pivot_longer(cols = starts_with("mean")) %>% 
+  mutate(param = stringr::str_sub(name, start = 5),
+         mean = value) %>% 
+  dplyr::select(., -c(value, name)) %>% 
+  left_join(., CIdata) -> CIdata
+
+CIdata %>% 
+  pivot_longer(., cols = c(median, mean, low, high)) %>% 
+  filter(., param == "shape" & name != "median") %>% 
+  pivot_wider(names_from = name) -> CIshape
+
+CIdata %>% 
+  pivot_longer(., cols = c(median, mean, low, high)) %>% 
+  filter(., param == "scale" & name != "median") %>% 
+  pivot_wider(names_from = name) -> CIscale
+
+```
+
+
+```{r}
+
+cp_lines <- purrr::map(seq(1:100), function(y)
+  stat_function(fun = dweibull, args = list(scale = weib.boot.cp$est.scale[y], shape = weib.boot.cp$est.shape[y]), color = fig.5col[1]))
+
+pp_lines <- purrr::map(seq(1:100), function(y)
+  stat_function(fun = dweibull, args = list(scale = weib.boot.pp$est.scale[y], shape = weib.boot.pp$est.shape[y]), color = fig.5col[2]))
+
+np_lines <- purrr::map(seq(1:100), function(y)
+  stat_function(fun = dweibull, args = list(scale = weib.boot.np$est.scale[y], shape = weib.boot.np$est.shape[y]), color = fig.5col[3]))
+
+ggplot() +
+  cp_lines +
+  stat_function(fun = dweibull, args = list(shape = CIshape$mean[1], scale = CIscale$mean[1]), color = "black", size = 1) +
+  lims(x = c(0, 1250), y = c(0, 0.006)) +
+  theme_bw() +
+  labs(y = "Density", x = "Dispersal (m)") -> cp.dens
+
+ggplot() +
+  pp_lines +
+  stat_function(fun = dweibull, args = list(shape = CIshape$mean[2], scale = CIscale$mean[2]), color = "black", size = 1) +
+  lims(x = c(0, 1250), y = c(0, 0.006)) +
+  theme_bw() +
+  labs(y = "Density", x = "Dispersal (m)") -> pp.dens
+
+ggplot() +
+  np_lines +
+  stat_function(fun = dweibull, args = list(shape = CIshape$mean[3], scale = CIscale$mean[3]), color = "black", size = 1) +
+  lims(x = c(0, 1250), y = c(0, 0.006)) +
+  theme_bw() +
+  labs(y = "Density", x = "Dispersal (m)") -> np.dens
+
+plot_grid(cp.dens, pp.dens, np.dens, nrow = 3)
+
+
+```
+
+```{r}
+cp.dens +
+  coord_cartesian(xlim = c(400, 800), ylim = c(0, 0.001)) -> cp.tail
+
+pp.dens +
+  coord_cartesian(xlim = c(400, 800), ylim = c(0, 0.001)) -> pp.tail
+
+np.dens +
+  coord_cartesian(xlim = c(400, 800), ylim = c(0, 0.001)) -> np.tail
+
+plot_grid(cp.tail, pp.tail, np.tail, nrow = 3)
+
+```
+
+```{r}
+cp.dens +
+  coord_cartesian(xlim = c(500, 1000), ylim = c(0, 0.0001)) -> cp.tail
+
+pp.dens +
+  coord_cartesian(xlim = c(500, 1000), ylim = c(0, 0.0001)) -> pp.tail
+
+np.dens +
+  coord_cartesian(xlim = c(500, 1000), ylim = c(0, 0.0001)) -> np.tail
+
+plot_grid(cp.tail, pp.tail, np.tail, nrow = 3)
+```
+
+
+```{r}
+# all density means
+
+ggplot() +
+  stat_function(fun = dweibull, args = list(shape = CIshape$mean[1], scale = CIscale$mean[1]), color = fig.5col[1], size = 1) +
+  stat_function(fun = dweibull, args = list(shape = CIshape$mean[2], scale = CIscale$mean[2]), color = fig.5col[2], size = 1) +
+  stat_function(fun = dweibull, args = list(shape = CIshape$mean[3], scale = CIscale$mean[3]), color = fig.5col[3], size = 1) +
+  # Everything after this line is the confidence intervals
+  #   stat_function(fun = dweibull, args = list(shape = CIshape$low[1], scale = CIscale$low[1]), color = fig.5col[1], size = 1, linetype = "dashed") +
+  # stat_function(fun = dweibull, args = list(shape = CIshape$low[2], scale = CIscale$low[2]), color = fig.5col[2], size = 1, linetype = "dashed") +
+  # stat_function(fun = dweibull, args = list(shape = CIshape$low[3], scale = CIscale$low[3]), color = fig.5col[3], size = 1, linetype = "dashed") +
+  # lims(x = c(0, 1500), y = c(0, 0.006)) +
+  #     stat_function(fun = dweibull, args = list(shape = CIshape$high[1], scale = CIscale$high[1]), color = fig.5col[1], size = 1, linetype = "dashed") +
+  # stat_function(fun = dweibull, args = list(shape = CIshape$high[2], scale = CIscale$high[2]), color = fig.5col[2], size = 1, linetype = "dashed") +
+  # stat_function(fun = dweibull, args = list(shape = CIshape$high[3], scale = CIscale$high[3]), color = fig.5col[3], size = 1, linetype = "dashed") +
+  lims(x = c(0, 1500), y = c(0, 0.0062)) +
+  theme_bw() +
+  labs(y = "Density", x = "Dispersal (m)") +
+#coord_cartesian(xlim = c(500, 1500), ylim = c(0, 0.0002)) +
+    NULL
+```
+
+```{r}
+ggplot() +
+  stat_function(fun = dweibull, args = list(shape = CIshape$mean[1], scale = CIscale$mean[1]), color = fig.5col[1], size = 1) +
+  stat_function(fun = dweibull, args = list(shape = CIshape$mean[2], scale = CIscale$mean[2]), color = fig.5col[2], size = 1) +
+  stat_function(fun = dweibull, args = list(shape = CIshape$mean[3], scale = CIscale$mean[3]), color = fig.5col[3], size = 1) +
+  lims(x = c(0, 1500), y = c(0, 0.006)) +
+  theme_bw() +
+  labs(y = "Density", x = "Dispersal (m)") +
+  coord_cartesian(xlim = c(500, 1500), ylim = c(0, 0.0003))
+```
+
+
+```{r eval=FALSE}
 CIdata %>% 
   filter(., param == "shape") %>% 
   ggplot(., aes(x  = model, y = mean)) +
@@ -777,10 +831,9 @@ plot_grid(ShapeCI, ScaleCI)
 prop.above1.10.cp.shape <- 1-pkde1d(q=1.10, cp.shape.kde)
 prop.above1.10.pp.shape <- 1-pkde1d(q=1.10, pp.shape.kde)
 prop.above1.10.np.shape <- 1-pkde1d(q=1.10, np.shape.kde)
-
 ```
 
-```{r fig.width=10}
+```{r fig.width=10, eval = FALSE}
 data.frame(grid_points = cp.shape.kde$grid_points, values = cp.shape.kde$values, model = "CP", param = "shape") %>% 
   bind_rows(., data.frame(grid_points = pp.shape.kde$grid_points, values = pp.shape.kde$values, model = "PP", param = "shape")) %>% 
   bind_rows(., data.frame(grid_points = np.shape.kde$grid_points, values = np.shape.kde$values, model = "NP", param = "shape")) %>% 
@@ -823,17 +876,38 @@ plot_grid(shapeplot, scaleplot, ncol = 2)
 
 ```
 
-## Figure Dispersal Kernels
+
+Dispersal Kernels
 
 ```{r}
-cp_lines <- purrr::map(seq(1:1000), function(y)
-  stat_function(fun = dweibull, args = list(scale = weib.boot.cp$est.scale[y], shape = weib.boot.cp$est.shape[y]), color = "lightgray"))
 
-pp_lines <- purrr::map(seq(1:1000), function(y)
-  stat_function(fun = dweibull, args = list(scale = weib.boot.pp$est.scale[y], shape = weib.boot.pp$est.shape[y]), color = "lightgray"))
 
-np_lines <- purrr::map(seq(1:1000), function(y)
-  stat_function(fun = dweibull, args = list(scale = weib.boot.np$est.scale[y], shape = weib.boot.np$est.shape[y]), color = "lightgray"))
+
+
+
+ggplot() +
+  stat_function(fun = dweibull, args = list(shape = CIshape$mean[1], scale = CIscale$mean[1]), color = fig.5col[1], size = 1) +
+  stat_function(fun = dweibull, args = list(shape = CIshape$mean[2], scale = CIscale$mean[2]), color = fig.5col[2], size = 1) +
+  stat_function(fun = dweibull, args = list(shape = CIshape$mean[3], scale = CIscale$mean[3]), color = fig.5col[3], size = 1) +
+  cp_lines +
+  pp_lines +
+  np_lines +
+  lims(x = c(0, 1250)) +
+  theme_bw()
+
+
+```
+
+
+```{r}
+cp_lines <- purrr::map(seq(1:100), function(y)
+  stat_function(fun = dweibull, args = list(scale = weib.boot.cp$est.scale[y], shape = weib.boot.cp$est.shape[y]), color = fig.5col[1]))
+
+pp_lines <- purrr::map(seq(1:100), function(y)
+  stat_function(fun = dweibull, args = list(scale = weib.boot.pp$est.scale[y], shape = weib.boot.pp$est.shape[y]), color = fig.5col[2]))
+
+np_lines <- purrr::map(seq(1:100), function(y)
+  stat_function(fun = dweibull, args = list(scale = weib.boot.np$est.scale[y], shape = weib.boot.np$est.shape[y]), color = fig.5col[3]))
 
 
 ggplot() +
