@@ -1051,6 +1051,9 @@ Data for each seed, not per run
 # here::here()
 disp_table <- read.csv("Ch1_movement_rates/Figures/table2.csv")
 
+disp_table %>% 
+  dplyr::select(., Model, Mean.dispersal_sd, kurtosis, Max_dispersal, LDD_500) -> disp_table
+
 knitr::kable(disp_table)
 
 ```
@@ -1070,7 +1073,6 @@ knitr::kable(disp_table)
 # subset data ---------------------------------
 
 nsamps <- 10000
-itera <- 1000
 
 
 cp.df %>%
@@ -1148,7 +1150,7 @@ thresh.np <- threshrange.plot(np.evd$disp, r = r, type = "GP", nint = nint) %>%
 ```
 
 
-```{r fig.width=12, fig.height=3}
+```{r fig.width=12, fig.height=4}
 # Threshold figures
 
 threshplot_fx <- function(thresh_data, th, r, model){
@@ -1166,9 +1168,9 @@ threshplot_fx <- function(thresh_data, th, r, model){
     geom_vline(xintercept = th, color = "red", linetype = "dashed") +
     scale_x_continuous(limits = r, n.breaks = 7 ) +
     # scale_x_continuous(name = NULL, labels = NULL, breaks = NULL) +
-    # theme(axis.title.x = element_blank(),
-    #       axis.ticks.x = element_blank(),
-    #       axis.text.x = element_blank()) +
+    theme(axis.title.x = element_blank(),
+          #axis.ticks.x = element_blank(),
+          axis.text.x = element_blank()) +
     # coord_cartesian(xlim = c(200, 550)) +
     NULL -> thresh_scale
 
@@ -1183,7 +1185,7 @@ threshplot_fx <- function(thresh_data, th, r, model){
     # coord_cartesian(xlim = c(200, 550)) +
     NULL -> thresh_shape
 
-  plot_grid(thresh_scale, thresh_shape, nrow = 2)
+  plot_grid(thresh_scale, thresh_shape, nrow = 2, align = "v")
 
 }
 
@@ -1192,10 +1194,11 @@ plot.pp <- threshplot_fx(thresh_data = thresh.pp, th = tval.pp, r = r, model = "
 plot.np <- threshplot_fx(thresh_data = thresh.np, th = tval.np, r = r, model = "NP")
 
 
-plot_grid(plot.cp, plot.pp, plot.np, ncol = 3)
-ggsave2(filename = "Ch1_movement_rates/Figures/Figure6.png")
+plot_grid(plot.cp, plot.pp, plot.np, ncol = 3, labels = c("A)", "B)", "C)"), hjust = 0, vjust = 1, label_size = 10)
+#ggsave2(filename = "Ch1_movement_rates/Figures/Figure6.png")
 
 ```
+
 
 ## Fit values
 
