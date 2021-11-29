@@ -1204,31 +1204,45 @@ plot_grid(plot.cp, plot.pp, plot.np, ncol = 3, labels = c("A)", "B)", "C)"), hju
 
 ```{r}
 
-evd.fit.cp <-fevd(cp.evd$disp, threshold = tval.cp, type = "GP")
-evd.fit.pp <- fevd(pp.evd$disp, threshold = tval.cp, type = "GP")
-evd.fit.np <- fevd(np.evd$disp, threshold = tval.cp, type = "GP")
+evd.fit.cp <- fevd(cp.evd$disp, threshold = tval.cp, type = "GP")
+evd.fit.pp <- fevd(pp.evd$disp, threshold = tval.pp, type = "GP")
+evd.fit.np <- fevd(np.evd$disp, threshold = tval.np, type = "GP")
 
-summary(evd.fit.cp)
-summary(evd.fit.pp)
-summary(evd.fit.np)
+cbind(c("CP", "PP", "NP"), rbind(evd.fit.cp$results$par,
+      evd.fit.pp$results$par,
+      evd.fit.np$results$par))
 
 ```
-
-
 
 Find the conditional probabilities. Probability of exceeding a distance x, based on the fitted distribution
 
 ```{r}
 
 # To find the probability of exceeding 1000, 5000, or 10,000 meters based on the fitted ged 
-dist_range <- c(200, 500, 1000, 5000, 10000)
+dist_range <- c(200, 500, 1000, 5000)
 
-pextRemes(evd.fit.cp, dist_range, lower.tail = FALSE)
-pextRemes(evd.fit.pp, dist_range, lower.tail = FALSE)
-pextRemes(evd.fit.np, dist_range, lower.tail = FALSE)
+cbind(c("Distance", "CP", "PP", "NP"), rbind(dist_range,
+                                             pextRemes(evd.fit.cp, dist_range, lower.tail = FALSE),
+                                             pextRemes(evd.fit.pp, dist_range, lower.tail = FALSE),
+                                             pextRemes(evd.fit.np, dist_range, lower.tail = FALSE)))
 
-# Not sure this is right though. I want the conditional probability that a dispersal distance that is already over the threshold goes beyong 1000, 5000, and 10000 meters. 
+```
+
+
+Summary for the fits
+
+```{r}
+summary(evd.fit.cp)
+plot(evd.fit.cp)
+summary(evd.fit.pp)
+plot(evd.fit.pp)
+summary(evd.fit.np)
+plot(evd.fit.np)
 
 
 ```
+
+
+
+
 
