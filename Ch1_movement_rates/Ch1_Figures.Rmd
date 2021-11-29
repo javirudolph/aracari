@@ -507,9 +507,7 @@ seedplots2d
 
 ```
 
-
-
-```{r}
+```{r loadingData}
 
 # Weibull fit ------------------------------------------------------------
 
@@ -567,8 +565,6 @@ z.joint_weib %>%
 #plot_grid(meanweib, varweib, nrow = 2, labels = c("A)", "B)"), hjust = 0, vjust = 1, label_size = 10)
 
 ```
-
-
 
 ```{r eval = FALSE}
 joint_weib %>%
@@ -646,9 +642,7 @@ plot_grid(weib_shape, weib_scale, weib_mean, weib_variance, ncol = 4)
 ```
 
 
-Kernel density estimation plots with kde1d
-
-```{r fig.width=9, fig.height=3.5, include = FALSE}
+```{r Kde1dEstimates, include = FALSE}
 library(kde1d)
   
 
@@ -702,11 +696,10 @@ CIdata %>%
 
 ```
 
-
-```{r}
+```{r RunPurrrCurves}
 
 xmax <- 1500
-ncurves <- 50
+ncurves <- 200
 
 cp_lines <- purrr::map(seq(1:ncurves), function(y)
   stat_function(fun = dweibull, args = list(scale = weib.boot.cp$est.scale[y], shape = weib.boot.cp$est.shape[y]), color = fig.5col[1]))
@@ -730,6 +723,7 @@ ggplot() +
   theme_bw() +
   labs(y = "Density", x = "Dispersal (m)") +
   theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
         panel.grid.major = element_blank()) +
   coord_cartesian(xlim = c(0, coords[1]), ylim = c(0, coords[2])) +
   NULL -> cp.dens
@@ -741,6 +735,7 @@ ggplot() +
   theme_bw() +
   labs(y = "Density", x = "Dispersal (m)") +
   theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
         panel.grid.major = element_blank()) +
   coord_cartesian(xlim = c(0, coords[1]), ylim = c(0, coords[2])) +
   NULL -> pp.dens
@@ -784,28 +779,26 @@ backgroundcol <- "#f7f2e4"
 cp.dens +
   coord_cartesian(xlim = c(600, 1000), ylim = c(0, 0.0001)) +
   theme(panel.background = element_rect(fill = backgroundcol),
-        axis.title.y = element_blank()) -> cp.tail
+        panel.grid = element_line(color = "white")) +
+  labs(y = "") -> cp.tail
 
 pp.dens +
   coord_cartesian(xlim = c(600, 1000), ylim = c(0, 0.0001)) +
   theme(panel.background = element_rect(fill = backgroundcol),
-        axis.title.y = element_blank()) -> pp.tail
+        panel.grid = element_line(color = "white")) +
+  labs(y = "") -> pp.tail
 
 np.dens +
   coord_cartesian(xlim = c(600, 1000), ylim = c(0, 0.0001)) +
   theme(panel.background = element_rect(fill = backgroundcol),
-        axis.title.y = element_blank()) -> np.tail
+        panel.grid = element_line(color = "white")) +
+  labs(y = "") -> np.tail
 
 kernel_tails_fig <- plot_grid(cp.tail, pp.tail, np.tail, nrow = 3)
 #kernel_tails_fig
 ```
 
-```{r KernelGrid}
-plot_grid(kernelcurvesfig, kernel_tails_fig, ncol = 2, labels = c("A)", "B)"), hjust = 0, vjust = 1, label_size = 10)
-```
-
-
-```{r}
+```{r eval = FALSE}
 # all density means
 
 ggplot() +
@@ -825,9 +818,8 @@ ggplot() +
   labs(y = "Density", x = "Dispersal (m)") +
 #coord_cartesian(xlim = c(500, 1500), ylim = c(0, 0.0002)) +
     NULL
-```
 
-```{r}
+
 ggplot() +
   stat_function(fun = dweibull, args = list(shape = CIshape$mean[1], scale = CIscale$mean[1]), color = fig.5col[1], size = 1) +
   stat_function(fun = dweibull, args = list(shape = CIshape$mean[2], scale = CIscale$mean[2]), color = fig.5col[2], size = 1) +
@@ -838,37 +830,90 @@ ggplot() +
   coord_cartesian(xlim = c(500, 1500), ylim = c(0, 0.0003))
 ```
 
-
-```{r eval=FALSE}
+```{r ParamCIs}
 CIdata %>% 
   filter(., param == "shape") %>% 
-  ggplot(., aes(x  = model, y = mean)) +
+  ggplot(., aes(x  = model, y = mean, color = model)) +
   geom_point() +
   geom_segment(aes(y = low, yend = high, x = model, xend = model)) +
-  labs(y = "Value", x = "Shape") +
-  #scale_color_manual(values = my.cols1[c(1,4,6)]) +
+  labs(y = "Shape value", x = "Model") +
+  scale_color_manual(values = fig.5col) +
   theme_bw() +
-  theme(legend.title = element_blank(),
-        legend.position = c(0.9, 0.2)) -> ShapeCI
+  theme(legend.position = "none") -> ShapeCI
 
 CIdata %>% 
   filter(., param == "scale") %>% 
-  ggplot(., aes(x  = model, y = mean)) +
+  ggplot(., aes(x  = model, y = mean, color = model)) +
   geom_point() +
   geom_segment(aes(y = low, yend = high, x = model, xend = model)) +
-  labs(y = "Value", x = "Scale") +
-  #scale_color_manual(values = my.cols1[c(1,4,6)]) +
+  labs(y = "Scale value", x = "Model") +
+  scale_color_manual(values = fig.5col) +
   theme_bw() +
-  theme(legend.title = element_blank(),
-        legend.position = c(0.9, 0.2)) -> ScaleCI
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank()) -> ScaleCI
 
-plot_grid(ShapeCI, ScaleCI)
-
-# The proportion of shape parameter values above the sampling distribution is 
-prop.above1.10.cp.shape <- 1-pkde1d(q=1.10, cp.shape.kde)
-prop.above1.10.pp.shape <- 1-pkde1d(q=1.10, pp.shape.kde)
-prop.above1.10.np.shape <- 1-pkde1d(q=1.10, np.shape.kde)
+CIparams_figure <- plot_grid(ScaleCI, ShapeCI, nrow = 2)
+#CIparams_figure
+# # The proportion of shape parameter values above the sampling distribution is 
+# prop.above1.10.cp.shape <- 1-pkde1d(q=1.10, cp.shape.kde)
+# prop.above1.10.pp.shape <- 1-pkde1d(q=1.10, pp.shape.kde)
+# prop.above1.10.np.shape <- 1-pkde1d(q=1.10, np.shape.kde)
 ```
+
+```{r MeanVar}
+
+violincolor <- "lightgray"
+
+joint_weib %>%
+  group_by(model) %>%
+  ggplot(., aes(x = model, y = meanweib)) +
+  geom_violin(color = violincolor, fill = violincolor) +
+  geom_boxplot(width = 0.1, aes(color = model)) +
+  scale_color_manual(values = fig.5col) +
+  # geom_violin() +
+  # geom_jitter(data = joint_weib %>% 
+  #               group_by(model) %>% 
+  #               sample_n(200),
+  #             position = position_jitter(0.1)) +
+  #geom_hline(aes(yintercept = 1), lty = "dashed") +
+  labs(y = "Est. Mean", x = "Model") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        legend.position = "none") +
+  NULL -> weib_mean
+
+joint_weib %>%
+  group_by(model) %>%
+  ggplot(., aes(x = model, y = varweib)) +
+    geom_violin(color = violincolor, fill = violincolor) +
+  geom_boxplot(width = 0.1, aes(color = model)) +
+  scale_color_manual(values = fig.5col) +
+  # geom_violin() +
+  # geom_jitter(data = joint_weib %>% 
+  #               group_by(model) %>% 
+  #               sample_n(200),
+  #             position = position_jitter(0.1)) +
+  labs(y = "Est. Variance", x = "Model") +
+  theme_bw() +
+  theme(legend.position = "none") +
+  NULL-> weib_variance
+
+MeanVar_figure <- plot_grid(weib_mean, weib_variance, nrow = 2, align = "v")
+#MeanVar_figure
+```
+
+
+```{r Figure5, fig.width=12, fig.height=7}
+
+plot_grid(kernelcurvesfig, kernel_tails_fig, CIparams_figure, MeanVar_figure, ncol = 4, rel_widths = c(0.9, 1, 0.3, 0.6),
+          labels = c("A)", "B)", "C)", "D)"), hjust = -0.5, vjust = 1, label_size = 10)
+
+#ggsave2(filename = "Ch1_movement_rates/Figures/Figure5.png")
+
+```
+
 
 ```{r fig.width=10, eval = FALSE}
 data.frame(grid_points = cp.shape.kde$grid_points, values = cp.shape.kde$values, model = "CP", param = "shape") %>% 
@@ -914,29 +959,7 @@ plot_grid(shapeplot, scaleplot, ncol = 2)
 ```
 
 
-Dispersal Kernels
-
-```{r}
-
-
-
-
-
-ggplot() +
-  stat_function(fun = dweibull, args = list(shape = CIshape$mean[1], scale = CIscale$mean[1]), color = fig.5col[1], size = 1) +
-  stat_function(fun = dweibull, args = list(shape = CIshape$mean[2], scale = CIscale$mean[2]), color = fig.5col[2], size = 1) +
-  stat_function(fun = dweibull, args = list(shape = CIshape$mean[3], scale = CIscale$mean[3]), color = fig.5col[3], size = 1) +
-  cp_lines +
-  pp_lines +
-  np_lines +
-  lims(x = c(0, 1250)) +
-  theme_bw()
-
-
-```
-
-
-```{r}
+```{r CIkernels, eval = FALSE}
 cp_lines <- purrr::map(seq(1:100), function(y)
   stat_function(fun = dweibull, args = list(scale = weib.boot.cp$est.scale[y], shape = weib.boot.cp$est.shape[y]), color = fig.5col[1]))
 
