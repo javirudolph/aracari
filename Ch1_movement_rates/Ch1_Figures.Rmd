@@ -196,6 +196,7 @@ table1
 
 # Figure 2   
 
+
 ```{r}
 # Visualize distribution and data points
 
@@ -287,7 +288,8 @@ plot_grid(logfit_plot, social_group_curves, movrates_used, nrow = 3, rel_heights
 
 ggsave2(filename = "Ch1_movement_rates/Figures/Figure2.png")
 
-```
+``` 
+
 **Figure 2** - Fitted distributions to movement rate data from estimated from radiotracking. A) lognormal distribution fitted to the twelve data points of movement rate. B) Lognormal distributions used to describe movement rates for each social group. We used the movement rate of each family group, shown by the colored dots across the x axis, as the meanlog parameter in each lognormal distribution. Due to data constraints, we used the estimated sdlog parameter from panel A to generate movement rate curves from panel B. C) movement rates used for each of the pooling scenarios. In the case of complete pooling (cp), estimated parameters from the lognormal distribution in panel A were used to calculate the expected value and this was used as the movement rate for cp. In the case of no pooling (np) we randomly sampled 30 movement rates from the distribution fitted in panel A. In the case of partial pooling (pp), we randomly sampled 6 movement rates from each social group’s curve and used these for the partial pooling simulations.  
 
 
@@ -313,6 +315,7 @@ grt_data %>%
   #stat_function(fun = dgamma, args = list(shape = 4, scale = 5), color = "red") + 
   geom_point(aes(x = grt, color = Bird_ID, y = 0), size = 4) +
   scale_color_manual(values = c(my.cols1[4], my.cols1[2], my.cols1[3], my.cols1[1])) +
+  lims(x = c(-.01, 105)) +
   theme_bw() +
   labs(x = "Gut retention time in minutes", y = "Density") +
   theme(legend.position = "none")+
@@ -320,7 +323,9 @@ grt_data %>%
 
 ggsave2(filename = "Ch1_movement_rates/Figures/Figure3.png")
 
-```
+``` 
+
+
 **Figure 3** - Description of gut retention times using field data for four individuals, shown by each dot along the x axis. The density curve fitted corresponds to a gamma distribution with parameters shape = 2.0562 and scale = 13. 8688. This gamma distribution is later used to sample gut retention times for simulations. 
 
 
@@ -455,7 +460,9 @@ plot_grid(disp2_plot, NULL, hexplot, nrow = 3, rel_heights = c(1,0.05,1))
 
 ```
 
-**Figure 4** - Average dispersal and dispersion for 100,000 simulation runs per pooling scenario. A) Dispersal per run is calculated as the distance from the origin to the average location of the 5 seeds in that run. The average seed location is then used to calculate dispersion as the distance of each seed to the average seed location in that run. Overall distribution of average dispersal is similar across scenarios, with differences in the density and location of outliers, with the furthest average dispersal at 1222m in the NP scenario. B) Seed dispersion per run in the three pooling scenarios. Higher values of dispersion represent more even distribution of seeds per simulation run. The overall distribution of dispersion data points is comparable across scenarios. When we focus on outliers, we observe a higher density of points past 400m of dispersion in the NP scenario, however the most extreme outliers belong to the PP, and CP scenarios. C) Average seed locations per simulation run. This two-dimensional representation of average seed locations shows a higher density close to the origin. Average seed locations over 500m from the origin are outlined in green, clearly showing a higher number of average locations outside this range for the NP scenario.  
+**Figure 4** - Average dispersal and dispersion for 100,000 simulation runs per pooling scenario. A) Dispersal per run is calculated as the distance from the origin to the average location of the 5 seeds in that run. The average seed location is then used to calculate dispersion as the distance of each seed to the average seed location in that run. Overall distribution of average dispersal is similar across scenarios, with differences in the density and location of outliers, with the furthest average dispersal at 1222m in the NP scenario. B) Seed dispersion per run in the three pooling scenarios. Higher values of dispersion represent more even distribution of seeds per simulation run. The overall distribution of dispersion data points is comparable across scenarios. When we focus on outliers, we observe a higher density of points past 400m of dispersion in the NP scenario, however the most extreme outliers belong to the PP, and CP scenarios. C) Average seed locations per simulation run. This two-dimensional representation of average seed locations shows a higher density close to the origin. Average seed locations over 500m from the origin are outlined in green, clearly showing a higher number of average locations outside this range for the NP scenario.   
+
+
 
 
 
@@ -1215,9 +1222,9 @@ cbind(c("CP", "PP", "NP"), rbind(evd.fit.cp$results$par,
 dist_range <- c(200, 500, 1000, 5000)
 
 cbind(c("Distance", "CP", "PP", "NP"), rbind(dist_range,
-                                             pextRemes(evd.fit.cp, dist_range, lower.tail = FALSE),
-                                             pextRemes(evd.fit.pp, dist_range, lower.tail = FALSE),
-                                             pextRemes(evd.fit.np, dist_range, lower.tail = FALSE)))
+                                             signif(pextRemes(evd.fit.cp, dist_range, lower.tail = FALSE), 5),
+                                             signif(pextRemes(evd.fit.pp, dist_range, lower.tail = FALSE), 5),
+                                             signif(pextRemes(evd.fit.np, dist_range, lower.tail = FALSE), 5)))
 
 ```
 
