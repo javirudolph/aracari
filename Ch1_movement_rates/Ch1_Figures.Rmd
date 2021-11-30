@@ -699,7 +699,7 @@ CIdata %>%
 ```{r RunPurrrCurves}
 
 xmax <- 1500
-ncurves <- 500
+ncurves <- 1000
 
 cp_lines <- purrr::map(seq(1:ncurves), function(y)
   stat_function(fun = dweibull, args = list(scale = weib.boot.cp$est.scale[y], shape = weib.boot.cp$est.shape[y]), color = fig.5col[1]))
@@ -721,10 +721,8 @@ ggplot() +
   stat_function(fun = dweibull, args = list(shape = CIshape$mean[1], scale = CIscale$mean[1]), color = "black", size = 1) +
   lims(x = c(0, xmax), y = c(0, 0.006)) +
   theme_bw() +
-  labs(y = "Density", x = "Dispersal (m)") +
-  theme(axis.title.x = element_blank(),
-        axis.text.x = element_blank(),
-        panel.grid.major = element_blank()) +
+  labs(y = "Density", x = "") +
+  theme(panel.grid.major = element_blank()) +
   coord_cartesian(xlim = c(0, coords[1]), ylim = c(0, coords[2])) +
   NULL -> cp.dens
 
@@ -733,10 +731,8 @@ ggplot() +
   stat_function(fun = dweibull, args = list(shape = CIshape$mean[2], scale = CIscale$mean[2]), color = "black", size = 1) +
   lims(x = c(0, xmax), y = c(0, 0.006)) +
   theme_bw() +
-  labs(y = "Density", x = "Dispersal (m)") +
-  theme(axis.title.x = element_blank(),
-        axis.text.x = element_blank(),
-        panel.grid.major = element_blank()) +
+  labs(y = "Density", x = "") +
+  theme(panel.grid.major = element_blank()) +
   coord_cartesian(xlim = c(0, coords[1]), ylim = c(0, coords[2])) +
   NULL -> pp.dens
 
@@ -779,19 +775,25 @@ backgroundcol <- "#f7f2e4"
 cp.dens +
   coord_cartesian(xlim = c(600, 1000), ylim = c(0, 0.0001)) +
   theme(panel.background = element_rect(fill = backgroundcol),
-        panel.grid = element_line(color = "white")) +
+        panel.grid = element_line(color = "grey")) +
+  geom_vline(xintercept = 900, linetype = "dashed", color = "black") +
+  geom_hline(yintercept = 0.00005, linetype = "dashed", color = "black") +
   labs(y = "") -> cp.tail
 
 pp.dens +
   coord_cartesian(xlim = c(600, 1000), ylim = c(0, 0.0001)) +
   theme(panel.background = element_rect(fill = backgroundcol),
-        panel.grid = element_line(color = "white")) +
+        panel.grid = element_line(color = "grey")) +
+    geom_vline(xintercept = 900, linetype = "dashed", color = "black") +
+  geom_hline(yintercept = 0.00005, linetype = "dashed", color = "black") +
   labs(y = "") -> pp.tail
 
 np.dens +
   coord_cartesian(xlim = c(600, 1000), ylim = c(0, 0.0001)) +
   theme(panel.background = element_rect(fill = backgroundcol),
-        panel.grid = element_line(color = "white")) +
+        panel.grid = element_line(color = "grey")) +
+    geom_vline(xintercept = 900, linetype = "dashed", color = "black") +
+  geom_hline(yintercept = 0.00005, linetype = "dashed", color = "black") +
   labs(y = "") -> np.tail
 
 kernel_tails_fig <- plot_grid(cp.tail, pp.tail, np.tail, nrow = 3)
@@ -910,7 +912,7 @@ MeanVar_figure <- plot_grid(weib_mean, weib_variance, nrow = 2, align = "v")
 plot_grid(kernelcurvesfig, kernel_tails_fig, CIparams_figure, MeanVar_figure, ncol = 4, rel_widths = c(0.9, 1, 0.3, 0.6),
           labels = c("A)", "B)", "C)", "D)"), hjust = -0.5, vjust = 1, label_size = 10)
 
-ggsave2(filename = "Ch1_movement_rates/Figures/Figure5.png")
+#ggsave2(filename = "Ch1_movement_rates/Figures/Figure5.png")
 
 ```
 
