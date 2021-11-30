@@ -699,7 +699,7 @@ CIdata %>%
 ```{r RunPurrrCurves}
 
 xmax <- 1500
-ncurves <- 200
+ncurves <- 500
 
 cp_lines <- purrr::map(seq(1:ncurves), function(y)
   stat_function(fun = dweibull, args = list(scale = weib.boot.cp$est.scale[y], shape = weib.boot.cp$est.shape[y]), color = fig.5col[1]))
@@ -910,7 +910,7 @@ MeanVar_figure <- plot_grid(weib_mean, weib_variance, nrow = 2, align = "v")
 plot_grid(kernelcurvesfig, kernel_tails_fig, CIparams_figure, MeanVar_figure, ncol = 4, rel_widths = c(0.9, 1, 0.3, 0.6),
           labels = c("A)", "B)", "C)", "D)"), hjust = -0.5, vjust = 1, label_size = 10)
 
-#ggsave2(filename = "Ch1_movement_rates/Figures/Figure5.png")
+ggsave2(filename = "Ch1_movement_rates/Figures/Figure5.png")
 
 ```
 
