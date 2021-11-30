@@ -65,7 +65,7 @@ movrate_cp_ln <- as.numeric(exp(logfit$estimate[1]))
 
 # Figure 1  
 
-```{r}
+```{r Figure1}
 # Figure 1 - example of how the process works.
 # set.seed(72)
 # set.seed(987)
@@ -166,9 +166,9 @@ test.df %>%
   theme_bw() -> D
 
 
-plot_grid(A, B, C, D, labels = "AUTO")
+plot_grid(A, B, C, D, labels = c("A)", "B)", "C)", "D)"), hjust = 0, vjust = 1, label_size = 10)
 
-# ggsave2(filename = "Ch1_movement_rates/Figures/Figure1.png")
+ggsave2(filename = "Ch1_movement_rates/Figures/Figure1.png")
 ```
 
 
@@ -176,7 +176,9 @@ plot_grid(A, B, C, D, labels = "AUTO")
 
 # Table 1  
 
-```{r}
+**Table1** - Movement rates for the twelve tagged individuals from data collected by Holbrook (2011). Movement rate for individuals is calculated as the distance moved in meters per minute for every movement bout, averaged across all observations during the tracking period. In the case of social groups, the movement rate is calculated as the average for all movement bouts across all individuals belonging to that social group. Movement rate units are in meters displaced per minute. 
+
+```{r Table1}
 ptpl %>% 
   group_by(Bird_ID, fam_g) %>% 
   summarise(movrate = round(mean(mpm),1),
@@ -185,8 +187,8 @@ ptpl %>%
               group_by(fam_g) %>% 
               summarise(famrate = round(mean(mpm), 1))) %>% 
   dplyr::select(Bird_ID, obs, movrate, fam_g, famrate) -> table1
-
-knitr::kable(table1)
+table1
+#knitr::kable(table1)
 # write.csv(table1, file = "Ch1_movement_rates/Figures/table1.csv")
 
 ```
@@ -207,9 +209,9 @@ cols.fig2 <- c("#23262f","#717492","#b3a82a","#c94f21","#980012","#0d907a","#b9b
 # movrate_np
 # movrate_pp
 
-movratedf <- data.frame(scenario = "cp", group = NA, movrate = movrate_cp) %>% 
-  bind_rows(., data.frame(scenario = rep("pp", 42), group = movrate_pp$fam_g, movrate = movrate_pp$movrate)) %>% 
-  bind_rows(., data.frame(scenario = rep("np", 30), group = NA, movrate = movrate_np))
+movratedf <- data.frame(scenario = "CP", group = NA, movrate = movrate_cp) %>% 
+  bind_rows(., data.frame(scenario = rep("PP", 42), group = movrate_pp$fam_g, movrate = movrate_pp$movrate)) %>% 
+  bind_rows(., data.frame(scenario = rep("NP", 30), group = NA, movrate = movrate_np))
 
 # Logfit plot
 
@@ -264,7 +266,7 @@ fam_moverate %>%
         axis.title.x = element_blank()) -> social_group_curves
 
 movratedf %>% 
-  ggplot(., aes(x = movrate, y = factor(scenario, levels = c("pp", "np", "cp")), color = as.character(group))) +
+  ggplot(., aes(x = movrate, y = factor(scenario, levels = c("PP", "NP", "CP")), color = as.character(group))) +
   geom_jitter(size = 3, alpha = 0.8, height = 0.1) +
   scale_color_manual(values = cols.fig2) +
   scale_x_continuous(limits = c(0, 70)) +
@@ -280,17 +282,17 @@ movratedf %>%
 ```
 
 ```{r fig.height=7, fig.width=5}
-plot_grid(logfit_plot, social_group_curves, movrates_used, nrow = 3, rel_heights = c(2,2,1), labels = "AUTO")
+plot_grid(logfit_plot, social_group_curves, movrates_used, nrow = 3, rel_heights = c(2,2,1), labels = c("A)", "B)", "C)"), hjust = 0, vjust = 1, label_size = 10)
 
 
-# ggsave2(filename = "Ch1_movement_rates/Figures/Figure2.png")
+ggsave2(filename = "Ch1_movement_rates/Figures/Figure2.png")
 
 ```
+**Figure 2** - Fitted distributions to movement rate data from estimated from radiotracking. A) lognormal distribution fitted to the twelve data points of movement rate. B) Lognormal distributions used to describe movement rates for each social group. We used the movement rate of each family group, shown by the colored dots across the x axis, as the meanlog parameter in each lognormal distribution. Due to data constraints, we used the estimated sdlog parameter from panel A to generate movement rate curves from panel B. C) movement rates used for each of the pooling scenarios. In the case of complete pooling (cp), estimated parameters from the lognormal distribution in panel A were used to calculate the expected value and this was used as the movement rate for cp. In the case of no pooling (np) we randomly sampled 30 movement rates from the distribution fitted in panel A. In the case of partial pooling (pp), we randomly sampled 6 movement rates from each social group’s curve and used these for the partial pooling simulations.  
 
 
 
-
-# Figure 3 - gut retention times:  
+# Figure 3
 
 
 ```{r include=FALSE}
@@ -302,11 +304,11 @@ plot(grt_fit)
 
 ```
 
-```{r}
+```{r Figure3, fig.width=3, fig.height=3}
 
 grt_data %>% 
   ggplot() +
-  geom_histogram(aes(x = grt, y = ..density..), fill = my.cols1[7], bins = 20) +
+  #geom_histogram(aes(x = grt, y = ..density..), fill = my.cols1[7], bins = 20) +
   stat_function(fun = dgamma, args = list(shape = grt_fit$estimate[1], rate = grt_fit$estimate[2])) +
   #stat_function(fun = dgamma, args = list(shape = 4, scale = 5), color = "red") + 
   geom_point(aes(x = grt, color = Bird_ID, y = 0), size = 4) +
@@ -316,12 +318,11 @@ grt_data %>%
   theme(legend.position = "none")+
   NULL
 
-# ggsave2(filename = "Ch1_movement_rates/Figures/Figure3.png")
+ggsave2(filename = "Ch1_movement_rates/Figures/Figure3.png")
 
 ```
+**Figure 3** - Description of gut retention times using field data for four individuals, shown by each dot along the x axis. The density curve fitted corresponds to a gamma distribution with parameters shape = 2.0562 and scale = 13. 8688. This gamma distribution is later used to sample gut retention times for simulations. 
 
-
- 
 
 
 
@@ -353,26 +354,6 @@ cp.summ.df %>%
 
 
 # Figure 4 - average dispersal and dispersion per run  
-
-Build a table with quantiles or summary stats for the dispersal and dispersion per run. Dispersion tells us how spread appart the seeds are from each other during a simulation. I would expect that for individuals with higher movement rates dispersion might be higher for their simulation runs too. This because a higher movement rate would extend the tail of the exponential distribution for movement distances, and thus have a larger range for movement distances, with a higher probability larger movement distances. So, during a simulation, a bird would see itself taking larger steps if they have a larger movement rate. Thus, their seeds would potentially be distributed more far apart. 
-
-
-```{r}
-  
-disp_df %>% 
-  group_by(model) %>% 
-  summarise(av.disp = c(mean(av.disp), sd(av.disp), n(), round(quantile(av.disp, c(0, 0.25, 0.5, 0.75, 0.9, 1)), digits = 1)),
-            dsprsn = c(mean(dsprsn), sd(dsprsn), n(), round(quantile(dsprsn, c(0, 0.25, 0.5, 0.75, 0.9, 1)),digits = 1)),
-            q = c("mean", "sd", "n", "min", 0.25, 0.5, 0.75, 0.9, "max")) %>% 
-  pivot_longer(cols = c(av.disp, dsprsn), names_to = "property", values_to = "value") %>% 
-  pivot_wider(., names_from = q, values_from = value) %>% 
-  arrange(., property) -> qtable_models
-
-qtable_models
-```
-
-
-### Idea for dispersal and dispersion 
 
 
 ```{r fig.width=9, fig.height=3}
@@ -474,8 +455,27 @@ plot_grid(disp2_plot, NULL, hexplot, nrow = 3, rel_heights = c(1,0.05,1))
 
 ```
 
+**Figure 4** - Average dispersal and dispersion for 100,000 simulation runs per pooling scenario. A) Dispersal per run is calculated as the distance from the origin to the average location of the 5 seeds in that run. The average seed location is then used to calculate dispersion as the distance of each seed to the average seed location in that run. Overall distribution of average dispersal is similar across scenarios, with differences in the density and location of outliers, with the furthest average dispersal at 1222m in the NP scenario. B) Seed dispersion per run in the three pooling scenarios. Higher values of dispersion represent more even distribution of seeds per simulation run. The overall distribution of dispersion data points is comparable across scenarios. When we focus on outliers, we observe a higher density of points past 400m of dispersion in the NP scenario, however the most extreme outliers belong to the PP, and CP scenarios. C) Average seed locations per simulation run. This two-dimensional representation of average seed locations shows a higher density close to the origin. Average seed locations over 500m from the origin are outlined in green, clearly showing a higher number of average locations outside this range for the NP scenario.  
 
-Figure 5 - Dispersal kernels
+
+
+
+```{r}
+  
+disp_df %>% 
+  group_by(model) %>% 
+  summarise(av.disp = c(mean(av.disp), sd(av.disp), n(), round(quantile(av.disp, c(0, 0.25, 0.5, 0.75, 0.9, 1)), digits = 1)),
+            dsprsn = c(mean(dsprsn), sd(dsprsn), n(), round(quantile(dsprsn, c(0, 0.25, 0.5, 0.75, 0.9, 1)),digits = 1)),
+            q = c("mean", "sd", "n", "min", 0.25, 0.5, 0.75, 0.9, "max")) %>% 
+  pivot_longer(cols = c(av.disp, dsprsn), names_to = "property", values_to = "value") %>% 
+  pivot_wider(., names_from = q, values_from = value) %>% 
+  arrange(., property) -> qtable_models
+
+qtable_models
+```
+
+# Figure 5 - Dispersal kernels 
+
 
 ```{r fig.width=9, fig.height=3.5, eval = FALSE}
 
@@ -748,20 +748,6 @@ ggplot() +
 
 kernelcurvesfig <- plot_grid(cp.dens, pp.dens, np.dens, nrow = 3)
 #kernelcurvesfig
-
-```
-
-```{r eval = FALSE}
-cp.dens +
-  coord_cartesian(xlim = c(400, 800), ylim = c(0, 0.001)) -> cp.tail
-
-pp.dens +
-  coord_cartesian(xlim = c(400, 800), ylim = c(0, 0.001)) -> pp.tail
-
-np.dens +
-  coord_cartesian(xlim = c(400, 800), ylim = c(0, 0.001)) -> np.tail
-
-plot_grid(cp.tail, pp.tail, np.tail, nrow = 3)
 
 ```
 
@@ -1045,9 +1031,12 @@ cp.df %>%
 
 ```
 
+**Figure 5** - Estimated seed dispersal kernels and distribution of parameter values for the three pooling scenarios. A) Seed dispersal kernel curves for 1000 random samples of 100 seeds for each of the pooling scenarios based on fitting a Weibull probability density function to the data. B) Focus on the tails of the dispersal kernels, where the dashed lines are used for guiding purposes only. The NP scenario (blue) has a higher density of heavy tailed kernels, when compared to the other two scenarios. C) Each dispersal kernel is modeled using a Weibull distribution where estimated parameter values are obtained for each of the 1000 random samples. For the shape and scale parameters, we calculate the mean and their 95% confidence intervals generated from a non-parametric kernel density estimation to the 1000 parameter values obtained from the 1000 Weibull fits. D) Calculated expected value (mean) and variance for each of the kernel density curves using the scale and shape parameters obtained from the Weibull distribution fits. Overall distribution of variance for the three scenarios is similar, with the number and extent of outliers for the NP scenario being relatively higher.  
 
-# Table 2 - results  
-Data for each seed, not per run
+
+# Table 2 - results   
+
+Summary table on seed dispersal distances for each of the pooling scenarios. For each of the scenarios, the metrics reported in this table are based on the 500,000 seeds deposited under each of the simulated scenarios.  
 
 ```{r}
 # here::here()
@@ -1061,14 +1050,8 @@ knitr::kable(disp_table)
 ```
 
 
-### FIGURE 6 EVD generalized pareto results
+# Appendix FIGURE 6 EVD generalized pareto results
 
-1. Make threshold plot to figure out threshold
-2. Make associated mean excess plot
-3. Calculate the 95% quantile for mean excess to use as threshold
-4. Make threshplot and show the threshold based on the mean excess
-5. fit a gpd distribution using that threshold and report parameter values
-6. Calculate conditional probabilities over certain distances
 
 ```{r include = FALSE}
 
@@ -1153,6 +1136,14 @@ thresh.np <- threshrange.plot(np.evd$disp, r = r, type = "GP", nint = nint) %>%
 
 
 ```{r fig.width=12, fig.height=4}
+
+# 1. Make threshold plot to figure out threshold
+# 2. Make associated mean excess plot
+# 3. Calculate the 95% quantile for mean excess to use as threshold
+# 4. Make threshplot and show the threshold based on the mean excess
+# 5. fit a gpd distribution using that threshold and report parameter values
+# 6. Calculate conditional probabilities over certain distances
+
 # Threshold figures
 
 threshplot_fx <- function(thresh_data, th, r, model){
@@ -1216,7 +1207,7 @@ cbind(c("CP", "PP", "NP"), rbind(evd.fit.cp$results$par,
 
 ```
 
-Find the conditional probabilities. Probability of exceeding a distance x, based on the fitted distribution
+## Find the conditional probabilities. Probability of exceeding a distance x, based on the fitted distribution
 
 ```{r}
 
@@ -1231,7 +1222,7 @@ cbind(c("Distance", "CP", "PP", "NP"), rbind(dist_range,
 ```
 
 
-Summary for the fits
+## Summary for the fits
 
 ```{r}
 summary(evd.fit.cp)
