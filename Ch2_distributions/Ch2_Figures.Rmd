@@ -1,0 +1,93 @@
+---
+title: "Distributions"
+author: "Javiera Rudolph"
+output: 
+  html_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+# knitr::opts_chunk$set(fig.width=12, fig.height=6)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r message=FALSE, warning=FALSE}
+library(aracari)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(cowplot)
+library(fitdistrplus)
+
+```
+
+
+```{r include=FALSE}
+set.seed(20211207)
+
+# Data ----------------------------------------------------
+# The script for this data is in the data-raw folder
+load("data/ptpl.rda")
+
+ptpl %>%
+  filter(., mpm != 0) -> ptpl
+```
+
+# Figure 1  
+
+```{r Figure1}
+# Figure 1 ---------------------------------------------
+# Distribution of velocities at the different pooling levels
+
+ptpl %>%
+  ggplot(., aes((x = mpm))) +
+  geom_line(aes(x = mpm, group = id), stat = "density", alpha = 0.4) +
+  # geom_line(aes(x = mpm, group = fam_g), stat = "density", alpha = 0.4,
+  #           color = "blue") +
+  geom_line(stat = "density", color = "#1191d1", lwd = 1) +
+  geom_vline(xintercept = 0, color = "grey") +
+  geom_hline(yintercept = 0, color = "grey") +
+  labs(y = "Density", x = "Velocity in m/min") +
+  theme_classic()
+```  
+
+
+# Figure X - angles
+
+```{r}
+p1_angles <- ptpl %>% 
+  drop_na(rel.angle) %>% 
+  mutate(d.angle = ifelse(rel.angle > 0, rel.angle * 180/pi,
+                          rel.angle * 180/pi + 360)) %>% 
+  ggplot(., aes(x = d.angle)) +
+  geom_histogram(color = "grey", fill = "grey") +
+  coord_polar(theta = "x", start = -pi/2, direction = -1) +
+  scale_x_continuous(breaks = seq(0, 360, 30), limits = c(0, 360)) +
+  theme_minimal() +
+  theme(axis.title = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position = "none") +
+  labs(title = "Complete pooling")
+
+p2_angles <- ptpl %>% 
+  drop_na(rel.angle) %>% 
+  mutate(d.angle = ifelse(rel.angle > 0, rel.angle * 180/pi,
+                          rel.angle * 180/pi + 360),
+         B_id = paste0("B", id)) %>% 
+  ggplot(., aes(x = d.angle)) +
+  geom_histogram(color = "grey", fill = "grey") +
+  coord_polar(theta = "x", start = -pi/2, direction = -1) +
+  scale_x_continuous(breaks = seq(0, 360, 30), limits = c(0, 360)) +
+  theme_minimal() +
+  theme(axis.title = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position = "none") +
+  facet_wrap(~B_id) +
+  theme(axis.text = element_blank()) +
+  labs(title = "No pooling")
+
+plot_grid(p1_angles, p2_angles)
+
+```
+
