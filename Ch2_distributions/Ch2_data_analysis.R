@@ -23,94 +23,152 @@ param <- c("shape", "rate", "shape", "scale", "meanlog", "sdlog")
 dist <- c("gamma", "gamma", "weibull", "weibull", "lnorm", "lnorm")
 kpars <- c(2, 2, 2, 2, 2, 2)
 
-# Functions ----------------------------------------------------
-
-build_fits_df <- function(x){
-
-  nm <- deparse(substitute(x))
-
-  x %>%
-    map(., `[`, c("estimate", "sd", "loglik", "n")) %>%
-    map(as_tibble) %>%
-    bind_rows()
-}
-
-# Figure 1 ---------------------------------------------
-# Distribution of velocities at the different pooling levels
-
-ptpl %>%
-  ggplot(., aes((x = mpm))) +
-  geom_line(aes(x = mpm, group = id), stat = "density", alpha = 0.4) +
-  # geom_line(aes(x = mpm, group = fam_g), stat = "density", alpha = 0.4,
-  #           color = "blue") +
-  geom_line(stat = "density", color = "#1191d1", lwd = 1) +
-  geom_vline(xintercept = 0, color = "grey") +
-  geom_hline(yintercept = 0, color = "grey") +
-  labs(y = "Density", x = "Velocity in m/min") +
-  theme_classic()
-
 # Complete pooling fits -------------------------------------
-pop <- lapply(dist.used, function(x){fitdist(ptpl$mpm, distr = x)})
 
-# Get data for qqplot at population level
-qqpop <- qqcomp(pop, plotstyle = "ggplot")$data
-names(qqpop) <- c("theoretical", "fdist", "empirical")
-
-# Save the population level parameters
+## Function to save the fit information and parameters -----
 
 build_fits_df <- function(x){
 
   nm <- deparse(substitute(x))
 
   x %>%
-    map(., `[`, c("estimate", "sd", "loglik", "n")) %>%
+    map(., `[`, c("estimate", "sd", "loglik", "n", "bic")) %>%
     map(as_tibble) %>%
     bind_rows()
 }
 
-prms.df <- build_fits_df(pop) %>%
-  mutate(param = param,
-         dist = dist,
-         kpars = kpars,
-         data = "pop")
+## CP bootstrapping -----------------------------------------
 
+nboots <- 1000
+nsamples <- 30
 
-# NP -------------------------------------------------
-# Repeating the process for data at the individual level
-inds <- unique(as.character(nu_df$B_id))
+cp.fits <- NULL
 
-# Fitting the four distributions for each individual and saving the parameters in a dataframe
-ind.models <- NULL
-for(i in 1:length(inds)){
-  fit.df <- nu_df %>%
-    dplyr::filter(., B_id == inds[i])
+for(i in 1:nboots){
 
-  fit <- lapply(dist.used, function(x){fitdist(fit.df$nu, distr = x)})
+  boot.df <- sample(ptpl$mpm, size = nsamples, replace = TRUE)
 
-  ind.models[[i]] <- fit
+  fit <- lapply(dist.used, function(x){fitdist(boot.df, distr = x)})
 
-  assign(paste(inds[i]), fit)
-
-  fit.prms <- build_fits_df(fit) %>%
+  out <- build_fits_df(fit) %>%
     mutate(param = param,
            dist = dist,
            kpars = kpars,
-           data = inds[i])
+           dBIC = bic - min(bic),
+           boot = paste0("boot_", i))
 
-  prms.df <- bind_rows(prms.df, fit.prms)
+  cp.fits <- rbind.data.frame(cp.fits, out)
 }
 
+## Best fit model ---------------------------------------
 
-# Getting qqplot data for each individual
-inds.models.data <- NULL
-for(i in 1:length(inds)){
-  x <- ind.models[[i]]
+cp.fits %>%
+  dplyr::select(., bic, dist, dBIC, boot) %>%
+  group_by(boot) %>%
+  distinct() %>%
+  ungroup() %>%
+  filter(dBIC == 0) %>%
+  count(dist) %>%
+  mutate(prcnt_support = n/nboots) %>%
+  mutate(model = "CP") %>%
+  ggplot(., aes(x = model, y = prcnt_support, fill = dist)) +
+  geom_col()
 
-  qqdata <- qqcomp(x, plotstyle = "ggplot")$data %>%
-    mutate(data = inds[i])
-  names(qqdata) <- c("theoretical", "fdist", "empirical", "individual")
-  inds.models.data <- bind_rows(inds.models.data, qqdata)
+
+# No pooling fits ----------------------------------
+
+ids <- unique(ptpl$id)
+
+np.fits <- NULL
+
+for(i in 1:nboots){
+
+  boot.df <- ptpl %>%
+    ungroup() %>%
+    dplyr::select(.,id, mpm) %>%
+    group_by(., id) %>%
+    sample_n(., size = nsamples, replace = TRUE)
+
+  for(j in 1:length(ids)){
+
+    indv.df <- boot.df %>%
+      filter(., id == ids[j])
+
+    fit <- lapply(dist.used, function(x){fitdist(indv.df$mpm, distr = x)})
+
+    out <- build_fits_df(fit) %>%
+      mutate(param = param,
+             dist = dist,
+             kpars = kpars,
+             dBIC = bic - min(bic),
+             individual = ids[j],
+             boot = paste0("boot_", i))
+
+    np.fits <- rbind.data.frame(np.fits, out)
+
+  }
+
 }
 
+## Best fit model ---------------------------------------
 
+np.fits %>%
+  dplyr::select(., bic, dist, dBIC, individual, boot) %>%
+  group_by(individual, boot) %>%
+  distinct() %>%
+  group_by(individual) %>%
+  filter(dBIC == 0) %>%
+  count(dist) %>%
+  mutate(prcnt_support = n/nboots) %>%
+  ggplot(., aes(x = individual, y = prcnt_support, fill = dist)) +
+  geom_col()
+
+
+# Partial pooling fits ----------------------------------
+
+fgs <- unique(ptpl$fam_g)
+
+pp.fits <- NULL
+
+for(i in 1:nboots){
+
+  boot.df <- ptpl %>%
+    ungroup() %>%
+    dplyr::select(.,fam_g, mpm) %>%
+    group_by(., fam_g) %>%
+    sample_n(., size = nsamples, replace = TRUE)
+
+  for(j in 1:length(fgs)){
+
+    fg.df <- boot.df %>%
+      filter(., fam_g == fgs[j])
+
+    fit <- lapply(dist.used, function(x){fitdist(fg.df$mpm, distr = x)})
+
+    out <- build_fits_df(fit) %>%
+      mutate(param = param,
+             dist = dist,
+             kpars = kpars,
+             dBIC = bic - min(bic),
+             fgroup = fgs[j],
+             boot = paste0("boot_", i))
+
+    pp.fits <- rbind.data.frame(pp.fits, out)
+
+  }
+
+}
+
+## Best fit model ---------------------------------------
+
+pp.fits %>%
+  dplyr::select(., bic, dist, dBIC, fgroup, boot) %>%
+  group_by(fgroup, boot) %>%
+  distinct() %>%
+  group_by(fgroup) %>%
+  filter(dBIC == 0) %>%
+  count(dist) %>%
+  mutate(prcnt_support = n/nboots) %>%
+  ggplot(., aes(x = fgroup, y = prcnt_support, fill = dist)) +
+  geom_col()
 
