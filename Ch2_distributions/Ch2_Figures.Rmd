@@ -91,3 +91,48 @@ plot_grid(p1_angles, p2_angles)
 
 ```
 
+# Fits 
+
+```{r}
+load("Ch2_distributions/fits_df.RData")
+```
+
+```{r}
+nboots <- 1000
+
+cp.fits %>%
+  dplyr::select(., bic, dist, dBIC, boot) %>%
+  group_by(boot) %>%
+  distinct() %>%
+  ungroup() %>%
+  filter(dBIC == 0) %>%
+  count(dist) %>%
+  mutate(prcnt_support = n/nboots) %>%
+  mutate(model = "CP") %>%
+  ggplot(., aes(x = model, y = prcnt_support, fill = dist)) +
+  geom_col()
+
+pp.fits %>%
+  dplyr::select(., bic, dist, dBIC, fgroup, boot) %>%
+  group_by(fgroup, boot) %>%
+  distinct() %>%
+  group_by(fgroup) %>%
+  filter(dBIC == 0) %>%
+  count(dist) %>%
+  mutate(prcnt_support = n/nboots) %>%
+  ggplot(., aes(x = fgroup, y = prcnt_support, fill = dist)) +
+  geom_col()
+
+np.fits %>%
+  dplyr::select(., bic, dist, dBIC, individual, boot) %>%
+  group_by(individual, boot) %>%
+  distinct() %>%
+  group_by(individual) %>%
+  filter(dBIC == 0) %>%
+  count(dist) %>%
+  mutate(prcnt_support = n/nboots) %>%
+  ggplot(., aes(x = individual, y = prcnt_support, fill = dist)) +
+  geom_col()
+
+```
+
