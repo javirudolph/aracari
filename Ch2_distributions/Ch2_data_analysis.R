@@ -172,3 +172,5 @@ pp.fits %>%
   ggplot(., aes(x = fgroup, y = prcnt_support, fill = dist)) +
   geom_col()
 
+save(cp.fits, pp.fits, np.fits, file = "Ch2_distributions/fits_df.RDS")
+
