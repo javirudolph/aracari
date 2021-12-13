@@ -40,7 +40,7 @@ build_fits_df <- function(x){
 ## CP bootstrapping -----------------------------------------
 
 nboots <- 1000
-nsamples <- 30
+nsamples <- length(ptpl$mpm)
 
 cp.fits <- NULL
 
@@ -81,13 +81,19 @@ ids <- unique(ptpl$id)
 
 np.fits <- NULL
 
+
 for(i in 1:nboots){
 
   boot.df <- ptpl %>%
     ungroup() %>%
     dplyr::select(.,id, mpm) %>%
-    group_by(., id) %>%
-    sample_n(., size = nsamples, replace = TRUE)
+    group_by(id) %>%
+    nest() %>%
+    ungroup() %>%
+    mutate(n = map_int(data, nrow)) %>%
+    mutate(samp = map2(data, n, sample_n, replace = TRUE)) %>%
+    dplyr::select(-data) %>%
+    unnest(samp)
 
   for(j in 1:length(ids)){
 
@@ -130,18 +136,19 @@ fgs <- unique(ptpl$fam_g)
 
 pp.fits <- NULL
 
+
 for(i in 1:nboots){
 
   boot.df <- ptpl %>%
     ungroup() %>%
     dplyr::select(.,fam_g, mpm) %>%
-    group_by(., fam_g) %>%
-    sample_n(., size = nsamples, replace = TRUE)
-
-  for(j in 1:length(fgs)){
-
-    fg.df <- boot.df %>%
-      filter(., fam_g == fgs[j])
+    group_by(fam_g) %>%
+    nest() %>%
+    ungroup() %>%
+    mutate(n = map_int(data, nrow)) %>%
+    mutate(samp = map2(data, n, sample_n, replace = TRUE)) %>%
+    dplyr::select(-data) %>%
+    unnest(samp)
 
     fit <- lapply(dist.used, function(x){fitdist(fg.df$mpm, distr = x)})
 
@@ -172,5 +179,5 @@ pp.fits %>%
   ggplot(., aes(x = fgroup, y = prcnt_support, fill = dist)) +
   geom_col()
 
-save(cp.fits, pp.fits, np.fits, file = "Ch2_distributions/fits_df.RDS")
+save(cp.fits, pp.fits, np.fits, file = "Ch2_distributions/fits_df.RData")
 
