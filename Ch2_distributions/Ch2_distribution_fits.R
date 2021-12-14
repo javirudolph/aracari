@@ -37,12 +37,78 @@ build_fits_df <- function(x){
     bind_rows()
 }
 
+# Regular fits -----------------------------------------
+
+## CP fit ------------------------------------------------
+
+cp.fit <- lapply(dist.used, function(x){fitdist(ptpl$mpm, distr = x)})
+
+reg_fits_info <- build_fits_df(cp.fit) %>%
+  mutate(param = param,
+         dist = dist,
+         kpars = kpars,
+         dBIC = bic - min(bic),
+         ID = "CP",
+         model = "CP")
+
+## NP fit ---------------------------------------------
+
+ids <- unique(ptpl$id)
+
+for(j in 1:length(ids)){
+
+  indv.df <- ptpl %>%
+    filter(., id == ids[j])
+
+  fit <- lapply(dist.used, function(x){fitdist(indv.df$mpm, distr = x)})
+
+  out <- build_fits_df(fit) %>%
+    mutate(param = param,
+           dist = dist,
+           kpars = kpars,
+           dBIC = bic - min(bic),
+           ID = ids[j],
+           model = "NP")
+
+  reg_fits_info <- rbind.data.frame(reg_fits_info, out)
+
+}
+
+## PP fit -----------------------------------------------
+
+fgs <- unique(ptpl$fam_g)
+
+for(j in 1:length(fgs)){
+
+  fam.df <- ptpl %>%
+    filter(., fam_g == fgs[j])
+
+  fit <- lapply(dist.used, function(x){fitdist(fam.df$mpm, distr = x)})
+
+  out <- build_fits_df(fit) %>%
+    mutate(param = param,
+           dist = dist,
+           kpars = kpars,
+           dBIC = bic - min(bic),
+           ID = fgs[j],
+           model = "PP")
+
+  reg_fits_info <- rbind.data.frame(reg_fits_info, out)
+
+}
+
+#################################################################
+
+###################################################################
+
+
+# Bootstrapping --------------------------------------------------
 ## CP bootstrapping -----------------------------------------
 
 nboots <- 1000
 nsamples <- length(ptpl$mpm)
 
-cp.fits <- NULL
+cp.boot.fits <- NULL
 
 for(i in 1:nboots){
 
@@ -57,29 +123,15 @@ for(i in 1:nboots){
            dBIC = bic - min(bic),
            boot = paste0("boot_", i))
 
-  cp.fits <- rbind.data.frame(cp.fits, out)
+  cp.boot.fits <- rbind.data.frame(cp.boot.fits, out)
 }
-
-## Best fit model ---------------------------------------
-
-cp.fits %>%
-  dplyr::select(., bic, dist, dBIC, boot) %>%
-  group_by(boot) %>%
-  distinct() %>%
-  ungroup() %>%
-  filter(dBIC == 0) %>%
-  count(dist) %>%
-  mutate(prcnt_support = n/nboots) %>%
-  mutate(model = "CP") %>%
-  ggplot(., aes(x = model, y = prcnt_support, fill = dist)) +
-  geom_col()
 
 
 # No pooling fits ----------------------------------
 
 ids <- unique(ptpl$id)
 
-np.fits <- NULL
+np.boot.fits <- NULL
 
 
 for(i in 1:nboots){
@@ -110,31 +162,19 @@ for(i in 1:nboots){
              individual = ids[j],
              boot = paste0("boot_", i))
 
-    np.fits <- rbind.data.frame(np.fits, out)
+    np.boot.fits <- rbind.data.frame(np.boot.fits, out)
 
   }
 
 }
 
-## Best fit model ---------------------------------------
-
-np.fits %>%
-  dplyr::select(., bic, dist, dBIC, individual, boot) %>%
-  group_by(individual, boot) %>%
-  distinct() %>%
-  group_by(individual) %>%
-  filter(dBIC == 0) %>%
-  count(dist) %>%
-  mutate(prcnt_support = n/nboots) %>%
-  ggplot(., aes(x = individual, y = prcnt_support, fill = dist)) +
-  geom_col()
 
 
 # Partial pooling fits ----------------------------------
 
 fgs <- unique(ptpl$fam_g)
 
-pp.fits <- NULL
+pp.boot.fits <- NULL
 
 
 for(i in 1:nboots){
@@ -150,6 +190,11 @@ for(i in 1:nboots){
     dplyr::select(-data) %>%
     unnest(samp)
 
+  for(j in 1:length(fgs)){
+
+    fg.df <- boot.df %>%
+      filter(., fam_g == fgs[j])
+
     fit <- lapply(dist.used, function(x){fitdist(fg.df$mpm, distr = x)})
 
     out <- build_fits_df(fit) %>%
@@ -160,24 +205,13 @@ for(i in 1:nboots){
              fgroup = fgs[j],
              boot = paste0("boot_", i))
 
-    pp.fits <- rbind.data.frame(pp.fits, out)
+    pp.boot.fits <- rbind.data.frame(pp.boot.fits, out)
 
   }
 
 }
 
-## Best fit model ---------------------------------------
 
-pp.fits %>%
-  dplyr::select(., bic, dist, dBIC, fgroup, boot) %>%
-  group_by(fgroup, boot) %>%
-  distinct() %>%
-  group_by(fgroup) %>%
-  filter(dBIC == 0) %>%
-  count(dist) %>%
-  mutate(prcnt_support = n/nboots) %>%
-  ggplot(., aes(x = fgroup, y = prcnt_support, fill = dist)) +
-  geom_col()
 
-save(cp.fits, pp.fits, np.fits, file = "Ch2_distributions/fits_df.RData")
+save.image(file = "Ch2_distributions/fits_df.RData")
 
