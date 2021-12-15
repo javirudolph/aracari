@@ -23,6 +23,7 @@ param <- c("shape", "rate", "shape", "scale", "meanlog", "sdlog")
 dist <- c("gamma", "gamma", "weibull", "weibull", "lnorm", "lnorm")
 kpars <- c(2, 2, 2, 2, 2, 2)
 
+
 # Complete pooling fits -------------------------------------
 
 ## Function to save the fit information and parameters -----
@@ -67,7 +68,7 @@ for(j in 1:length(ids)){
            dist = dist,
            kpars = kpars,
            dBIC = bic - min(bic),
-           ID = ids[j],
+           ID = paste0("B",ids[j]),
            model = "NP")
 
   reg_fits_info <- rbind.data.frame(reg_fits_info, out)
@@ -90,7 +91,7 @@ for(j in 1:length(fgs)){
            dist = dist,
            kpars = kpars,
            dBIC = bic - min(bic),
-           ID = fgs[j],
+           ID = toupper(fgs[j]),
            model = "PP")
 
   reg_fits_info <- rbind.data.frame(reg_fits_info, out)
@@ -159,7 +160,7 @@ for(i in 1:nboots){
              dist = dist,
              kpars = kpars,
              dBIC = bic - min(bic),
-             individual = ids[j],
+             individual = paste0("B", ids[j]),
              boot = paste0("boot_", i))
 
     np.boot.fits <- rbind.data.frame(np.boot.fits, out)
@@ -202,7 +203,7 @@ for(i in 1:nboots){
              dist = dist,
              kpars = kpars,
              dBIC = bic - min(bic),
-             fgroup = fgs[j],
+             fgroup = toupper(fgs[j]),
              boot = paste0("boot_", i))
 
     pp.boot.fits <- rbind.data.frame(pp.boot.fits, out)
@@ -213,7 +214,7 @@ for(i in 1:nboots){
 
 
 
-save.image(file = "Ch2_distributions/fits_df.RData")
+# save.image(file = "Ch2_distributions/fits_df.RData")
 save(nboots, dist, dist.used, ids, fgs, kpars, param, reg_fits_info,
      cp.boot.fits, pp.boot.fits, np.boot.fits,
      file = "Ch2_distributions/Ch2_fits.RData")
