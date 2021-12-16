@@ -58,7 +58,9 @@ scales::show_col(my.cols2)
 
 ptpl %>%
   ggplot(., aes((x = mpm))) +
-  geom_line(aes(x = mpm, group = id, color = fam_g), stat = "density", alpha = 0.8) +
+  #geom_line(aes(x = mpm, group = id, color = fam_g), stat = "density", alpha = 0.8) +
+  geom_line(aes(x = mpm, group = id), color = "grey", 
+            stat = "density", alpha = 0.8) +
   # geom_line(aes(x = mpm, group = fam_g), stat = "density", alpha = 0.4,
   #           color = "blue") +
   geom_line(stat = "density", color = "black", lwd = 1) +
@@ -138,79 +140,6 @@ reg_fits_info %>%
 #bestmodel
 ```
 
-
-# Figure 2 - 
-HERE - get rid of the first panel. Make figure later with percent support at the pooling levels so Fig 2 only shows the importance of variaiton since different models fit different bootsptraps. 
-
-```{r fig.width=12}
-
-cols.fig2 <- c("#b9bec3", 
-               "#0d907a", "#DEB41E", "#9C1D29", "#23262f")
-
-cp.boot.fits %>%
-  dplyr::select(., bic, dist, dBIC, boot) %>%
-  group_by(boot) %>%
-  distinct() %>%
-  ungroup() %>%
-  filter(dBIC == 0) %>%
-  count(dist) %>%
-  mutate(prcnt_support = n/nboots) %>%
-  mutate(model = "CP") %>%
-  ggplot(., aes(x = model, y = prcnt_support, fill = dist)) +
-  geom_col() +
-  labs(y = "Percent Support") +
-  theme_classic() +
-  theme(legend.position = "none",
-        axis.title.x = element_blank()) +
-  geom_label(data = bestmodel %>% filter(., model == "CP"),
-             aes(x = model, y = -0.05, label = dist)) +
-  scale_fill_manual(values = cols.fig2) -> cp.fit
-
-pp.boot.fits %>%
-  dplyr::select(., bic, dist, dBIC, fgroup, boot) %>%
-  group_by(fgroup, boot) %>%
-  distinct() %>%
-  group_by(fgroup) %>%
-  filter(dBIC == 0) %>%
-  count(dist) %>%
-  mutate(prcnt_support = n/nboots) %>%
-  ggplot(., aes(x = fgroup, y = prcnt_support, fill = dist)) +
-  geom_col() +
-  theme_classic() +
-  theme(legend.position = "none",
-        axis.title.y = element_blank(),
-        axis.title.x = element_blank()) +
-  geom_label(data = bestmodel %>% filter(., model == "PP"),
-             aes(x = ID, y = -0.05, label = dist)) +
-  scale_fill_manual(values = cols.fig2) -> pp.fit
-
-np.boot.fits %>%
-  dplyr::select(., bic, dist, dBIC, individual, boot) %>%
-  group_by(individual, boot) %>%
-  distinct() %>%
-  group_by(individual) %>%
-  filter(dBIC == 0) %>%
-  count(dist) %>%
-  mutate(prcnt_support = n/nboots) %>%
-  ggplot(., aes(x = individual, y = prcnt_support, fill = dist)) +
-  geom_col() +
-  theme_classic() +
-  theme(axis.title.y = element_blank(),
-        axis.title.x = element_blank()) +
-  geom_label(data = bestmodel %>% filter(., model == "NP"),
-             aes(x = ID, y = -0.05, label = dist)) +
-  scale_fill_manual(values = cols.fig2)  -> np.fit
-
-legend <- get_legend(np.fit + theme(legend.position = "bottom") +
-                       guides(fill=guide_legend(title="Distribution")))
-
-plot_grid(cp.fit, pp.fit, 
-          np.fit + theme(legend.position = "none"), 
-          ncol = 3, rel_widths = c(0.8,1,1.4)) -> col_grid
-
-plot_grid(col_grid, legend, nrow = 2, rel_heights = c(1, 0.1))
-
-```
 
 ```{r eval=FALSE}
 # Difference to the second best model
@@ -319,41 +248,8 @@ np.boot.fits %>%
   arrange(boot) -> np.bic
 
 
+
 ```
-# Figure 3 
-
-These boxplots should be showing the distribution of the BIC values for the three pooling levels with their models. 
-
-```{r}
-cp.bic %>% 
-  bind_rows(pp.bic) %>% 
-  bind_rows(np.bic) %>% 
-  mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi"))) %>% 
-  ggplot(., aes(x = model, color = dist, y = BIC)) +
-  geom_boxplot() +
-  scale_color_manual(values = cols.fig2) +
-  labs(x = "Pooling Model", y = "Raw BIC values") +
-  theme_classic()
-```
-
-
-```{r}
-cp.bic %>% 
-  bind_rows(pp.bic) %>% 
-  bind_rows(np.bic) %>% 
-  filter(., deltaBIC == 0) %>% 
-  group_by(model) %>% 
-  count(dist) %>% 
-  mutate(prcnt_support = n/nboots) %>%
-  mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi"))) %>% 
-  ggplot(., aes(x = model, y = prcnt_support, fill = dist)) +
-  scale_fill_manual(values = cols.fig2) +
-  geom_col() +
-  theme_classic() +
-  labs(x = "Pooling Level", y = "Percent Support")
-```
-
-
 # Table 1 - 
 
 For no bootstraps, just what are the BIC values we select. 
@@ -413,22 +309,199 @@ gt_tbl %>%
 knitr::include_graphics("Ch2_distributions/aic_bic_table.png")
 ```
 
-# Figure 4  
-
-Fix this. The idea is that each bootstrap is represented here with their BIC value for each model. We see that there's very strong evidence for the multi distribution model at both PP and NP levels. The summary quantiles later show extre support for this. 
 
 
+
+# Figure 2 - 
+
+
+```{r fig.width=12, fig.height=6}
+
+cols.fig2 <- c("#b9bec3", 
+               "#0d907a", "#DEB41E", "#9C1D29", "#23262f")
+
+cp.bic %>% 
+  bind_rows(pp.bic) %>% 
+  bind_rows(np.bic) %>% 
+  filter(., deltaBIC == 0) %>% 
+  group_by(model) %>% 
+  count(dist) %>% 
+  mutate(prcnt_support = n/nboots) %>%
+  mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi"))) %>% 
+  ggplot(., aes(x = model, y = prcnt_support, fill = dist)) +
+  scale_fill_manual(values = cols.fig2) +
+  geom_col() +
+  theme_classic() +
+  scale_y_continuous(labels = scales::percent) +
+  labs(x = "Pooling Level", y = "Percent Support") +
+  theme(axis.title.x = element_blank()) +
+  geom_label(data = bestmodel %>%
+               filter(., model == "CP"),
+             aes(x = model, y = -0.05, label = dist)) -> pooling.support
+
+# cp.boot.fits %>%
+#   dplyr::select(., bic, dist, dBIC, boot) %>%
+#   group_by(boot) %>%
+#   distinct() %>%
+#   ungroup() %>%
+#   filter(dBIC == 0) %>%
+#   count(dist) %>%
+#   mutate(prcnt_support = n/nboots) %>%
+#   mutate(model = "CP") %>%
+#   ggplot(., aes(x = model, y = prcnt_support, fill = dist)) +
+#   geom_col() +
+#   labs(y = "Percent Support") +
+#   theme_classic() +
+#   theme(legend.position = "none",
+#         axis.title.x = element_blank()) +
+#   geom_label(data = bestmodel %>% filter(., model == "CP"),
+#              aes(x = model, y = -0.05, label = dist)) +
+#   scale_fill_manual(values = cols.fig2) -> cp.fit
+
+pp.boot.fits %>%
+  dplyr::select(., bic, dist, dBIC, fgroup, boot) %>%
+  group_by(fgroup, boot) %>%
+  distinct() %>%
+  group_by(fgroup) %>%
+  filter(dBIC == 0) %>%
+  count(dist) %>%
+  mutate(prcnt_support = n/nboots) %>%
+  ggplot(., aes(x = fgroup, y = prcnt_support, fill = dist)) +
+  geom_col() +
+  theme_classic() +
+  theme(legend.position = "none",
+        axis.title.y = element_blank(),
+        axis.title.x = element_blank()) +
+  scale_y_continuous(labels = scales::percent) +
+  geom_label(data = bestmodel %>% filter(., model == "PP"),
+             aes(x = ID, y = -0.05, label = dist)) +
+  scale_fill_manual(values = cols.fig2) -> pp.support
+
+np.boot.fits %>%
+  dplyr::select(., bic, dist, dBIC, individual, boot) %>%
+  group_by(individual, boot) %>%
+  distinct() %>%
+  group_by(individual) %>%
+  filter(dBIC == 0) %>%
+  count(dist) %>%
+  mutate(prcnt_support = n/nboots) %>%
+  ggplot(., aes(x = individual, y = prcnt_support, fill = dist)) +
+  geom_col() +
+  theme_classic() +
+  theme(axis.title.y = element_blank(),
+        axis.title.x = element_blank()) +
+  scale_y_continuous(labels = scales::percent) +
+  geom_label(data = bestmodel %>% filter(., model == "NP"),
+             aes(x = ID, y = -0.05, label = dist)) +
+  scale_fill_manual(values = cols.fig2)  -> np.support
+
+# legend <- get_legend(np.fit + theme(legend.position = "bottom") +
+#                        guides(fill=guide_legend(title="Distribution")))
+model.legend <- get_legend(pooling.support + theme(legend.position = "bottom") +
+                             guides(fill=guide_legend(title = "Distribution model")))
+
+# plot_grid(cp.fit, pp.fit, 
+#           np.fit + theme(legend.position = "none"), 
+#           ncol = 3, rel_widths = c(0.8,1,1.4)) -> col_grid
+# 
+# plot_grid(col_grid, legend, nrow = 2, rel_heights = c(1, 0.1))
+
+# first_row <- plot_grid(NULL, 
+#                        pooling.support + theme(legend.position = "none"),
+#                        NULL, rel_widths = c(0.3, 1, 0.3))
+# 
+# second_row <- plot_grid(pp.support, 
+#                         np.support + theme(legend.position = "none"),
+#                         ncol = 2, rel_widths = c(1, 1.2))
+# plot_grid(pooling.support + theme(legend.position = "none"),
+#           second_row, model.legend, nrow = 3, rel_heights = c(1,1,0.2))
+
+
+bar_col <- plot_grid(pooling.support + theme(legend.position = "none"),
+                     pp.support, 
+                     np.support + theme(legend.position = "none"),
+                     ncol = 3, rel_widths = c(0.4, 1, 1.4))
+plot_grid(bar_col, model.legend, nrow = 2, rel_heights = c(1, 0.1))
+
+```  
+
+
+
+
+# Figure 3 
+
+These boxplots should be showing the distribution of the BIC values for the three pooling levels with their models. 
 
 ```{r}
-plot_grid(cp.bic %>% 
+cp.bic %>% 
+  bind_rows(pp.bic) %>% 
+  bind_rows(np.bic) %>% 
+  mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi"))) %>% 
+  ggplot(., aes(x = model, color = dist, y = BIC)) +
+  geom_boxplot() +
+  scale_color_manual(values = cols.fig2) +
+  labs(x = "Pooling Model", y = "Raw BIC values") +
+  theme_classic() +
+  guides(color=guide_legend(title = "Distribution model")) +
+  theme(legend.position = "bottom")
+
+```
+
+
+
+
+
+
+# Figure 4  
+
+Fix this. The idea is that each bootstrap is represented here with their BIC value for each model. We see that there's very strong evidence for the multi distribution model at both PP and NP levels. The summary quantiles later show very high support for this. Difference here between incorporating variation at the expense of sample size, and getting high support, or staying with high sample size without variation.
+
+
+
+```{r fig.height=6}
+
+cp.bic %>% 
+  mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi"))) %>% 
   ggplot(., aes(x = deltaBIC, color = dist, y = boot)) +
-  geom_point(),
-  pp.bic %>% 
+  #geom_col() +
+  geom_point() +
+  scale_color_manual(values = cols.fig2) +
+  theme_classic() +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  labs(y = "Bootstrap replicates", x = "") +
+  theme(legend.position = "none") -> Fig4a
+
+pp.bic %>% 
+  mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi"))) %>% 
   ggplot(., aes(x = deltaBIC, color = dist, y = boot)) +
-  geom_point(),
-  np.bic %>% 
+  #geom_col() +
+  geom_point() +
+  scale_color_manual(values = cols.fig2) +
+  theme_classic() +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  labs(y = "Bootstrap replicates", x = "") +
+  theme(legend.position = "none") -> Fig4b
+
+np.bic %>% 
+  mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi"))) %>% 
   ggplot(., aes(x = deltaBIC, color = dist, y = boot)) +
-  geom_point(), nrow = 3)
+  #geom_col() +
+  geom_point() +
+  scale_color_manual(values = cols.fig2) +
+  theme_classic() +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  labs(y = "Bootstrap replicates", x = "BIC units from best model") -> Fig4c
+
+legend4 <- get_legend(Fig4c +
+                       guides(color=guide_legend(title = "Distribution \n model")))
+
+plot_grid(Fig4a, Fig4b, 
+          Fig4c + theme(legend.position = "none"), nrow = 3) -> fig4
+
+plot_grid(fig4, legend4, ncol = 2, rel_widths = c(1, 0.15))
 
 ```
 
@@ -463,6 +536,47 @@ np.bic %>%
 ```
 
 
+What about the parameters of the best fit distributions? Meaning, that for each boostrap, keep only the best model. Plot those.
+
+**CP**  
+
+
+```{r fig.height=6}
+cp.boot.fits %>% 
+  filter(., dBIC == 0) %>% 
+  ggplot(., aes(y = estimate)) +
+  facet_wrap(dist~param, ncol = 2, scales = "free") +
+  geom_boxplot()
+```
+
+**PP**  
+
+```{r fig.height=6}
+pp.boot.fits %>% 
+  filter(., dBIC == 0) %>% 
+  ggplot(., aes(y = estimate, x = fgroup)) +
+  facet_wrap(dist~param, ncol = 2, scales = "free") +
+  geom_boxplot()
+```  
+
+
+**NP**  
+
+
+```{r fig.height=6}
+np.boot.fits %>% 
+  filter(., dBIC == 0) %>% 
+  ggplot(., aes(y = estimate, x = individual)) +
+  facet_wrap(dist~param, ncol = 2, scales = "free") +
+  geom_boxplot()
+```
+
+
+# Visualize them as density curves:
+
+```{r}
+
+```
 
 
 # Figure X - angles
