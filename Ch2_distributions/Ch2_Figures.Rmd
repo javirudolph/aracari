@@ -458,42 +458,42 @@ Fix this. The idea is that each bootstrap is represented here with their BIC val
 
 
 
-```{r fig.height=6}
+```{r fig.height=4}
 
 cp.bic %>% 
   mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi"))) %>% 
   ggplot(., aes(x = deltaBIC, color = dist, y = boot)) +
   #geom_col() +
-  geom_point() +
+  geom_point(alpha = 0.8, shape = 15) +
   scale_color_manual(values = cols.fig2) +
   theme_classic() +
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank()) +
-  labs(y = "Bootstrap replicates", x = "") +
+  labs(y = "Bootstrap \n replicates", x = "") +
   theme(legend.position = "none") -> Fig4a
 
 pp.bic %>% 
   mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi"))) %>% 
   ggplot(., aes(x = deltaBIC, color = dist, y = boot)) +
   #geom_col() +
-  geom_point() +
+  geom_point(alpha = 0.8, shape = 15) +
   scale_color_manual(values = cols.fig2) +
   theme_classic() +
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank()) +
-  labs(y = "Bootstrap replicates", x = "") +
+  labs(y = "Bootstrap \n replicates", x = "") +
   theme(legend.position = "none") -> Fig4b
 
 np.bic %>% 
   mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi"))) %>% 
   ggplot(., aes(x = deltaBIC, color = dist, y = boot)) +
   #geom_col() +
-  geom_point() +
+  geom_point(alpha = 0.8, shape = 15) +
   scale_color_manual(values = cols.fig2) +
   theme_classic() +
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank()) +
-  labs(y = "Bootstrap replicates", x = "BIC units from best model") -> Fig4c
+  labs(y = "Bootstrap \n replicates", x = "BIC units from best model") -> Fig4c
 
 legend4 <- get_legend(Fig4c +
                        guides(color=guide_legend(title = "Distribution \n model")))
@@ -504,6 +504,8 @@ plot_grid(Fig4a, Fig4b,
 plot_grid(fig4, legend4, ncol = 2, rel_widths = c(1, 0.15))
 
 ```
+
+
 
 On average, how many units away is the second model from the best one?  
 
