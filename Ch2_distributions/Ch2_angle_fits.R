@@ -30,3 +30,8 @@ ptpl %>%
 mu0 <- circ.mean(angle_data$rel.angle)
 rho0 <- est.rho(angle_data$rel.angle)
 a <- wrpcauchy.ml(angle_data$rel.angle, mu0 = mu0, rho0 = rho0)
+
+
+
+
+
