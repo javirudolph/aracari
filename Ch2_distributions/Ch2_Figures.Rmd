@@ -158,9 +158,10 @@ reg_fits_info %>%
 ```
 
 
-Calculate the BIC for the models:
 
 ```{r}
+# Calculate the BIC for the models:
+
 reg_fits_info %>% 
   dplyr::select(model, ID, dist, loglik, n, kpars) %>% 
   distinct() %>% 
@@ -254,9 +255,9 @@ np.boot.fits %>%
 
 
 ```
-# Table 1 - 
+# Table 1 - BIC values for models across pooling levels  
 
-For no bootstraps, just what are the BIC values we select. 
+Table 1 - BIC values obtained for models fitted to velocity data across pooling levels. Probability density functions considered included the Gamma, Weibull, and Lognormal distributions. Multi distribution models selected the best fitting distribution model for each family group or individual, allowing for variation not only in estimated parameters, but also in the distribution used. Based on BIC values, the best fitting model is the Multi-distribution with Partial Pooling, closely followed by the Complete Pooling Lognormal model. 
 
 
 ```{r}
