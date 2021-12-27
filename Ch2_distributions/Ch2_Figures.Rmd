@@ -317,10 +317,10 @@ knitr::include_graphics("Ch2_distributions/aic_bic_table.png")
 
 
 
-# Figure 2 - Percent Support
+# Figure 3 - Percent Support
 
 
-```{r Figure2, fig.width=12, fig.height=6}
+```{r Figure3, fig.width=12, fig.height=6}
 
 cols.fig2 <- c("#b9bec3", 
                "#0d907a", "#DEB41E", "#9C1D29", "#23262f")
@@ -430,11 +430,11 @@ bar_col <- plot_grid(pooling.support + theme(legend.position = "none"),
                      labels = c("A)", "B)", "C)"), label_size = 10)
 plot_grid(bar_col, model.legend, nrow = 2, rel_heights = c(1, 0.1))
 
-ggsave2(filename = "Ch2_distributions/Figures/Figure2.png")
+ggsave2(filename = "Ch2_distributions/Figures/Figure3.png")
 
 ```   
 
-Figure 2 - Percent support for the different distribution models at the three pooling levels. Percent support is based on 1000 bootstrapped replicas for each scenario. Labels on the x axis show the best fitting model for the original datasets. A) percent support at the three pooling levels, with CP having over 50% support for the lognormal distribution, in agreement with the model fit to the complete dataset. PP and NP scenarios show 100% support for the multi-distribution model, which considers the best fitting model for each family group or individual, respectively. B) Percent support for each model in the family groups. C) Support for each model at the individual level.  
+Figure 3 - Percent support for the different distribution models at the three pooling levels. Percent support is based on 1000 bootstrapped replicas for each scenario. Labels on the x axis show the best fitting model for the original datasets. A) percent support at the three pooling levels, with CP having over 50% support for the lognormal distribution, in agreement with the model fit to the complete dataset. PP and NP scenarios show 100% support for the multi-distribution model, which considers the best fitting model for each family group or individual, respectively. B) Percent support for each model in the family groups. C) Support for each model at the individual level.  
 
 
 ```{r eval=FALSE}
@@ -456,9 +456,9 @@ cp.bic %>%
 
 
 
-# Figure 4  
+# Figure 4 - BIC units from best model
 
-Fix this. The idea is that each bootstrap is represented here with their BIC value for each model. We see that there's very strong evidence for the multi distribution model at both PP and NP levels. The summary quantiles later show very high support for this. Difference here between incorporating variation at the expense of sample size, and getting high support, or staying with high sample size without variation.
+<!-- Fix this. The idea is that each bootstrap is represented here with their BIC value for each model. We see that there's very strong evidence for the multi distribution model at both PP and NP levels. The summary quantiles later show very high support for this. Difference here between incorporating variation at the expense of sample size, and getting high support, or staying with high sample size without variation. -->
 
 
 
@@ -526,7 +526,9 @@ cp.bic %>%
         axis.ticks.y = element_blank()) +
   labs(y = "Bootstrap replicates", x = "BIC units from best model") +
   theme(legend.position = "right") +
-  guides(color=guide_legend(title = "Distribution \n model"))
+  guides(color=guide_legend(title = "Distribution \n model")) 
+
+ggsave2(filename = "Ch2_distributions/Figures/Figure4.png")
 ```
 
 
