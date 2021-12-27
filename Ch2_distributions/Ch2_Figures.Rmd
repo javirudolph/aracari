@@ -128,7 +128,7 @@ plot_grid(cp_lines, pp_lines, np_lines, nrow = 3)
 ```  
 
 
-# Fits 
+<!-- # Fits  -->
 
 ```{r}
 load("Ch2_distributions/Ch2_fits.RData")
@@ -320,7 +320,7 @@ knitr::include_graphics("Ch2_distributions/aic_bic_table.png")
 # Figure 2 - 
 
 
-```{r fig.width=12, fig.height=6}
+```{r Figure2, fig.width=12, fig.height=6}
 
 cols.fig2 <- c("#b9bec3", 
                "#0d907a", "#DEB41E", "#9C1D29", "#23262f")
@@ -332,7 +332,8 @@ cp.bic %>%
   group_by(model) %>% 
   count(dist) %>% 
   mutate(prcnt_support = n/nboots) %>%
-  mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi"))) %>% 
+  mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi")),
+         model = factor(model, levels = c("CP", "PP", "NP"))) %>% 
   ggplot(., aes(x = model, y = prcnt_support, fill = dist)) +
   scale_fill_manual(values = cols.fig2) +
   geom_col() +
@@ -425,8 +426,11 @@ model.legend <- get_legend(pooling.support + theme(legend.position = "bottom") +
 bar_col <- plot_grid(pooling.support + theme(legend.position = "none"),
                      pp.support, 
                      np.support + theme(legend.position = "none"),
-                     ncol = 3, rel_widths = c(0.4, 1, 1.4))
+                     ncol = 3, rel_widths = c(0.4, 1, 1.4), 
+                     labels = c("A)", "B)", "C)"), label_size = 10)
 plot_grid(bar_col, model.legend, nrow = 2, rel_heights = c(1, 0.1))
+
+ggsave2(filename = "Ch2_distributions/Figures/Figure2.png")
 
 ```  
 
