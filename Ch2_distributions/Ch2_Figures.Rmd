@@ -36,7 +36,7 @@ ptpl %>%
   filter(., mpm != 0) -> ptpl
 ```
 
-# Figure 1  
+# Figure 1 - Density plots for velocity
 
 ```{r include=FALSE}
 # Color palette ----------------------------------------
@@ -54,7 +54,7 @@ scales::show_col(my.cols2)
 ```
 
 
-```{r}
+```{r Figure1, fig.width=6, fig.height=4}
 
 ptpl %>%
   ggplot(., aes((x = mpm))) +
@@ -70,10 +70,14 @@ ptpl %>%
   theme_classic() +
   scale_color_manual(values = my.cols2) +
   theme(legend.position = "none")
-```
+
+ggsave2(filename = "Ch2_distributions/Figures/Figure1.png")
+```  
+
+Figure 1 - Probability density plots of velocity data for each individual (grey lines), and pooled across individuals (black line). Considerable variation from the population level density (black line) is observed for various individuals. Particular focus towards the tails, where certain individuals possess much higher densities for large velocities, something that gets dampened when considering pooled data for velocity densities. 
 
 
-```{r eval=FALSE, Figure1, fig.height=6, fig.width=4}
+```{r eval=FALSE, fig.height=6, fig.width=4}
 # Figure 1 ---------------------------------------------
 # Distribution of velocities at the different pooling levels
 
