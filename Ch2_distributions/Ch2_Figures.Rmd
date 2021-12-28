@@ -529,7 +529,9 @@ cp.bic %>%
   guides(color=guide_legend(title = "Distribution \n model")) 
 
 ggsave2(filename = "Ch2_distributions/Figures/Figure4.png")
-```
+``` 
+
+Figure 4 - Delta BIC values for each bootstrap in the three pooling scenarios. Each bootstrap is represented in the y axis, with BIC units from the best model shown in the x axis. For the first panel, the CP scenario shows significant overlap among models for each bootstrap. Given that multi distribution models for the PP and NP scenarios have 100% support, this means they have the lowest BIC score, or a $\Delta$ BIC equal to zero, and thus show as a straight line at x=0 in the plots above.
 
 
 On average, how many units away is the second model from the best one?  
@@ -563,7 +565,10 @@ np.bic %>%
 ```
 
 
-What about the parameters of the best fit distributions? Meaning, that for each boostrap, keep only the best model. Plot those.
+# Appendix figures
+
+To tell the same story, we see variation in the parameters estimated for each bootstrap under various models.  
+
 
 **CP**  
 
