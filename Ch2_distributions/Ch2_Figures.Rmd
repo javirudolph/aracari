@@ -534,34 +534,40 @@ ggsave2(filename = "Ch2_distributions/Figures/Figure4.png")
 Figure 4 - Delta BIC values for each bootstrap in the three pooling scenarios. Each bootstrap is represented in the y axis, with BIC units from the best model shown in the x axis. For the first panel, the CP scenario shows significant overlap among models for each bootstrap. Given that multi distribution models for the PP and NP scenarios have 100% support, this means they have the lowest BIC score, or a $\Delta$ BIC equal to zero, and thus show as a straight line at x=0 in the plots above.
 
 
-On average, how many units away is the second model from the best one?  
+# Table 2 - Average BIC units from best model
 
-**CP**
+Table 2 - Mean and median distance for second best model in BIC units, for each of the pooling scenarios.
 
-```{r}
+```{r Table2}
+# cp.bic %>% 
+#   filter(., deltaBIC != 0) %>% 
+#   group_by(boot) %>% 
+#   summarise(min = min(deltaBIC)) %>% 
+#   summary()
+# 
+# pp.bic %>% 
+#   filter(., deltaBIC != 0) %>% 
+#   group_by(boot) %>% 
+#   summarise(min = min(deltaBIC)) %>% 
+#   summary()
+# 
+# np.bic %>% 
+#   filter(., deltaBIC != 0) %>% 
+#   group_by(boot) %>% 
+#   summarise(min = min(deltaBIC)) %>% 
+#   summary()
+
+
 cp.bic %>% 
+  bind_rows(pp.bic) %>% 
+  bind_rows(np.bic) %>% 
   filter(., deltaBIC != 0) %>% 
-  group_by(boot) %>% 
+  group_by(model, boot) %>% 
   summarise(min = min(deltaBIC)) %>% 
-  summary()
-```
+  group_by(model) %>% 
+  summarise(median = median(min),
+            mean = mean(min))
 
-**PP** 
-```{r}
-pp.bic %>% 
-  filter(., deltaBIC != 0) %>% 
-  group_by(boot) %>% 
-  summarise(min = min(deltaBIC)) %>% 
-  summary()
-```
-
-**NP**
-```{r}
-np.bic %>% 
-  filter(., deltaBIC != 0) %>% 
-  group_by(boot) %>% 
-  summarise(min = min(deltaBIC)) %>% 
-  summary()
 ```
 
 
