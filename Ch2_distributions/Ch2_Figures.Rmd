@@ -267,11 +267,12 @@ BIC_table %>%
          dist = str_to_title(dist)) %>% 
   mutate(model = factor(model, levels = c("CP", "PP", "NP"))) %>% 
   arrange(., model) -> BIC_table
-# BIC_table
+
+BIC_table
 
 ```
 
-```{r}
+```{r eval=FALSE}
 
 #library(gt)
 
