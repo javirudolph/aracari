@@ -3,5 +3,6 @@
 .RData
 inst/doc
 *.RDS
+*.png
 
 paper/*.RData
