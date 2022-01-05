@@ -90,12 +90,12 @@ for(j in 1:length(ids)){
 
 ## PP fit -----------------------------------------------
 
-fgs <- unique(ptpl$fam_g)
+g.id <- paste0("G", 1:6)
 
-for(j in 1:length(fgs)){
+for(j in 1:length(g.id)){
 
   fam.df <- ptpl %>%
-    filter(., fam_g == fgs[j])
+    filter(., group == g.id[j])
 
   fit <- lapply(dist.used, function(x){fitdist(fam.df$mpm, distr = x)})
 
@@ -104,7 +104,7 @@ for(j in 1:length(fgs)){
            dist = dist,
            kpars = kpars,
            dBIC = bic - min(bic),
-           ID = toupper(fgs[j]),
+           ID = toupper(g.id[j]),
            model = "PP")
 
   reg_fits_info <- rbind.data.frame(reg_fits_info, out)
