@@ -12,10 +12,23 @@ library(fitdistrplus)
 
 # Data ----------------------------------------------------
 # The script for this data is in the data-raw folder
-load("data/ptpl.rda")
+#load("data/ptpl.rda")
+
+# ptpl %>%
+#   filter(., mpm != 0) -> ptpl
+
+load("Ch2_distributions/Orig_data_KH/tidy_data.RData")
+
 
 ptpl %>%
-  filter(., mpm != 0) -> ptpl
+  mutate(T_minutes = dt/60,
+         Bird_ID = id,
+         mpm = dist/T_minutes,
+         R2n = lead(R2n)) %>%
+  filter(mpm != 0) %>%
+  group_by(Bird_ID) %>%
+  add_tally() %>%
+  filter(n >= 30) -> ptpl
 
 
 dist.used <- c("gamma", "weibull", "lnorm")
