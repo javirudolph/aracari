@@ -53,7 +53,9 @@ scales::show_col(my.cols2)
 
 ```
 
+## F1 - Color 
 
+Color version - each social group has a different color.  
 
 ```{r Figure1col, fig.width=12, fig.height=4}
 
@@ -113,10 +115,14 @@ fam_dens_plot +
 fam_dens_plot +
   annotation_custom(grob = ggplotGrob(fam_zoom), xmin = annot_xy[1] , xmax = annot_xy[2] , ymin = annot_xy[3] , ymax = annot_xy[4]) -> b
 
-plot_grid(a, b)
+plot_grid(b,a, labels = c("A)", "B)"))
 
 ggsave2(filename = "Ch2_distributions/Figures/Figure1_color.png")
 ```  
+
+## F1 - BW 
+
+Black and white version seems more clear to me. Maybe worth including a different in the underlying curves to make sure the point comes across that one is for individuals, and the other for social groups.  
 
 
 ```{r Figure1bw, fig.width=12, fig.height=4}
@@ -177,63 +183,12 @@ fam_dens_plot +
 fam_dens_plot +
   annotation_custom(grob = ggplotGrob(fam_zoom), xmin = annot_xy[1] , xmax = annot_xy[2] , ymin = annot_xy[3] , ymax = annot_xy[4]) -> b
 
-plot_grid(a, b)
+plot_grid(b, a, labels = c("A)", "B)"))
 
 ggsave2(filename = "Ch2_distributions/Figures/Figure1_bw.png")
 ```  
 
-Figure 1 - Probability density plots of velocity data for each individual (grey lines), and pooled across individuals (black line). Considerable variation from the population level density (black line) is observed for various individuals. Particular focus towards the tails, where certain individuals possess much higher densities for large velocities, something that gets dampened when considering pooled data for velocity densities. 
-
-
-```{r eval=FALSE, fig.height=6, fig.width=4}
-# Figure 1 ---------------------------------------------
-# Distribution of velocities at the different pooling levels
-
-cols.fig1 <- c("#23262f","#717492","#b3a82a","#c94f21","#980012","#0d907a","#b9bec3")
-
-ptpl %>%
-  ggplot(., aes((x = mpm))) +
-  #geom_line(aes(x = mpm, group = id), stat = "density", alpha = 0.4) +
-  # geom_line(aes(x = mpm, group = fam_g), stat = "density", alpha = 0.4,
-  #           color = "blue") +
-  geom_line(stat = "density", color = "black") +
-  geom_vline(xintercept = 0, color = "grey") +
-  geom_hline(yintercept = 0, color = "grey") +
-  labs(y = "Density", x = "Velocity in m/min") +
-  theme_classic() +
-  lims(y = c(0, 0.05)) -> cp_lines
-
-ptpl %>%
-  ggplot(., aes((x = mpm))) +
-  geom_line(aes(x = mpm, group = id, color = fam_g), stat = "density") +
-  # geom_line(aes(x = mpm, group = fam_g), stat = "density", alpha = 0.4,
-  #           color = "blue") +
-  #geom_line(stat = "density", color = "#1191d1", lwd = 1) +
-  geom_vline(xintercept = 0, color = "grey") +
-  geom_hline(yintercept = 0, color = "grey") +
-  labs(y = "Density", x = "Velocity in m/min") +
-  theme_classic() +
-  scale_color_manual(values = cols.fig1) +
-  theme(legend.position = "none") +
-  lims(y = c(0, 0.05)) -> np_lines
-
-ptpl %>%
-  ggplot(., aes((x = mpm))) +
-  #geom_line(aes(x = mpm, group = id), stat = "density", alpha = 0.4) +
-  geom_line(aes(x = mpm, group = fam_g, color = fam_g),
-            stat = "density") +
-  #geom_line(stat = "density", color = "#1191d1", lwd = 1) +
-  geom_vline(xintercept = 0, color = "grey") +
-  geom_hline(yintercept = 0, color = "grey") +
-  labs(y = "Density", x = "Velocity in m/min") +
-  theme_classic() +
-  scale_color_manual(values = cols.fig1) +
-  theme(legend.position = "none") +
-  lims(y = c(0, 0.05)) -> pp_lines
-
-plot_grid(cp_lines, pp_lines, np_lines, nrow = 3)
-
-```  
+Figure 1 - Kernel density estimates for the distribution of velocity data at different pooling levels, with the dark black density curve showing complete pooling. A) Partial pooling representation of the data, where each curve displays the density of velocities across a social group. B) No pooling scenario, where each density curve is associated to a single individual's velocity data. Plot inserts show a zoom to the tail of the distribution of velocity data in both panels. We observe considerable variation for both partial and no pooling scenarios, when compared to the single black density curve that represents the complete pooling. Particular focus towards the tails, where certain individuals possess much higher densities for large velocities, something that gets dampened when considering pooled data for velocity densities. 
 
 
 <!-- # Fits  -->
