@@ -54,25 +54,74 @@ scales::show_col(my.cols2)
 ```
 
 
-```{r Figure1, fig.width=6, fig.height=4}
 
-ptpl %>%
+```{r Figure1, fig.width=12, fig.height=4}
+
+zoom_dims <- c(90, 200, 0, 0.01)
+annot_xy <- c(50, 200, 0.025, 0.045)
+box_color <- "blue"
+
+ind_dens_plot <- ptpl %>%
   ggplot(., aes((x = mpm))) +
   #geom_line(aes(x = mpm, group = id, color = fam_g), stat = "density", alpha = 0.8) +
   geom_line(aes(x = mpm, group = id), color = "grey", 
             stat = "density", alpha = 0.8) +
-  # geom_line(aes(x = mpm, group = fam_g), stat = "density", alpha = 0.4,
-  #           color = "blue") +
   geom_line(stat = "density", color = "black", lwd = 1) +
   geom_vline(xintercept = 0, color = "grey") +
   geom_hline(yintercept = 0, color = "grey") +
   labs(y = "Density", x = "Velocity in m/min") +
+  # geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[2], y = zoom_dims[3], yend = zoom_dims[3]), color = box_color) +
+  # geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[2], y = zoom_dims[4], yend = zoom_dims[4]), color = box_color) +
+  # geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[1], y = zoom_dims[3], yend = zoom_dims[4]), color = box_color) +
+  # geom_segment(aes(x = zoom_dims[2], xend = zoom_dims[2], y = zoom_dims[3], yend = zoom_dims[4]), color = box_color) +
   theme_classic() +
   scale_color_manual(values = my.cols2) +
   theme(legend.position = "none")
 
+ind_dens_plot +
+  coord_cartesian(
+    xlim = zoom_dims[1:2],
+    ylim = zoom_dims[3:4]) +
+  theme(title = element_blank()) -> ind_zoom
+
+ind_dens_plot +
+  annotation_custom(grob = ggplotGrob(ind_zoom), xmin = annot_xy[1] , xmax = annot_xy[2] , ymin = annot_xy[3] , ymax = annot_xy[4]) -> a
+
+
+fam_dens_plot <- ptpl %>%
+  ggplot(., aes((x = mpm))) +
+  #geom_line(aes(x = mpm, group = id, color = fam_g), stat = "density", alpha = 0.8) +
+  geom_line(aes(x = mpm, group = fam_g), color = "grey", 
+            stat = "density", alpha = 0.8) +
+  geom_line(stat = "density", color = "black", lwd = 1) +
+  geom_vline(xintercept = 0, color = "grey") +
+  geom_hline(yintercept = 0, color = "grey") +
+  labs(y = "Density", x = "Velocity in m/min") +
+    # geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[2], y = zoom_dims[3], yend = zoom_dims[3]), color = box_color) +
+  # geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[2], y = zoom_dims[4], yend = zoom_dims[4]), color = box_color) +
+  # geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[1], y = zoom_dims[3], yend = zoom_dims[4]), color = box_color) +
+  # geom_segment(aes(x = zoom_dims[2], xend = zoom_dims[2], y = zoom_dims[3], yend = zoom_dims[4]), color = box_color) +
+  theme_classic() +
+  scale_color_manual(values = my.cols2) +
+  theme(legend.position = "none")
+
+fam_dens_plot +
+  coord_cartesian(
+    xlim = zoom_dims[1:2],
+    ylim = zoom_dims[3:4]) +
+  theme(title = element_blank()) -> fam_zoom
+
+
+fam_dens_plot +
+  annotation_custom(grob = ggplotGrob(fam_zoom), xmin = annot_xy[1] , xmax = annot_xy[2] , ymin = annot_xy[3] , ymax = annot_xy[4]) -> b
+
+plot_grid(a, b)
+
 ggsave2(filename = "Ch2_distributions/Figures/Figure1.png")
 ```  
+
+
+
 
 Figure 1 - Probability density plots of velocity data for each individual (grey lines), and pooled across individuals (black line). Considerable variation from the population level density (black line) is observed for various individuals. Particular focus towards the tails, where certain individuals possess much higher densities for large velocities, something that gets dampened when considering pooled data for velocity densities. 
 
