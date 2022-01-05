@@ -50,7 +50,38 @@ birds %>%
          TAG = `TRANS#`,
          burst = paste(TAG, DATE, sep = "_"),
          burst = sub(" .*", "", burst)) %>%
-  dplyr:: select(X_UTM, Y_UTM, DATE, TAG, burst)-> all_tags
+  dplyr:: select(X_UTM, Y_UTM, DATE, TAG, burst)-> xydf
+
+
+# Set spatial coordinates for the dataset
+
+coordinates(xydf) <- c("X_UTM", "Y_UTM")
+
+
+#Assign a projection, I know it is UTM zone 18 because it is Ecuadorian Amazon
+proj4string(xydf) <- CRS("+proj=utm +zone=18 +datum=WGS84")
+
+
+# Create ltraj object for work with adehabitat
+# We set typeII = TRUE because we have variable time frames, although locations were attempted every 15 minutes, this didn't always happen.
+ptpl.ltraj <- as.ltraj(coordinates(xydf), burst = xydf$burst,
+                       date = xydf$DATE, id = xydf$TAG, typeII = TRUE)
+
+
+# We can see the locations for all the individuals tracked
+plot(ptpl.ltraj)
+
+# The data frame now has the original xy locations, the time stamp, the individual
+# But it has also added information about the displacement and net squared displacement.
+# There is a high number of NA because we can only calculate distances moved from continous locations, happening during the same tracking session (which are a few hours per day)
+
+ptpl <- ld(ptpl.ltraj)
+
+
+
+
+
+#######################################################
 
 # Now, edit the other birds
 
@@ -66,6 +97,11 @@ bird1 %>%
             burst = paste(TAG, DATE, sep = "_"),
             burst = sub(" .*", "", burst)) -> T84
 
+coordinates(T84) <- c("X_UTM", "Y_UTM")
+proj4string(T84) <- CRS("+proj=utm +zone=18 +datum=WGS84")
+T84.traj <- as.ltraj(coordinates(T84), burst = T84$burst, date = T84$DATE, id = T84$TAG, typeII = TRUE)
+T84.df <- ld(T84.traj)
+
 
 bird2 %>%
   dplyr::select(X_UTM, Y_UTM, date, time) %>%
@@ -78,6 +114,11 @@ bird2 %>%
             TAG = as.character(49),
             burst = paste(TAG, DATE, sep = "_"),
             burst = sub(" .*", "", burst)) -> T49
+
+coordinates(T49) <- c("X_UTM", "Y_UTM")
+proj4string(T49) <- CRS("+proj=utm +zone=18 +datum=WGS84")
+T49.traj <- as.ltraj(coordinates(T49), burst = T49$burst, date = T49$DATE, id = T49$TAG, typeII = TRUE)
+T49.df <- ld(T49.traj)
 
 bird3 %>%
   rename(X_UTM = X_Estimate,
@@ -95,35 +136,16 @@ bird3 %>%
             burst = paste(TAG, DATE, sep = "_"),
             burst = sub(" .*", "", burst)) -> T28
 
-## Get them all into the same tag_df
+coordinates(T28) <- c("X_UTM", "Y_UTM")
+proj4string(T28) <- CRS("+proj=utm +zone=18 +datum=WGS84")
+T28.traj <- as.ltraj(coordinates(T28), burst = T28$burst, date = T28$DATE, id = T28$TAG, typeII = TRUE)
+T28.df <- ld(T28.traj)
 
-all_tags %>%
-  bind_rows(., T28, T49, T84) -> ptplUTM
 
 #########################################################
 
-# Set spatial coordinates for the dataset
-
-coordinates(ptplUTM) <- c("X_UTM", "Y_UTM")
-
-#Assign a projection, I know it is UTM zone 18 because it is Ecuadorian Amazon
-proj4string(ptplUTM) <- CRS("+proj=utm +zone=18 +datum=WGS84")
-
-
-# Create ltraj object for work with adehabitat
-# We set typeII = TRUE because we have variable time frames, although locations were attempted every 15 minutes, this didn't always happen.
-ptpl.ltraj <- as.ltraj(coordinates(ptplUTM), burst = ptplUTM$burst,
-                       date = ptplUTM$DATE, id = ptplUTM$TAG, typeII = TRUE)
-
-
-# We can see the locations for all the individuals tracked
-plot(ptpl.ltraj)
-
-# The data frame now has the original xy locations, the time stamp, the individual
-# But it has also added information about the displacement and net squared displacement.
-# There is a high number of NA because we can only calculate distances moved from continous locations, happening during the same tracking session (which are a few hours per day)
-
-ptpl <- ld(ptpl.ltraj)
+ptpl <- ptpl %>%
+  bind_rows(T28.df, T49.df, T84.df)
 
 ##################################
 # MORE info
