@@ -186,7 +186,7 @@ for(i in 1:nboots){
 
 # Partial pooling fits ----------------------------------
 
-fgs <- unique(ptpl$fam_g)
+g.id <- paste0("G", 1:6)
 
 pp.boot.fits <- NULL
 
@@ -195,8 +195,8 @@ for(i in 1:nboots){
 
   boot.df <- ptpl %>%
     ungroup() %>%
-    dplyr::select(.,fam_g, mpm) %>%
-    group_by(fam_g) %>%
+    dplyr::select(., group, mpm) %>%
+    group_by(group) %>%
     nest() %>%
     ungroup() %>%
     mutate(n = map_int(data, nrow)) %>%
@@ -204,10 +204,10 @@ for(i in 1:nboots){
     dplyr::select(-data) %>%
     unnest(samp)
 
-  for(j in 1:length(fgs)){
+  for(j in 1:length(g.id)){
 
     fg.df <- boot.df %>%
-      filter(., fam_g == fgs[j])
+      filter(., group == g.id[j])
 
     fit <- lapply(dist.used, function(x){fitdist(fg.df$mpm, distr = x)})
 
@@ -216,7 +216,7 @@ for(i in 1:nboots){
              dist = dist,
              kpars = kpars,
              dBIC = bic - min(bic),
-             fgroup = toupper(fgs[j]),
+             fgroup = toupper(g.id[j]),
              boot = paste0("boot_", i))
 
     pp.boot.fits <- rbind.data.frame(pp.boot.fits, out)
