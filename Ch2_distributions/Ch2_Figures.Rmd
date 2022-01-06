@@ -714,12 +714,14 @@ cp.best %>%
   filter(., dist == "lnorm") %>% 
   ggplot(., aes(x = meanlog, y = sdlog)) +
   geom_point(alpha = aval) +
+  lims(x = c(0.7, 3.5), y = c(0.5, 2.1)) +
   figx.theme -> cp.ln
 
 cp.best %>%
   filter(., dist == "weibull") %>% 
   ggplot(., aes(x = scale, y = shape)) +
   geom_point(alpha = aval) +
+  lims(x = c(5, 80), y = c(0, 2.1)) +
   figx.theme -> cp.wei
 
 cp.grid <- plot_grid(NULL, cp.ln, cp.wei, ncol = 3)
@@ -729,7 +731,7 @@ pp.best %>%
   ggplot(., aes(x = rate, y = shape, color = group)) +
   geom_point(alpha = aval) +
   scale_color_manual(values=colsx) +
-  lims(x = c(0, 0.23), y = c(0.4, 2.4)) +
+  lims(x = c(0, 0.23), y = c(0.4, 2.3)) +
   figx.theme -> pp.gam
 
 pp.best %>%
@@ -737,6 +739,7 @@ pp.best %>%
   ggplot(., aes(x = meanlog, y = sdlog, color = group)) +
   geom_point(alpha = aval) +
   scale_color_manual(values=colsx) +
+  lims(x = c(0.7, 3.5), y = c(0.5, 2.1)) +
   figx.theme -> pp.ln
 
 pp.best %>%
@@ -744,6 +747,7 @@ pp.best %>%
   ggplot(., aes(x = scale, y = shape, color = group)) +
   geom_point(alpha = aval) +
   scale_color_manual(values=colsx) +
+  lims(x = c(5, 80), y = c(0, 2.1)) +
   figx.theme -> pp.wei
 
 pp.grid <- plot_grid(pp.gam, pp.ln, pp.wei, nrow = 1)
@@ -754,7 +758,7 @@ np.best %>%
   ggplot(., aes(x = rate, y = shape, color = group, shape = shapeid)) +
   geom_point(alpha = aval) +
   scale_color_manual(values=colsx) +
-  lims(x = c(0, 0.23), y = c(0.4, 2.4)) +
+  lims(x = c(0, 0.23), y = c(0.4, 2.3)) +
   figx.theme -> np.gam
 
 np.best %>% 
@@ -762,6 +766,7 @@ np.best %>%
   ggplot(., aes(x = meanlog, y = sdlog, color = group, shape = shapeid)) +
   geom_point(alpha = aval) +
   scale_color_manual(values=colsx) +
+  lims(x = c(0.7, 3.5), y = c(0.5, 2.1)) +
   figx.theme -> np.ln
 
 np.best %>%
@@ -769,6 +774,7 @@ np.best %>%
   ggplot(., aes(x = scale, y = shape, color = group, shape = shapeid)) +
   geom_point(alpha = aval) +
   scale_color_manual(values=colsx) +
+  lims(x = c(5, 80), y = c(0, 2.1)) +
   figx.theme -> np.wei
 
 np.grid <- plot_grid(np.gam, np.ln, np.wei, nrow = 1)
