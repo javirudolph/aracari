@@ -649,72 +649,127 @@ cp.bic %>%
 ```
 
 
-# Appendix figures
+# Figure X - Best fit parameters
 
 To tell the same story, we see variation in the parameters estimated for each bootstrap under various models.  
 
 
-**CP**  
+```{r}
 
-
-```{r fig.height=6}
-cp.boot.fits %>% 
+cp.boot.fits %>%
   filter(., dBIC == 0) %>% 
   dplyr::select(boot, estimate, param, dist) %>% 
-  pivot_wider(names_from = param, values_from = estimate) %>%
-  filter(., dist == "weibull") %>% 
-  ggplot(., aes(x = scale, y = shape)) +
-  geom_point()
+  pivot_wider(names_from = param, values_from = estimate) -> cp.best
+
+
+
+pp.boot.fits %>%
+  filter(., dBIC == 0) %>% 
+  dplyr::select(group, boot, estimate, param, dist) %>% 
+  pivot_wider(names_from = param, values_from = estimate) -> pp.best
+
+np.boot.fits %>%
+  filter(., dBIC == 0) %>% 
+  dplyr::select(individual, boot, estimate, param, dist) %>% 
+  pivot_wider(names_from = param, values_from = estimate) %>% 
+  mutate(id = str_remove(individual, "B"), 
+         group = case_when(
+    id %in% c(1,3,5) ~ "G1",
+    id %in% c(7) ~ "G2",
+    id %in% c(13, 19) ~ "G3",
+    id %in% c(22) ~ "G4",
+    id %in% c(28) ~ "G5",
+    id %in% c(49, 84) ~ "G6",
+    id %in% c(29, 30) ~ "G7"
+  )) %>%
+  #slice_sample(., n = 100) %>% 
+  arrange(group) %>% 
+  group_by(group) %>% 
+  mutate(shapeid = as.character(as.numeric(as.factor(individual)))) -> np.best
+#View(np.best)
+
+
 ```
 
-**PP**  
 
-```{r fig.height=6}
-pp.boot.fits %>% 
-  filter(., dBIC == 0) %>% 
-  ggplot(., aes(y = estimate, x = fgroup)) +
-  facet_wrap(dist~param, ncol = 2, scales = "free") +
-  geom_boxplot()
-```  
+```{r FigureX, fig.height=12, fig.width=12}
+library(MetBrewer)
 
+colsx <- met.brewer("Gauguin", n = 7)
+aval <- 0.3
 
-**NP**  
+figx.theme <- theme_bw() +
+  theme(legend.position = "none")
 
-
-```{r fig.height=6}
-
-np.boot.fits %>%
-  filter(., dBIC == 0) %>% 
-  dplyr::select(individual, boot, estimate, param, dist) %>% 
-  pivot_wider(names_from = param, values_from = estimate) %>%
-  filter(., dist == "gamma") %>% 
-  ggplot(., aes(x = rate, y = shape, color = individual)) +
-  geom_point() -> a
-
-np.boot.fits %>%
-  filter(., dBIC == 0) %>% 
-  dplyr::select(individual, boot, estimate, param, dist) %>% 
-  pivot_wider(names_from = param, values_from = estimate) %>%
+cp.best %>% 
   filter(., dist == "lnorm") %>% 
-  ggplot(., aes(x = meanlog, y = sdlog, color = individual)) +
-  geom_point() -> b
+  ggplot(., aes(x = meanlog, y = sdlog)) +
+  geom_point(alpha = aval) +
+  figx.theme -> cp.ln
 
-np.boot.fits %>%
-  filter(., dBIC == 0) %>% 
-  dplyr::select(individual, boot, estimate, param, dist) %>% 
-  pivot_wider(names_from = param, values_from = estimate) %>%
+cp.best %>%
   filter(., dist == "weibull") %>% 
-  ggplot(., aes(x = scale, y = shape, color = individual)) +
-  geom_point() -> c
+  ggplot(., aes(x = scale, y = shape)) +
+  geom_point(alpha = aval) +
+  figx.theme -> cp.wei
 
-plot_grid(a, b, c)
+cp.grid <- plot_grid(NULL, cp.ln, cp.wei, ncol = 3)
+
+pp.best %>% 
+  filter(., dist == "gamma") %>% 
+  ggplot(., aes(x = rate, y = shape, color = group)) +
+  geom_point(alpha = aval) +
+  scale_color_manual(values=colsx) +
+  figx.theme -> pp.gam
+
+pp.best %>%
+  filter(., dist == "lnorm") %>% 
+  ggplot(., aes(x = meanlog, y = sdlog, color = group)) +
+  geom_point(alpha = aval) +
+  scale_color_manual(values=colsx) +
+  figx.theme -> pp.ln
+
+pp.best %>%
+  filter(., dist == "weibull") %>% 
+  ggplot(., aes(x = scale, y = shape, color = group)) +
+  geom_point(alpha = aval) +
+  scale_color_manual(values=colsx) +
+  figx.theme -> pp.wei
+
+pp.grid <- plot_grid(pp.gam, pp.ln, pp.wei, nrow = 1)
+
+
+np.best %>% 
+  filter(., dist == "gamma") %>% 
+  ggplot(., aes(x = rate, y = shape, color = group, shape = shapeid)) +
+  geom_point(alpha = aval) +
+  scale_color_manual(values=colsx) +
+  figx.theme -> np.gam
+
+np.best %>% 
+  filter(., dist == "lnorm") %>% 
+  ggplot(., aes(x = meanlog, y = sdlog, color = group, shape = shapeid)) +
+  geom_point(alpha = aval) +
+  scale_color_manual(values=colsx) +
+  figx.theme -> np.ln
+
+np.best %>%
+  filter(., dist == "weibull") %>% 
+  ggplot(., aes(x = scale, y = shape, color = group, shape = shapeid)) +
+  geom_point(alpha = aval) +
+  scale_color_manual(values=colsx) +
+  figx.theme -> np.wei
+
+np.grid <- plot_grid(np.gam, np.ln, np.wei, nrow = 1)
+
+plot_grid(cp.grid, pp.grid, np.grid, nrow = 3)
 ```
 
 
 
 # Figure X - angles
 
-```{r fig.width=8, fig.height=6}
+```{r fig.width=8, fig.height=6, eval = FALSE}
 p1_angles <- ptpl %>% 
   drop_na(rel.angle) %>% 
   mutate(d.angle = ifelse(rel.angle > 0, rel.angle * 180/pi,
