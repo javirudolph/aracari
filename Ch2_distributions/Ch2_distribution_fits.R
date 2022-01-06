@@ -228,6 +228,6 @@ for(i in 1:nboots){
 
 
 # save.image(file = "Ch2_distributions/fits_df.RData")
-save(nboots, dist, dist.used, ids, fgs, kpars, param, reg_fits_info,
+save(nboots, dist, dist.used, ids, g.id, kpars, param, reg_fits_info,
      cp.boot.fits, pp.boot.fits, np.boot.fits,
      file = "Ch2_distributions/Ch2_fits.RData")
