@@ -595,7 +595,7 @@ cp.bic %>%
   ggplot(., aes(x = deltaBIC, color = dist, y = boot)) +
   facet_wrap(~model, nrow = 3) +
   #geom_col() +
-  geom_point(alpha = 0.8, shape = 15) +
+  geom_point(alpha = 0.8, shape = 15, size = 0.8) +
   scale_color_manual(values = cols.fig2) +
   theme_classic() +
   theme(axis.text.y = element_blank(),
@@ -638,10 +638,12 @@ cp.bic %>%
   bind_rows(pp.bic) %>% 
   bind_rows(np.bic) %>% 
   filter(., deltaBIC != 0) %>% 
+  mutate(model = factor(model, levels = c("CP", "PP", "NP"))) %>% 
   group_by(model, boot) %>% 
   summarise(min = min(deltaBIC)) %>% 
   group_by(model) %>% 
-  summarise(median = median(min),
+  summarise(minimum = min(min),
+            median = median(min),
             mean = mean(min))
 
 ```
@@ -658,9 +660,11 @@ To tell the same story, we see variation in the parameters estimated for each bo
 ```{r fig.height=6}
 cp.boot.fits %>% 
   filter(., dBIC == 0) %>% 
-  ggplot(., aes(y = estimate)) +
-  facet_wrap(dist~param, ncol = 2, scales = "free") +
-  geom_boxplot()
+  dplyr::select(boot, estimate, param, dist) %>% 
+  pivot_wider(names_from = param, values_from = estimate) %>%
+  filter(., dist == "weibull") %>% 
+  ggplot(., aes(x = scale, y = shape)) +
+  geom_point()
 ```
 
 **PP**  
@@ -678,11 +682,32 @@ pp.boot.fits %>%
 
 
 ```{r fig.height=6}
-np.boot.fits %>% 
+
+np.boot.fits %>%
   filter(., dBIC == 0) %>% 
-  ggplot(., aes(y = estimate, x = individual)) +
-  facet_wrap(dist~param, ncol = 2, scales = "free") +
-  geom_boxplot()
+  dplyr::select(individual, boot, estimate, param, dist) %>% 
+  pivot_wider(names_from = param, values_from = estimate) %>%
+  filter(., dist == "gamma") %>% 
+  ggplot(., aes(x = rate, y = shape, color = individual)) +
+  geom_point() -> a
+
+np.boot.fits %>%
+  filter(., dBIC == 0) %>% 
+  dplyr::select(individual, boot, estimate, param, dist) %>% 
+  pivot_wider(names_from = param, values_from = estimate) %>%
+  filter(., dist == "lnorm") %>% 
+  ggplot(., aes(x = meanlog, y = sdlog, color = individual)) +
+  geom_point() -> b
+
+np.boot.fits %>%
+  filter(., dBIC == 0) %>% 
+  dplyr::select(individual, boot, estimate, param, dist) %>% 
+  pivot_wider(names_from = param, values_from = estimate) %>%
+  filter(., dist == "weibull") %>% 
+  ggplot(., aes(x = scale, y = shape, color = individual)) +
+  geom_point() -> c
+
+plot_grid(a, b, c)
 ```
 
 
