@@ -709,13 +709,15 @@ colsx <- met.brewer("Tiepolo", n = 7)
 aval <- 0.3
 
 figx.theme <- theme_bw() +
-  theme(legend.position = "none")
+  theme(legend.position = "none",
+        axis.title = element_text(size = 8))
 
 cp.best %>% 
   filter(., dist == "lnorm") %>% 
   ggplot(., aes(x = meanlog, y = sdlog)) +
   geom_point(alpha = aval) +
   lims(x = c(0.7, 3.7), y = c(0.5, 2.1)) +
+  labs(subtitle = "CP - lnorm") +
   figx.theme -> cp.ln
 
 cp.best %>%
@@ -723,6 +725,7 @@ cp.best %>%
   ggplot(., aes(x = scale, y = shape)) +
   geom_point(alpha = aval) +
   lims(x = c(5, 80), y = c(0, 2.1)) +
+  labs(subtitle = "CP - weibull") +
   figx.theme -> cp.wei
 
 cp.grid <- plot_grid(cp.ln, cp.wei, ncol = 2, labels = c("A)", "B)"), label_size = 9)
@@ -733,6 +736,7 @@ pp.best %>%
   geom_point(alpha = aval) +
   scale_color_manual(values=colsx, drop=FALSE) +
   lims(x = c(0, 0.23), y = c(0.4, 2.3)) +
+  labs(subtitle = "PP - gamma") +
   figx.theme -> pp.gam
 
 pp.best %>%
@@ -741,6 +745,7 @@ pp.best %>%
   geom_point(alpha = aval) +
   scale_color_manual(values=colsx, drop=FALSE) +
   lims(x = c(0.7, 3.7), y = c(0.5, 2.1)) +
+  labs(subtitle = "PP - lnorm") +
   figx.theme -> pp.ln
 
 pp.best %>%
@@ -749,6 +754,7 @@ pp.best %>%
   geom_point(alpha = aval) +
   scale_color_manual(values=colsx, drop=FALSE) +
   lims(x = c(5, 80), y = c(0, 2.1)) +
+  labs(subtitle = "PP - weibull") +
   figx.theme -> pp.wei
 
 pp.grid <- plot_grid(pp.gam, pp.ln, pp.wei, nrow = 1, labels = c("C)", "D)", "E)"), label_size = 9)
@@ -760,6 +766,7 @@ np.best %>%
   geom_point(alpha = aval) +
   scale_color_manual(values=colsx, drop=FALSE) +
   lims(x = c(0, 0.23), y = c(0.4, 2.3)) +
+  labs(subtitle = "NP - gamma") +
   figx.theme -> np.gam
 
 np.best %>% 
@@ -768,6 +775,7 @@ np.best %>%
   geom_point(alpha = aval) +
   scale_color_manual(values=colsx, drop=FALSE) +
   lims(x = c(0.7, 3.7), y = c(0.5, 2.1)) +
+  labs(subtitle = "NP - lnorm") +
   figx.theme -> np.ln
 
 np.best %>%
@@ -776,6 +784,7 @@ np.best %>%
   geom_point(alpha = aval) +
   scale_color_manual(values=colsx, drop=FALSE) +
   lims(x = c(5, 80), y = c(0, 2.1)) +
+  labs(subtitle = "NP - weibull") +
   figx.theme -> np.wei
 
 np.grid <- plot_grid(np.gam, np.ln, np.wei, nrow = 1, labels = c("F)", "G)", "H)"), label_size = 9)
