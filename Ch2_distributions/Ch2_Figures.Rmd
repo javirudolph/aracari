@@ -663,12 +663,12 @@ cp.boot.fits %>%
   dplyr::select(boot, estimate, param, dist) %>% 
   pivot_wider(names_from = param, values_from = estimate) -> cp.best
 
-cp.best
 
 pp.boot.fits %>%
   filter(., dBIC == 0) %>% 
   dplyr::select(group, boot, estimate, param, dist) %>% 
-  pivot_wider(names_from = param, values_from = estimate) -> pp.best
+  pivot_wider(names_from = param, values_from = estimate) %>% 
+  mutate(group = as.factor(group)) -> pp.best
 
 np.boot.fits %>%
   filter(., dBIC == 0) %>% 
@@ -684,7 +684,8 @@ np.boot.fits %>%
     id %in% c(49, 84) ~ "G6",
     id %in% c(29, 30) ~ "G7"
   )) %>%
-  #slice_sample(., n = 100) %>% 
+  #slice_sample(., n = 100) %>%
+  mutate(group = as.factor(group)) %>% 
   arrange(group) %>% 
   group_by(group) %>% 
   mutate(shapeid = as.character(as.numeric(as.factor(individual)))) -> np.best
@@ -714,7 +715,7 @@ cp.best %>%
   filter(., dist == "lnorm") %>% 
   ggplot(., aes(x = meanlog, y = sdlog)) +
   geom_point(alpha = aval) +
-  lims(x = c(0.7, 3.5), y = c(0.5, 2.1)) +
+  lims(x = c(0.7, 3.7), y = c(0.5, 2.1)) +
   figx.theme -> cp.ln
 
 cp.best %>%
@@ -724,13 +725,13 @@ cp.best %>%
   lims(x = c(5, 80), y = c(0, 2.1)) +
   figx.theme -> cp.wei
 
-cp.grid <- plot_grid(NULL, cp.ln, cp.wei, ncol = 3)
+#cp.grid <- plot_grid(NULL, cp.ln, cp.wei, ncol = 3)
 
 pp.best %>% 
   filter(., dist == "gamma") %>% 
   ggplot(., aes(x = rate, y = shape, color = group)) +
   geom_point(alpha = aval) +
-  scale_color_manual(values=colsx) +
+  scale_color_manual(values=colsx, drop=FALSE) +
   lims(x = c(0, 0.23), y = c(0.4, 2.3)) +
   figx.theme -> pp.gam
 
@@ -738,15 +739,15 @@ pp.best %>%
   filter(., dist == "lnorm") %>% 
   ggplot(., aes(x = meanlog, y = sdlog, color = group)) +
   geom_point(alpha = aval) +
-  scale_color_manual(values=colsx) +
-  lims(x = c(0.7, 3.5), y = c(0.5, 2.1)) +
+  scale_color_manual(values=colsx, drop=FALSE) +
+  lims(x = c(0.7, 3.7), y = c(0.5, 2.1)) +
   figx.theme -> pp.ln
 
 pp.best %>%
   filter(., dist == "weibull") %>% 
   ggplot(., aes(x = scale, y = shape, color = group)) +
   geom_point(alpha = aval) +
-  scale_color_manual(values=colsx) +
+  scale_color_manual(values=colsx, drop=FALSE) +
   lims(x = c(5, 80), y = c(0, 2.1)) +
   figx.theme -> pp.wei
 
@@ -757,7 +758,7 @@ np.best %>%
   filter(., dist == "gamma") %>% 
   ggplot(., aes(x = rate, y = shape, color = group, shape = shapeid)) +
   geom_point(alpha = aval) +
-  scale_color_manual(values=colsx) +
+  scale_color_manual(values=colsx, drop=FALSE) +
   lims(x = c(0, 0.23), y = c(0.4, 2.3)) +
   figx.theme -> np.gam
 
@@ -765,19 +766,32 @@ np.best %>%
   filter(., dist == "lnorm") %>% 
   ggplot(., aes(x = meanlog, y = sdlog, color = group, shape = shapeid)) +
   geom_point(alpha = aval) +
-  scale_color_manual(values=colsx) +
-  lims(x = c(0.7, 3.5), y = c(0.5, 2.1)) +
+  scale_color_manual(values=colsx, drop=FALSE) +
+  lims(x = c(0.7, 3.7), y = c(0.5, 2.1)) +
   figx.theme -> np.ln
 
 np.best %>%
   filter(., dist == "weibull") %>% 
   ggplot(., aes(x = scale, y = shape, color = group, shape = shapeid)) +
   geom_point(alpha = aval) +
-  scale_color_manual(values=colsx) +
+  scale_color_manual(values=colsx, drop=FALSE) +
   lims(x = c(5, 80), y = c(0, 2.1)) +
   figx.theme -> np.wei
 
 np.grid <- plot_grid(np.gam, np.ln, np.wei, nrow = 1)
+
+
+legend.grid <- get_legend(pp.best %>%
+  filter(., dist == "lnorm") %>% 
+  ggplot(., aes(x = meanlog, y = sdlog, color = group)) +
+  geom_point(alpha = aval) +
+  scale_color_manual(values=colsx) +
+  lims(x = c(0.7, 3.7), y = c(0.5, 2.1)) +
+  theme_bw() +
+  guides(color = guide_legend(title = "Social Group", ncol = 2,
+                              override.aes = list(alpha = 0.9, size = 5))))
+
+cp.grid <- plot_grid(legend.grid, cp.ln, cp.wei, ncol = 3)
 
 plot_grid(cp.grid, pp.grid, np.grid, nrow = 3)
 
