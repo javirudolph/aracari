@@ -725,7 +725,7 @@ cp.best %>%
   lims(x = c(5, 80), y = c(0, 2.1)) +
   figx.theme -> cp.wei
 
-#cp.grid <- plot_grid(NULL, cp.ln, cp.wei, ncol = 3)
+cp.grid <- plot_grid(cp.ln, cp.wei, ncol = 2, labels = c("A)", "B)"), label_size = 9)
 
 pp.best %>% 
   filter(., dist == "gamma") %>% 
@@ -751,7 +751,7 @@ pp.best %>%
   lims(x = c(5, 80), y = c(0, 2.1)) +
   figx.theme -> pp.wei
 
-pp.grid <- plot_grid(pp.gam, pp.ln, pp.wei, nrow = 1)
+pp.grid <- plot_grid(pp.gam, pp.ln, pp.wei, nrow = 1, labels = c("C)", "D)", "E)"), label_size = 9)
 
 
 np.best %>% 
@@ -778,7 +778,7 @@ np.best %>%
   lims(x = c(5, 80), y = c(0, 2.1)) +
   figx.theme -> np.wei
 
-np.grid <- plot_grid(np.gam, np.ln, np.wei, nrow = 1)
+np.grid <- plot_grid(np.gam, np.ln, np.wei, nrow = 1, labels = c("F)", "G)", "H)"), label_size = 9)
 
 
 legend.grid <- get_legend(pp.best %>%
@@ -791,9 +791,10 @@ legend.grid <- get_legend(pp.best %>%
   guides(color = guide_legend(title = "Social Group", ncol = 2,
                               override.aes = list(alpha = 0.9, size = 5))))
 
-cp.grid <- plot_grid(legend.grid, cp.ln, cp.wei, ncol = 3)
+#cp.grid <- plot_grid(legend.grid, cp.ln, cp.wei, ncol = 3)
+row1 <- plot_grid(legend.grid, cp.grid, ncol = 2, rel_widths = c(1,2))
 
-plot_grid(cp.grid, pp.grid, np.grid, nrow = 3)
+plot_grid(row1, pp.grid, np.grid, nrow = 3)
 
 ggsave2(filename = "Ch2_distributions/Figures/Figurex.png")
 ```
