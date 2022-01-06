@@ -21,6 +21,8 @@ library(cowplot)
 library(fitdistrplus)
 library(stringr)
 library(gt)
+library(MetBrewer)
+library(purrr)
 
 ```
 
@@ -661,7 +663,7 @@ cp.boot.fits %>%
   dplyr::select(boot, estimate, param, dist) %>% 
   pivot_wider(names_from = param, values_from = estimate) -> cp.best
 
-
+cp.best
 
 pp.boot.fits %>%
   filter(., dBIC == 0) %>% 
@@ -689,13 +691,20 @@ np.boot.fits %>%
 #View(np.best)
 
 
+# What values to use
+map_dbl(cp.best[,-c(1,2)], min, na.rm = TRUE)
+map_dbl(cp.best[,-c(1,2)], max, na.rm = TRUE)
+map_dbl(pp.best[,-c(1:3)], min, na.rm = TRUE)
+map_dbl(pp.best[,-c(1:3)], max, na.rm = TRUE)
+map_dbl(np.best[,c(4:8)], min, na.rm = TRUE)
+map_dbl(np.best[,c(4:8)], max, na.rm = TRUE)
+
 ```
 
 
-```{r FigureX, fig.height=12, fig.width=12}
-library(MetBrewer)
+```{r FigureX, fig.height=9, fig.width=9}
 
-colsx <- met.brewer("Gauguin", n = 7)
+colsx <- met.brewer("Tiepolo", n = 7)
 aval <- 0.3
 
 figx.theme <- theme_bw() +
@@ -720,6 +729,7 @@ pp.best %>%
   ggplot(., aes(x = rate, y = shape, color = group)) +
   geom_point(alpha = aval) +
   scale_color_manual(values=colsx) +
+  lims(x = c(0, 0.23), y = c(0.4, 2.4)) +
   figx.theme -> pp.gam
 
 pp.best %>%
@@ -744,6 +754,7 @@ np.best %>%
   ggplot(., aes(x = rate, y = shape, color = group, shape = shapeid)) +
   geom_point(alpha = aval) +
   scale_color_manual(values=colsx) +
+  lims(x = c(0, 0.23), y = c(0.4, 2.4)) +
   figx.theme -> np.gam
 
 np.best %>% 
@@ -763,6 +774,8 @@ np.best %>%
 np.grid <- plot_grid(np.gam, np.ln, np.wei, nrow = 1)
 
 plot_grid(cp.grid, pp.grid, np.grid, nrow = 3)
+
+ggsave2(filename = "Ch2_distributions/Figures/Figurex.png")
 ```
 
 
