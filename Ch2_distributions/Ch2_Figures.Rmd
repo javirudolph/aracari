@@ -693,12 +693,12 @@ np.boot.fits %>%
 
 
 # What values to use
-map_dbl(cp.best[,-c(1,2)], min, na.rm = TRUE)
-map_dbl(cp.best[,-c(1,2)], max, na.rm = TRUE)
-map_dbl(pp.best[,-c(1:3)], min, na.rm = TRUE)
-map_dbl(pp.best[,-c(1:3)], max, na.rm = TRUE)
-map_dbl(np.best[,c(4:8)], min, na.rm = TRUE)
-map_dbl(np.best[,c(4:8)], max, na.rm = TRUE)
+# map_dbl(cp.best[,-c(1,2)], min, na.rm = TRUE)
+# map_dbl(cp.best[,-c(1,2)], max, na.rm = TRUE)
+# map_dbl(pp.best[,-c(1:3)], min, na.rm = TRUE)
+# map_dbl(pp.best[,-c(1:3)], max, na.rm = TRUE)
+# map_dbl(np.best[,c(4:8)], min, na.rm = TRUE)
+# map_dbl(np.best[,c(4:8)], max, na.rm = TRUE)
 
 ```
 
