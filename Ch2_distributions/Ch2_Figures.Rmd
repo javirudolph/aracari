@@ -29,11 +29,19 @@ library(gt)
 set.seed(20211207)
 
 # Data ----------------------------------------------------
-# The script for this data is in the data-raw folder
-load("data/ptpl.rda")
+# The script for this data is in the Orig_data_KH
+load("Ch2_distributions/Orig_data_KH/tidy_data.RData")
+
 
 ptpl %>%
-  filter(., mpm != 0) -> ptpl
+  mutate(T_minutes = dt/60,
+         Bird_ID = id,
+         mpm = dist/T_minutes,
+         R2n = lead(R2n)) %>%
+  filter(mpm != 0) %>%
+  group_by(Bird_ID) %>%
+  add_tally() %>%
+  filter(n >= 30) -> ptpl
 ```
 
 # Figure 1 - Density plots for velocity
@@ -65,7 +73,7 @@ box_color <- "blue"
 
 ind_dens_plot <- ptpl %>%
   ggplot(., aes((x = mpm))) +
-  geom_line(aes(x = mpm, group = id, color = fam_g), stat = "density", alpha = 0.8) +
+  geom_line(aes(x = mpm, group = id, color = sgroup), stat = "density", alpha = 0.8) +
   #geom_line(aes(x = mpm, group = id), color = "grey", stat = "density", alpha = 0.8) +
   geom_line(stat = "density", color = "black", lwd = 1) +
   geom_vline(xintercept = 0, color = "grey") +
@@ -90,8 +98,9 @@ ind_dens_plot +
 
 
 fam_dens_plot <- ptpl %>%
+  drop_na(sgroup) %>% 
   ggplot(., aes((x = mpm))) +
-  geom_line(aes(x = mpm, group = fam_g, color = fam_g), stat = "density", alpha = 0.8) +
+  geom_line(aes(x = mpm, group = sgroup, color = sgroup), stat = "density", alpha = 0.8) +
   #geom_line(aes(x = mpm, group = fam_g), color = "grey",stat = "density", alpha = 0.8) +
   geom_line(stat = "density", color = "black", lwd = 1) +
   geom_vline(xintercept = 0, color = "grey") +
@@ -158,9 +167,10 @@ ind_dens_plot +
 
 
 fam_dens_plot <- ptpl %>%
+  drop_na(sgroup) %>% 
   ggplot(., aes((x = mpm))) +
   #geom_line(aes(x = mpm, group = fam_g, color = fam_g), stat = "density", alpha = 0.8) +
-  geom_line(aes(x = mpm, group = fam_g), color = "grey",stat = "density", alpha = 0.8) +
+  geom_line(aes(x = mpm, group = sgroup), color = "grey",stat = "density", alpha = 0.8) +
   geom_line(stat = "density", color = "black", lwd = 1) +
   geom_vline(xintercept = 0, color = "grey") +
   geom_hline(yintercept = 0, color = "grey") +
@@ -189,6 +199,7 @@ ggsave2(filename = "Ch2_distributions/Figures/Figure1_bw.png")
 ```  
 
 Figure 1 - Kernel density estimates for the distribution of velocity data at different pooling levels, with the dark black density curve showing complete pooling. A) Partial pooling representation of the data, where each curve displays the density of velocities across a social group. B) No pooling scenario, where each density curve is associated to a single individual's velocity data. Plot inserts show a zoom to the tail of the distribution of velocity data in both panels. We observe considerable variation for both partial and no pooling scenarios, when compared to the single black density curve that represents the complete pooling. Particular focus towards the tails, where certain individuals possess much higher densities for large velocities, something that gets dampened when considering pooled data for velocity densities. 
+
 
 
 <!-- # Fits  -->
@@ -266,7 +277,7 @@ cp.boot.fits %>%
   ungroup() -> cp.bic
 
 pp.boot.fits %>% 
-  dplyr::select(loglik, n, kpars, dist, fgroup, boot) %>% 
+  dplyr::select(loglik, n, kpars, dist, group, boot) %>% 
   distinct() %>% 
   group_by(boot, dist) %>% 
   summarise(BIC = log(sum(n))*sum(kpars) - 2 * sum(loglik)) %>% 
@@ -275,7 +286,7 @@ pp.boot.fits %>%
             boot = boot,
             model = "PP") %>% 
   bind_rows(., pp.boot.fits %>% 
-  dplyr::select(loglik, n, kpars, dist, fgroup, boot, dBIC) %>% 
+  dplyr::select(loglik, n, kpars, dist, group, boot, dBIC) %>% 
   distinct() %>% 
   filter(., dBIC == 0) %>% 
   group_by(boot) %>% 
@@ -384,7 +395,7 @@ knitr::include_graphics("Ch2_distributions/aic_bic_table.png")
 # Figure 3 - Percent Support
 
 
-```{r Figure3, fig.width=12, fig.height=6}
+```{r Figure3, fig.width=12, fig.height=5}
 
 cols.fig2 <- c("#b9bec3", 
                "#0d907a", "#DEB41E", "#9C1D29", "#23262f")
@@ -399,7 +410,7 @@ cp.bic %>%
   mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi")),
          model = factor(model, levels = c("CP", "PP", "NP"))) %>% 
   ggplot(., aes(x = model, y = prcnt_support, fill = dist)) +
-  scale_fill_manual(values = cols.fig2) +
+  scale_fill_manual(values = cols.fig2, drop = FALSE) +
   geom_col() +
   theme_classic() +
   scale_y_continuous(labels = scales::percent) +
@@ -407,7 +418,7 @@ cp.bic %>%
   theme(axis.title.x = element_blank()) +
   geom_label(data = bestmodel %>%
                filter(., model == "CP"),
-             aes(x = model, y = -0.05, label = dist)) -> pooling.support
+             aes(x = model, y = -0.05, label = dist), size = 2.5) -> pooling.support
 
 # cp.boot.fits %>%
 #   dplyr::select(., bic, dist, dBIC, boot) %>%
@@ -429,14 +440,14 @@ cp.bic %>%
 #   scale_fill_manual(values = cols.fig2) -> cp.fit
 
 pp.boot.fits %>%
-  dplyr::select(., bic, dist, dBIC, fgroup, boot) %>%
-  group_by(fgroup, boot) %>%
+  dplyr::select(., bic, dist, dBIC, group, boot) %>%
+  group_by(group, boot) %>%
   distinct() %>%
-  group_by(fgroup) %>%
+  group_by(group) %>%
   filter(dBIC == 0) %>%
   count(dist) %>%
   mutate(prcnt_support = n/nboots) %>%
-  ggplot(., aes(x = fgroup, y = prcnt_support, fill = dist)) +
+  ggplot(., aes(x = group, y = prcnt_support, fill = dist)) +
   geom_col() +
   theme_classic() +
   theme(legend.position = "none",
@@ -444,7 +455,7 @@ pp.boot.fits %>%
         axis.title.x = element_blank()) +
   scale_y_continuous(labels = scales::percent) +
   geom_label(data = bestmodel %>% filter(., model == "PP"),
-             aes(x = ID, y = -0.05, label = dist)) +
+             aes(x = ID, y = -0.05, label = dist), size = 2.5) +
   scale_fill_manual(values = cols.fig2) -> pp.support
 
 np.boot.fits %>%
@@ -454,7 +465,8 @@ np.boot.fits %>%
   group_by(individual) %>%
   filter(dBIC == 0) %>%
   count(dist) %>%
-  mutate(prcnt_support = n/nboots) %>%
+  mutate(prcnt_support = n/nboots,
+         individual = factor(individual, levels = c("B1", "B3", "B5", "B7", "B13", "B19", "B22", "B28", "B49", "B84", "B30", "B29"))) %>%
   ggplot(., aes(x = individual, y = prcnt_support, fill = dist)) +
   geom_col() +
   theme_classic() +
@@ -462,7 +474,7 @@ np.boot.fits %>%
         axis.title.x = element_blank()) +
   scale_y_continuous(labels = scales::percent) +
   geom_label(data = bestmodel %>% filter(., model == "NP"),
-             aes(x = ID, y = -0.05, label = dist)) +
+             aes(x = ID, y = -0.05, label = dist), size = 2.5) +
   scale_fill_manual(values = cols.fig2)  -> np.support
 
 # legend <- get_legend(np.fit + theme(legend.position = "bottom") +
@@ -705,7 +717,7 @@ p2_angles <- ptpl %>%
   theme(axis.title = element_blank(),
         axis.text.y = element_blank(),
         legend.position = "none") +
-  facet_wrap(~fam_g, nrow = 2) +
+  facet_wrap(~group, nrow = 2) +
   theme(axis.text = element_blank()) +
   labs(title = "Partial pooling")
 
