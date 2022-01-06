@@ -151,16 +151,18 @@ ptpl <- ptpl %>%
 # MORE info
 
 # The social groups are as follows: (1, 3, 5), (7), (13, 19), (22), (28), and (49, 84).
+# Because birds 29 and 30 are from Yasuni Station, we consider those as one group as well.
 # From the map figure in Holbrook 2011
 
 ptpl %>%
-  mutate(group = case_when(
+  mutate(sgroup = case_when(
     id %in% c(1,3,5) ~ "G1",
     id %in% c(7) ~ "G2",
     id %in% c(13, 19) ~ "G3",
     id %in% c(22) ~ "G4",
     id %in% c(28) ~ "G5",
-    id %in% c(49, 84) ~ "G6"
+    id %in% c(49, 84) ~ "G6",
+    id %in% c(29, 30) ~ "G7"
   )) -> ptpl
 
 save(ptpl, file = "Ch2_distributions/Orig_data_KH/tidy_data.RData")
