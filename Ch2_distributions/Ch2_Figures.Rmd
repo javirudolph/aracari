@@ -27,7 +27,7 @@ library(purrr)
 ```
 
 
-```{r include=FALSE}
+```{r LoadMovData, include=FALSE}
 set.seed(20211207)
 
 # Data ----------------------------------------------------
@@ -46,9 +46,8 @@ ptpl %>%
   filter(n >= 30) -> ptpl
 ```
 
-# Figure 1 - Density plots for velocity
 
-```{r include=FALSE}
+```{r Colors, include=FALSE}
 # Color palette ----------------------------------------
 my.cols1 <- c("#23262f","#717492","#b3a82a","#c94f21","#980012",
               "#0d907a","#b9bec3","#31aec5", "#653625", "#2C5C5D",
@@ -59,25 +58,38 @@ scales::show_col(my.cols1)
 my.cols2 <- c("#23262f", "#0d907a", "#DEB41E", 
               "#9C1D29", "#c76620", "#4a92b0",
               "#669e46", "grey")
-scales::show_col(my.cols2)
+scales::show_col(my.cols1)
 
+# Colors for social groups ----------------------------------------
+
+sgroup_col <- met.brewer("Tiepolo", n = 7)
+
+# Colors for models --------------------------------- 
+
+mod_col <- met.brewer("Hokusai1", n=4)
+mod_col <- c("#4C6838", "#C1B489", "#8EBF72", "#91A5A0")
+mod_col <- c("#264653", "#2a9d8f", "#e2b33c", "#e76f51")
+
+scales::show_col(mod_col)
 ```
 
-## F1 - Color 
 
-Color version - each social group has a different color.  
+# Figure 1 - Density plots for velocity
 
-```{r Figure1col, fig.width=12, fig.height=4}
+<!-- Color version - each social group has a different color.   -->
+
+```{r Figure1col, fig.width=12, fig.height=4.5}
 
 zoom_dims <- c(90, 200, 0, 0.01)
 annot_xy <- c(50, 200, 0.025, 0.045)
 box_color <- "blue"
+aval <- 0.6
 
 ind_dens_plot <- ptpl %>%
   ggplot(., aes((x = mpm))) +
-  geom_line(aes(x = mpm, group = id, color = sgroup), stat = "density", alpha = 0.8) +
+  geom_line(aes(x = mpm, group = id, color = sgroup), stat = "density", alpha = aval, size=1) +
   #geom_line(aes(x = mpm, group = id), color = "grey", stat = "density", alpha = 0.8) +
-  geom_line(stat = "density", color = "black", lwd = 1) +
+  geom_line(stat = "density", color = "black", size = 1.3) +
   geom_vline(xintercept = 0, color = "grey") +
   geom_hline(yintercept = 0, color = "grey") +
   labs(y = "Density", x = "Velocity in m/min") +
@@ -86,7 +98,8 @@ ind_dens_plot <- ptpl %>%
   # geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[1], y = zoom_dims[3], yend = zoom_dims[4]), color = box_color) +
   # geom_segment(aes(x = zoom_dims[2], xend = zoom_dims[2], y = zoom_dims[3], yend = zoom_dims[4]), color = box_color) +
   theme_classic() +
-  scale_color_manual(values = my.cols2) +
+  #scale_color_manual(values = my.cols2) +
+  scale_color_manual(values = sgroup_col) +
   theme(legend.position = "none")
 
 ind_dens_plot +
@@ -102,9 +115,9 @@ ind_dens_plot +
 fam_dens_plot <- ptpl %>%
   drop_na(sgroup) %>% 
   ggplot(., aes((x = mpm))) +
-  geom_line(aes(x = mpm, group = sgroup, color = sgroup), stat = "density", alpha = 0.8) +
+  geom_line(aes(x = mpm, group = sgroup, color = sgroup), stat = "density", alpha = aval, size = 1) +
   #geom_line(aes(x = mpm, group = fam_g), color = "grey",stat = "density", alpha = 0.8) +
-  geom_line(stat = "density", color = "black", lwd = 1) +
+  geom_line(stat = "density", color = "black", size = 1.3) +
   geom_vline(xintercept = 0, color = "grey") +
   geom_hline(yintercept = 0, color = "grey") +
   labs(y = "Density", x = "Velocity in m/min") +
@@ -113,7 +126,8 @@ fam_dens_plot <- ptpl %>%
   # geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[1], y = zoom_dims[3], yend = zoom_dims[4]), color = box_color) +
   # geom_segment(aes(x = zoom_dims[2], xend = zoom_dims[2], y = zoom_dims[3], yend = zoom_dims[4]), color = box_color) +
   theme_classic() +
-  scale_color_manual(values = my.cols2) +
+  #scale_color_manual(values = my.cols2) +
+  scale_color_manual(values = sgroup_col) +
   theme(legend.position = "none")
 
 fam_dens_plot +
@@ -126,17 +140,39 @@ fam_dens_plot +
 fam_dens_plot +
   annotation_custom(grob = ggplotGrob(fam_zoom), xmin = annot_xy[1] , xmax = annot_xy[2] , ymin = annot_xy[3] , ymax = annot_xy[4]) -> b
 
-plot_grid(b,a, labels = c("A)", "B)"))
+toprow <- plot_grid(b,a, labels = c("A)", "B)"))
+
+fig1leg <- get_legend(ptpl %>%
+  drop_na(sgroup) %>% 
+  ggplot(., aes((x = mpm))) +
+  geom_line(aes(x = mpm, group = sgroup, color = sgroup), stat = "density", alpha = aval, size = 1.1) +
+  #geom_line(aes(x = mpm, group = fam_g), color = "grey",stat = "density", alpha = 0.8) +
+  geom_line(stat = "density", color = "black", size = 1.2) +
+  geom_vline(xintercept = 0, color = "grey") +
+  geom_hline(yintercept = 0, color = "grey") +
+  labs(y = "Density", x = "Velocity in m/min") +
+    # geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[2], y = zoom_dims[3], yend = zoom_dims[3]), color = box_color) +
+  # geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[2], y = zoom_dims[4], yend = zoom_dims[4]), color = box_color) +
+  # geom_segment(aes(x = zoom_dims[1], xend = zoom_dims[1], y = zoom_dims[3], yend = zoom_dims[4]), color = box_color) +
+  # geom_segment(aes(x = zoom_dims[2], xend = zoom_dims[2], y = zoom_dims[3], yend = zoom_dims[4]), color = box_color) +
+  theme_classic() +
+  #scale_color_manual(values = my.cols2) +
+  scale_color_manual(values = sgroup_col) +
+    guides(color = guide_legend(title = "Social group",
+                                override.aes = list(alpha = 0.8)))+
+    theme(legend.position = "bottom"))
+
+plot_grid(toprow, fig1leg, ncol = 1, rel_heights = c(1, 0.1))
 
 ggsave2(filename = "Ch2_distributions/Figures/Figure1_color.png")
 ```  
 
-## F1 - BW 
+<!-- ## F1 - BW  -->
 
-Black and white version seems more clear to me. Maybe worth including a different in the underlying curves to make sure the point comes across that one is for individuals, and the other for social groups.  
+<!-- Black and white version seems more clear to me. Maybe worth including a different in the underlying curves to make sure the point comes across that one is for individuals, and the other for social groups.   -->
 
 
-```{r Figure1bw, fig.width=12, fig.height=4}
+```{r Figure1bw,  eval = FALSE, fig.width=12, fig.height=4}
 
 zoom_dims <- c(90, 200, 0, 0.01)
 annot_xy <- c(50, 200, 0.025, 0.045)
@@ -200,18 +236,18 @@ plot_grid(b, a, labels = c("A)", "B)"))
 ggsave2(filename = "Ch2_distributions/Figures/Figure1_bw.png")
 ```  
 
-Figure 1 - Kernel density estimates for the distribution of velocity data at different pooling levels, with the dark black density curve showing complete pooling. A) Partial pooling representation of the data, where each curve displays the density of velocities across a social group. B) No pooling scenario, where each density curve is associated to a single individual's velocity data. Plot inserts show a zoom to the tail of the distribution of velocity data in both panels. We observe considerable variation for both partial and no pooling scenarios, when compared to the single black density curve that represents the complete pooling. Particular focus towards the tails, where certain individuals possess much higher densities for large velocities, something that gets dampened when considering pooled data for velocity densities. 
+Figure 1 - Kernel density estimates for the distribution of velocity data at different pooling levels, with the dark black density curve showing complete pooling. A) Partial pooling representation of the data, where each curve displays the density of velocities across a social group. B) No pooling scenario, where each density curve is associated to a single individual's velocity data. Individuals belonging to the same social group share the line color. Plot inserts show a zoom to the tail of the distribution of velocity data in both panels. We observe considerable variation for both partial and no pooling scenarios, when compared to the single black density curve that represents the complete pooling. Particular focus towards the tails, where certain individuals possess much higher densities for large velocities, something that gets dampened when considering pooled data for velocity densities. 
 
 
 
 <!-- # Fits  -->
 
-```{r}
+```{r LoadFitData}
 load("Ch2_distributions/Ch2_fits.RData")
 ```
 
 
-```{r}
+```{r CalcBestModel}
 reg_fits_info %>% 
   dplyr::select(., dist, dBIC, ID, model) %>% 
   distinct() %>% 
@@ -221,7 +257,7 @@ reg_fits_info %>%
 ```
 
 
-```{r eval=FALSE}
+```{r BICdist, eval=FALSE}
 # Difference to the second best model
 
 reg_fits_info %>% 
@@ -235,7 +271,7 @@ reg_fits_info %>%
 
 
 
-```{r}
+```{r CalcBICTable}
 # Calculate the BIC for the models:
 
 reg_fits_info %>% 
@@ -266,7 +302,7 @@ C %>%
   arrange(model) -> BIC_table
 ```
 
-```{r}
+```{r BootstrapBIC}
 cp.boot.fits %>% 
   dplyr::select(dist, bic, boot) %>% 
   distinct() %>% 
@@ -336,7 +372,7 @@ np.boot.fits %>%
 Table 1 - BIC values obtained for models fitted to velocity data across pooling levels. Probability density functions considered included the Gamma, Weibull, and Lognormal distributions. Multi distribution models selected the best fitting distribution model for each family group or individual, allowing for variation not only in estimated parameters, but also in the distribution used. Based on BIC values, the best fitting model is the Multi-distribution with Partial Pooling, closely followed by the Complete Pooling Lognormal model. 
 
 
-```{r}
+```{r GenerateBICtable}
 
 BIC_table %>% 
   mutate(dist = ifelse(dist == "lnorm", "lognormal", dist),
@@ -348,7 +384,7 @@ BIC_table
 
 ```
 
-```{r eval=FALSE}
+```{r Generate_gt_Table, eval=FALSE}
 
 #library(gt)
 
@@ -393,270 +429,12 @@ knitr::include_graphics("Ch2_distributions/aic_bic_table.png")
 
 
 
-
-# Figure 3 - Percent Support
-
-
-```{r Figure3, fig.width=12, fig.height=5}
-
-cols.fig2 <- c("#b9bec3", 
-               "#0d907a", "#DEB41E", "#9C1D29", "#23262f")
-
-cp.bic %>% 
-  bind_rows(pp.bic) %>% 
-  bind_rows(np.bic) %>% 
-  filter(., deltaBIC == 0) %>% 
-  group_by(model) %>% 
-  count(dist) %>% 
-  mutate(prcnt_support = n/nboots) %>%
-  mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi")),
-         model = factor(model, levels = c("CP", "PP", "NP"))) %>% 
-  ggplot(., aes(x = model, y = prcnt_support, fill = dist)) +
-  scale_fill_manual(values = cols.fig2, drop = FALSE) +
-  geom_col() +
-  theme_classic() +
-  scale_y_continuous(labels = scales::percent) +
-  labs(x = "Pooling Level", y = "Percent Support") +
-  theme(axis.title.x = element_blank()) +
-  geom_label(data = bestmodel %>%
-               filter(., model == "CP"),
-             aes(x = model, y = -0.05, label = dist), size = 2.5) -> pooling.support
-
-# cp.boot.fits %>%
-#   dplyr::select(., bic, dist, dBIC, boot) %>%
-#   group_by(boot) %>%
-#   distinct() %>%
-#   ungroup() %>%
-#   filter(dBIC == 0) %>%
-#   count(dist) %>%
-#   mutate(prcnt_support = n/nboots) %>%
-#   mutate(model = "CP") %>%
-#   ggplot(., aes(x = model, y = prcnt_support, fill = dist)) +
-#   geom_col() +
-#   labs(y = "Percent Support") +
-#   theme_classic() +
-#   theme(legend.position = "none",
-#         axis.title.x = element_blank()) +
-#   geom_label(data = bestmodel %>% filter(., model == "CP"),
-#              aes(x = model, y = -0.05, label = dist)) +
-#   scale_fill_manual(values = cols.fig2) -> cp.fit
-
-pp.boot.fits %>%
-  dplyr::select(., bic, dist, dBIC, group, boot) %>%
-  group_by(group, boot) %>%
-  distinct() %>%
-  group_by(group) %>%
-  filter(dBIC == 0) %>%
-  count(dist) %>%
-  mutate(prcnt_support = n/nboots) %>%
-  ggplot(., aes(x = group, y = prcnt_support, fill = dist)) +
-  geom_col() +
-  theme_classic() +
-  theme(legend.position = "none",
-        axis.title.y = element_blank(),
-        axis.title.x = element_blank()) +
-  scale_y_continuous(labels = scales::percent) +
-  geom_label(data = bestmodel %>% filter(., model == "PP"),
-             aes(x = ID, y = -0.05, label = dist), size = 2.5) +
-  scale_fill_manual(values = cols.fig2) -> pp.support
-
-np.boot.fits %>%
-  dplyr::select(., bic, dist, dBIC, individual, boot) %>%
-  group_by(individual, boot) %>%
-  distinct() %>%
-  group_by(individual) %>%
-  filter(dBIC == 0) %>%
-  count(dist) %>%
-  mutate(prcnt_support = n/nboots,
-         individual = factor(individual, levels = c("B1", "B3", "B5", "B7", "B13", "B19", "B22", "B28", "B49", "B84", "B30", "B29"))) %>%
-  ggplot(., aes(x = individual, y = prcnt_support, fill = dist)) +
-  geom_col() +
-  theme_classic() +
-  theme(axis.title.y = element_blank(),
-        axis.title.x = element_blank()) +
-  scale_y_continuous(labels = scales::percent) +
-  geom_label(data = bestmodel %>% filter(., model == "NP"),
-             aes(x = ID, y = -0.05, label = dist), size = 2.5) +
-  scale_fill_manual(values = cols.fig2)  -> np.support
-
-# legend <- get_legend(np.fit + theme(legend.position = "bottom") +
-#                        guides(fill=guide_legend(title="Distribution")))
-model.legend <- get_legend(pooling.support + theme(legend.position = "bottom") +
-                             guides(fill=guide_legend(title = "Distribution model")))
-
-# plot_grid(cp.fit, pp.fit, 
-#           np.fit + theme(legend.position = "none"), 
-#           ncol = 3, rel_widths = c(0.8,1,1.4)) -> col_grid
-# 
-# plot_grid(col_grid, legend, nrow = 2, rel_heights = c(1, 0.1))
-
-# first_row <- plot_grid(NULL, 
-#                        pooling.support + theme(legend.position = "none"),
-#                        NULL, rel_widths = c(0.3, 1, 0.3))
-# 
-# second_row <- plot_grid(pp.support, 
-#                         np.support + theme(legend.position = "none"),
-#                         ncol = 2, rel_widths = c(1, 1.2))
-# plot_grid(pooling.support + theme(legend.position = "none"),
-#           second_row, model.legend, nrow = 3, rel_heights = c(1,1,0.2))
-
-
-bar_col <- plot_grid(pooling.support + theme(legend.position = "none"),
-                     pp.support, 
-                     np.support + theme(legend.position = "none"),
-                     ncol = 3, rel_widths = c(0.4, 1, 1.4), 
-                     labels = c("A)", "B)", "C)"), label_size = 10)
-plot_grid(bar_col, model.legend, nrow = 2, rel_heights = c(1, 0.1))
-
-ggsave2(filename = "Ch2_distributions/Figures/Figure3.png")
-
-```   
-
-Figure 3 - Percent support for the different distribution models at the three pooling levels. Percent support is based on 1000 bootstrapped replicas for each scenario. Labels on the x axis show the best fitting model for the original datasets. A) percent support at the three pooling levels, with CP having over 50% support for the lognormal distribution, in agreement with the model fit to the complete dataset. PP and NP scenarios show 100% support for the multi-distribution model, which considers the best fitting model for each family group or individual, respectively. B) Percent support for each model in the family groups. C) Support for each model at the individual level.  
-
-
-```{r eval=FALSE}
-# These boxplots should be showing the distribution of the BIC values for the three pooling levels with their models. 
-
-cp.bic %>% 
-  bind_rows(pp.bic) %>% 
-  bind_rows(np.bic) %>% 
-  mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi"))) %>% 
-  ggplot(., aes(x = model, color = dist, y = BIC)) +
-  geom_boxplot() +
-  scale_color_manual(values = cols.fig2) +
-  labs(x = "Pooling Model", y = "Raw BIC values") +
-  theme_classic() +
-  guides(color=guide_legend(title = "Distribution model")) +
-  theme(legend.position = "bottom")
-
-``` 
-
-
-
-# Figure 4 - BIC units from best model
-
-<!-- Fix this. The idea is that each bootstrap is represented here with their BIC value for each model. We see that there's very strong evidence for the multi distribution model at both PP and NP levels. The summary quantiles later show very high support for this. Difference here between incorporating variation at the expense of sample size, and getting high support, or staying with high sample size without variation. -->
-
-
-
-```{r eval=FALSE, fig.height=4}
-
-cp.bic %>% 
-  mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi"))) %>% 
-  ggplot(., aes(x = deltaBIC, color = dist, y = boot)) +
-  #geom_col() +
-  geom_point(alpha = 0.8, shape = 15) +
-  scale_color_manual(values = cols.fig2) +
-  theme_classic() +
-  theme(axis.text.y = element_blank(),
-        axis.ticks.y = element_blank()) +
-  labs(y = "Bootstrap \n replicates", x = "") +
-  theme(legend.position = "none") -> Fig4a
-
-pp.bic %>% 
-  mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi"))) %>% 
-  ggplot(., aes(x = deltaBIC, color = dist, y = boot)) +
-  #geom_col() +
-  geom_point(alpha = 0.8, shape = 15) +
-  scale_color_manual(values = cols.fig2) +
-  theme_classic() +
-  theme(axis.text.y = element_blank(),
-        axis.ticks.y = element_blank()) +
-  labs(y = "Bootstrap \n replicates", x = "") +
-  theme(legend.position = "none") -> Fig4b
-
-np.bic %>% 
-  mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi"))) %>% 
-  ggplot(., aes(x = deltaBIC, color = dist, y = boot)) +
-  #geom_col() +
-  geom_point(alpha = 0.8, shape = 15) +
-  scale_color_manual(values = cols.fig2) +
-  theme_classic() +
-  theme(axis.text.y = element_blank(),
-        axis.ticks.y = element_blank()) +
-  labs(y = "Bootstrap \n replicates", x = "BIC units from best model") -> Fig4c
-
-legend4 <- get_legend(Fig4c +
-                       guides(color=guide_legend(title = "Distribution \n model")))
-
-plot_grid(Fig4a, Fig4b, 
-          Fig4c + theme(legend.position = "none"), nrow = 3) -> fig4
-
-plot_grid(fig4, legend4, ncol = 2, rel_widths = c(1, 0.15))
-
-```
-
-
-```{r fig.height=4}
-cp.bic %>% 
-  bind_rows(., pp.bic) %>% 
-  bind_rows(., np.bic) %>% 
-  mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi")),
-         model = factor(model, levels = c("CP", "PP", "NP"))) %>% 
-  ggplot(., aes(x = deltaBIC, color = dist, y = boot)) +
-  facet_wrap(~model, nrow = 3) +
-  #geom_col() +
-  geom_point(alpha = 0.8, shape = 15, size = 0.8) +
-  scale_color_manual(values = cols.fig2) +
-  theme_classic() +
-  theme(axis.text.y = element_blank(),
-        axis.ticks.y = element_blank()) +
-  labs(y = "Bootstrap replicates", x = "BIC units from best model") +
-  theme(legend.position = "right") +
-  guides(color=guide_legend(title = "Distribution \n model")) 
-
-ggsave2(filename = "Ch2_distributions/Figures/Figure4.png")
-``` 
-
-Figure 4 - Delta BIC values for each bootstrap in the three pooling scenarios. Each bootstrap is represented in the y axis, with BIC units from the best model shown in the x axis. For the first panel, the CP scenario shows significant overlap among models for each bootstrap. Given that multi distribution models for the PP and NP scenarios have 100% support, this means they have the lowest BIC score, or a $\Delta$ BIC equal to zero, and thus show as a straight line at x=0 in the plots above.
-
-
-# Table 2 - Average BIC units from best model
-
-Table 2 - Mean and median distance for second best model in BIC units, for each of the pooling scenarios.
-
-```{r Table2}
-# cp.bic %>% 
-#   filter(., deltaBIC != 0) %>% 
-#   group_by(boot) %>% 
-#   summarise(min = min(deltaBIC)) %>% 
-#   summary()
-# 
-# pp.bic %>% 
-#   filter(., deltaBIC != 0) %>% 
-#   group_by(boot) %>% 
-#   summarise(min = min(deltaBIC)) %>% 
-#   summary()
-# 
-# np.bic %>% 
-#   filter(., deltaBIC != 0) %>% 
-#   group_by(boot) %>% 
-#   summarise(min = min(deltaBIC)) %>% 
-#   summary()
-
-
-cp.bic %>% 
-  bind_rows(pp.bic) %>% 
-  bind_rows(np.bic) %>% 
-  filter(., deltaBIC != 0) %>% 
-  mutate(model = factor(model, levels = c("CP", "PP", "NP"))) %>% 
-  group_by(model, boot) %>% 
-  summarise(min = min(deltaBIC)) %>% 
-  group_by(model) %>% 
-  summarise(minimum = min(min),
-            median = median(min),
-            mean = mean(min))
-
-```
-
-
-# Figure X - Best fit parameters
+# Figure 2 - Best fit parameters
 
 To tell the same story, we see variation in the parameters estimated for each bootstrap under various models.  
 
 
-```{r}
+```{r Bootstrap_dBICzero}
 
 cp.boot.fits %>%
   filter(., dBIC == 0) %>% 
@@ -703,10 +481,10 @@ np.boot.fits %>%
 ```
 
 
-```{r FigureX, fig.height=9, fig.width=9}
+```{r Figure2, fig.height=9, fig.width=9}
 
-colsx <- met.brewer("Tiepolo", n = 7)
-aval <- 0.3
+#colsx <- met.brewer("Tiepolo", n = 7)
+aval <- 0.5
 
 figx.theme <- theme_bw() +
   theme(legend.position = "none",
@@ -734,7 +512,7 @@ pp.best %>%
   filter(., dist == "gamma") %>% 
   ggplot(., aes(x = rate, y = shape, color = group)) +
   geom_point(alpha = aval) +
-  scale_color_manual(values=colsx, drop=FALSE) +
+  scale_color_manual(values=sgroup_col, drop=FALSE) +
   lims(x = c(0, 0.23), y = c(0.4, 2.3)) +
   labs(subtitle = "PP - gamma") +
   figx.theme -> pp.gam
@@ -743,7 +521,7 @@ pp.best %>%
   filter(., dist == "lnorm") %>% 
   ggplot(., aes(x = meanlog, y = sdlog, color = group)) +
   geom_point(alpha = aval) +
-  scale_color_manual(values=colsx, drop=FALSE) +
+  scale_color_manual(values=sgroup_col, drop=FALSE) +
   lims(x = c(0.7, 3.7), y = c(0.5, 2.1)) +
   labs(subtitle = "PP - lnorm") +
   figx.theme -> pp.ln
@@ -752,7 +530,7 @@ pp.best %>%
   filter(., dist == "weibull") %>% 
   ggplot(., aes(x = scale, y = shape, color = group)) +
   geom_point(alpha = aval) +
-  scale_color_manual(values=colsx, drop=FALSE) +
+  scale_color_manual(values=sgroup_col, drop=FALSE) +
   lims(x = c(5, 80), y = c(0, 2.1)) +
   labs(subtitle = "PP - weibull") +
   figx.theme -> pp.wei
@@ -764,7 +542,7 @@ np.best %>%
   filter(., dist == "gamma") %>% 
   ggplot(., aes(x = rate, y = shape, color = group, shape = shapeid)) +
   geom_point(alpha = aval) +
-  scale_color_manual(values=colsx, drop=FALSE) +
+  scale_color_manual(values=sgroup_col, drop=FALSE) +
   lims(x = c(0, 0.23), y = c(0.4, 2.3)) +
   labs(subtitle = "NP - gamma") +
   figx.theme -> np.gam
@@ -773,7 +551,7 @@ np.best %>%
   filter(., dist == "lnorm") %>% 
   ggplot(., aes(x = meanlog, y = sdlog, color = group, shape = shapeid)) +
   geom_point(alpha = aval) +
-  scale_color_manual(values=colsx, drop=FALSE) +
+  scale_color_manual(values=sgroup_col, drop=FALSE) +
   lims(x = c(0.7, 3.7), y = c(0.5, 2.1)) +
   labs(subtitle = "NP - lnorm") +
   figx.theme -> np.ln
@@ -782,7 +560,7 @@ np.best %>%
   filter(., dist == "weibull") %>% 
   ggplot(., aes(x = scale, y = shape, color = group, shape = shapeid)) +
   geom_point(alpha = aval) +
-  scale_color_manual(values=colsx, drop=FALSE) +
+  scale_color_manual(values=sgroup_col, drop=FALSE) +
   lims(x = c(5, 80), y = c(0, 2.1)) +
   labs(subtitle = "NP - weibull") +
   figx.theme -> np.wei
@@ -794,7 +572,7 @@ legend.grid <- get_legend(pp.best %>%
   filter(., dist == "lnorm") %>% 
   ggplot(., aes(x = meanlog, y = sdlog, color = group)) +
   geom_point(alpha = aval) +
-  scale_color_manual(values=colsx) +
+  scale_color_manual(values=sgroup_col, drop=FALSE) +
   lims(x = c(0.7, 3.7), y = c(0.5, 2.1)) +
   theme_bw() +
   guides(color = guide_legend(title = "Social Group", ncol = 2,
@@ -805,8 +583,279 @@ row1 <- plot_grid(legend.grid, cp.grid, ncol = 2, rel_widths = c(1,2))
 
 plot_grid(row1, pp.grid, np.grid, nrow = 3)
 
-ggsave2(filename = "Ch2_distributions/Figures/Figurex.png")
+ggsave2(filename = "Ch2_distributions/Figures/Figure2.png")
 ```
+
+
+# Figure 3 - Percent Support
+
+
+```{r Figure3, fig.width=12, fig.height=5}
+
+cols.fig2 <- c("#b9bec3", 
+               "#0d907a", "#DEB41E", "#9C1D29", "#23262f")
+
+cp.bic %>% 
+  bind_rows(pp.bic) %>% 
+  bind_rows(np.bic) %>% 
+  filter(., deltaBIC == 0) %>% 
+  group_by(model) %>% 
+  count(dist) %>% 
+  mutate(prcnt_support = n/nboots) %>%
+  mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi")),
+         model = factor(model, levels = c("CP", "PP", "NP"))) %>% 
+  ggplot(., aes(x = model, y = prcnt_support, fill = dist)) +
+  #scale_fill_manual(values = cols.fig2, drop = FALSE) +
+  scale_fill_manual(values = mod_col, drop = FALSE) +
+  geom_col() +
+  theme_classic() +
+  scale_y_continuous(labels = scales::percent) +
+  labs(x = "Pooling Level", y = "Percent Support") +
+  theme(axis.title.x = element_blank()) +
+  geom_label(data = bestmodel %>%
+               filter(., model == "CP"),
+             aes(x = model, y = -0.05, label = dist), size = 2.5) -> pooling.support
+
+# cp.boot.fits %>%
+#   dplyr::select(., bic, dist, dBIC, boot) %>%
+#   group_by(boot) %>%
+#   distinct() %>%
+#   ungroup() %>%
+#   filter(dBIC == 0) %>%
+#   count(dist) %>%
+#   mutate(prcnt_support = n/nboots) %>%
+#   mutate(model = "CP") %>%
+#   ggplot(., aes(x = model, y = prcnt_support, fill = dist)) +
+#   geom_col() +
+#   labs(y = "Percent Support") +
+#   theme_classic() +
+#   theme(legend.position = "none",
+#         axis.title.x = element_blank()) +
+#   geom_label(data = bestmodel %>% filter(., model == "CP"),
+#              aes(x = model, y = -0.05, label = dist)) +
+#   scale_fill_manual(values = cols.fig2) -> cp.fit
+
+pp.boot.fits %>%
+  dplyr::select(., bic, dist, dBIC, group, boot) %>%
+  group_by(group, boot) %>%
+  distinct() %>%
+  group_by(group) %>%
+  filter(dBIC == 0) %>%
+  count(dist) %>%
+  mutate(prcnt_support = n/nboots) %>%
+  ggplot(., aes(x = group, y = prcnt_support, fill = dist)) +
+  geom_col() +
+  theme_classic() +
+  theme(legend.position = "none",
+        axis.title.y = element_blank(),
+        axis.title.x = element_blank()) +
+  scale_y_continuous(labels = scales::percent) +
+  geom_label(data = bestmodel %>% filter(., model == "PP"),
+             aes(x = ID, y = -0.05, label = dist), size = 2.5) +
+  #scale_fill_manual(values = cols.fig2) +
+  scale_fill_manual(values = mod_col, drop = FALSE) +
+  NULL -> pp.support
+
+np.boot.fits %>%
+  dplyr::select(., bic, dist, dBIC, individual, boot) %>%
+  group_by(individual, boot) %>%
+  distinct() %>%
+  group_by(individual) %>%
+  filter(dBIC == 0) %>%
+  count(dist) %>%
+  mutate(prcnt_support = n/nboots,
+         individual = factor(individual, levels = c("B1", "B3", "B5", "B7", "B13", "B19", "B22", "B28", "B49", "B84", "B30", "B29"))) %>%
+  ggplot(., aes(x = individual, y = prcnt_support, fill = dist)) +
+  geom_col() +
+  theme_classic() +
+  theme(axis.title.y = element_blank(),
+        axis.title.x = element_blank()) +
+  scale_y_continuous(labels = scales::percent) +
+  geom_label(data = bestmodel %>% filter(., model == "NP"),
+             aes(x = ID, y = -0.05, label = dist), size = 2.5) +
+  #scale_fill_manual(values = cols.fig2) +
+  scale_fill_manual(values = mod_col, drop = FALSE) +
+  NULL -> np.support
+
+# legend <- get_legend(np.fit + theme(legend.position = "bottom") +
+#                        guides(fill=guide_legend(title="Distribution")))
+model.legend <- get_legend(pooling.support + theme(legend.position = "bottom") +
+                             guides(fill=guide_legend(title = "Distribution model")))
+
+# plot_grid(cp.fit, pp.fit, 
+#           np.fit + theme(legend.position = "none"), 
+#           ncol = 3, rel_widths = c(0.8,1,1.4)) -> col_grid
+# 
+# plot_grid(col_grid, legend, nrow = 2, rel_heights = c(1, 0.1))
+
+# first_row <- plot_grid(NULL, 
+#                        pooling.support + theme(legend.position = "none"),
+#                        NULL, rel_widths = c(0.3, 1, 0.3))
+# 
+# second_row <- plot_grid(pp.support, 
+#                         np.support + theme(legend.position = "none"),
+#                         ncol = 2, rel_widths = c(1, 1.2))
+# plot_grid(pooling.support + theme(legend.position = "none"),
+#           second_row, model.legend, nrow = 3, rel_heights = c(1,1,0.2))
+
+
+bar_col <- plot_grid(pooling.support + theme(legend.position = "none"),
+                     pp.support, 
+                     np.support + theme(legend.position = "none"),
+                     ncol = 3, rel_widths = c(0.4, 1, 1.4), 
+                     labels = c("A)", "B)", "C)"), label_size = 10)
+plot_grid(bar_col, model.legend, nrow = 2, rel_heights = c(1, 0.1))
+
+ggsave2(filename = "Ch2_distributions/Figures/Figure3.png")
+
+```   
+
+Figure 3 - Percent support for the different distribution models at the three pooling levels. Percent support is based on 1000 bootstrapped replicas for each scenario. Labels on the x axis show the best fitting model for the original datasets. A) percent support at the three pooling levels, with CP having over 50% support for the lognormal distribution, in agreement with the model fit to the complete dataset. PP and NP scenarios show 100% support for the multi-distribution model, which considers the best fitting model for each family group or individual, respectively. B) Percent support for each model in the family groups. C) Support for each model at the individual level.  
+
+
+```{r BICboxplots, eval=FALSE}
+# These boxplots should be showing the distribution of the BIC values for the three pooling levels with their models. 
+
+cp.bic %>% 
+  bind_rows(pp.bic) %>% 
+  bind_rows(np.bic) %>% 
+  mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi"))) %>% 
+  ggplot(., aes(x = model, color = dist, y = BIC)) +
+  geom_boxplot() +
+  scale_color_manual(values = cols.fig2) +
+  labs(x = "Pooling Model", y = "Raw BIC values") +
+  theme_classic() +
+  guides(color=guide_legend(title = "Distribution model")) +
+  theme(legend.position = "bottom")
+
+``` 
+
+
+
+# Figure 4 - BIC units from best model
+
+<!-- Fix this. The idea is that each bootstrap is represented here with their BIC value for each model. We see that there's very strong evidence for the multi distribution model at both PP and NP levels. The summary quantiles later show very high support for this. Difference here between incorporating variation at the expense of sample size, and getting high support, or staying with high sample size without variation. -->
+
+
+
+```{r eval=FALSE, fig.height=4}
+
+cp.bic %>% 
+  mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi"))) %>% 
+  ggplot(., aes(x = deltaBIC, color = dist, y = boot)) +
+  #geom_col() +
+  geom_point(alpha = 0.8, shape = 15) +
+  #scale_color_manual(values = cols.fig2) +
+  scale_color_manual(values = mod_col, drop = FALSE) +
+  theme_classic() +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  labs(y = "Bootstrap \n replicates", x = "") +
+  theme(legend.position = "none") -> Fig4a
+
+pp.bic %>% 
+  mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi"))) %>% 
+  ggplot(., aes(x = deltaBIC, color = dist, y = boot)) +
+  #geom_col() +
+  geom_point(alpha = 0.8, shape = 15) +
+  #scale_color_manual(values = cols.fig2) +
+  scale_color_manual(values = mod_col, drop = FALSE) +
+  theme_classic() +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  labs(y = "Bootstrap \n replicates", x = "") +
+  theme(legend.position = "none") -> Fig4b
+
+np.bic %>% 
+  mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi"))) %>% 
+  ggplot(., aes(x = deltaBIC, color = dist, y = boot)) +
+  #geom_col() +
+  geom_point(alpha = 0.8, shape = 15) +
+  #scale_color_manual(values = cols.fig2) +
+  scale_color_manual(values = mod_col, drop = FALSE) +
+  theme_classic() +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  labs(y = "Bootstrap \n replicates", x = "BIC units from best model") -> Fig4c
+
+legend4 <- get_legend(Fig4c +
+                       guides(color=guide_legend(title = "Distribution \n model")))
+
+plot_grid(Fig4a, Fig4b, 
+          Fig4c + theme(legend.position = "none"), nrow = 3) -> fig4
+
+plot_grid(fig4, legend4, ncol = 2, rel_widths = c(1, 0.15))
+
+```
+
+
+```{r Figure4, fig.height=4}
+cp.bic %>% 
+  bind_rows(., pp.bic) %>% 
+  bind_rows(., np.bic) %>% 
+  mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi")),
+         model = factor(model, levels = c("CP", "PP", "NP"))) %>% 
+  ggplot(., aes(x = deltaBIC, color = dist, y = boot)) +
+  facet_wrap(~model, nrow = 3) +
+  #geom_col() +
+  geom_point(alpha = 0.9, shape = 15, size = 0.9) +
+  #scale_color_manual(values = cols.fig2) +
+  scale_color_manual(values = mod_col, drop = FALSE) +
+  theme_classic() +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  labs(y = "Bootstrap replicates", x = "BIC units from best model") +
+  theme(legend.position = "right") +
+  guides(color=guide_legend(title = "Distribution \n model", override.aes = list(size = 5))) 
+
+ggsave2(filename = "Ch2_distributions/Figures/Figure4.png")
+``` 
+
+Figure 4 - Delta BIC values for each bootstrap in the three pooling scenarios. Each bootstrap is represented in the y axis, with BIC units from the best model shown in the x axis. For the first panel, the CP scenario shows significant overlap among models for each bootstrap. Given that multi distribution models for the PP and NP scenarios have 100% support, this means they have the lowest BIC score, or a $\Delta$ BIC equal to zero, and thus show as a straight line at x=0 in the plots above.
+
+
+# Table 2 - Average BIC units from best model
+
+Table 2 - Mean and median distance for second best model in BIC units, for each of the pooling scenarios.
+
+```{r Table2}
+# cp.bic %>% 
+#   filter(., deltaBIC != 0) %>% 
+#   group_by(boot) %>% 
+#   summarise(min = min(deltaBIC)) %>% 
+#   summary()
+# 
+# pp.bic %>% 
+#   filter(., deltaBIC != 0) %>% 
+#   group_by(boot) %>% 
+#   summarise(min = min(deltaBIC)) %>% 
+#   summary()
+# 
+# np.bic %>% 
+#   filter(., deltaBIC != 0) %>% 
+#   group_by(boot) %>% 
+#   summarise(min = min(deltaBIC)) %>% 
+#   summary()
+
+
+cp.bic %>% 
+  bind_rows(pp.bic) %>% 
+  bind_rows(np.bic) %>% 
+  filter(., deltaBIC != 0) %>% 
+  mutate(model = factor(model, levels = c("CP", "PP", "NP"))) %>% 
+  group_by(model, boot) %>% 
+  summarise(min = min(deltaBIC)) %>% 
+  group_by(model) %>% 
+  summarise(minimum = min(min),
+            median = median(min),
+            mean = mean(min),
+            q2.5 = quantile(min, probs = 0.025),
+            q97.5 = quantile(min, probs = 0.975))
+
+```
+
+
+
 
 
 
