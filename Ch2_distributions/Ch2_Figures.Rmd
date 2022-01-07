@@ -1,9 +1,11 @@
 ---
 title: "Distributions"
 author: "Javiera Rudolph"
-output: 
+output:
+  word_document:
+    toc: yes
   html_document:
-    toc: true
+    toc: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -584,8 +586,9 @@ row1 <- plot_grid(legend.grid, cp.grid, ncol = 2, rel_widths = c(1,2))
 plot_grid(row1, pp.grid, np.grid, nrow = 3)
 
 ggsave2(filename = "Ch2_distributions/Figures/Figure2.png")
-```
+``` 
 
+Figure 2 -Parameter space for best fitting models under the three pooling scenarios for 1000 bootstrap replicas. Complete pooling approaches showed best fitting models under the lognormal (panel A.) and weibull (B.) distributions, but no models under a gamma distribution. C)-E) Panels show placement of best fitting models under the three distributions with each color representing a different social group. Under the NP scenario (panels F.-H.) individuals belongig to the same social group are represented with a different shape. 
 
 # Figure 3 - Percent Support
 
@@ -789,7 +792,7 @@ plot_grid(fig4, legend4, ncol = 2, rel_widths = c(1, 0.15))
 ```
 
 
-```{r Figure4, fig.height=4}
+```{r eval=FALSE, fig.height=4}
 cp.bic %>% 
   bind_rows(., pp.bic) %>% 
   bind_rows(., np.bic) %>% 
@@ -808,11 +811,41 @@ cp.bic %>%
   theme(legend.position = "right") +
   guides(color=guide_legend(title = "Distribution \n model", override.aes = list(size = 5))) 
 
-ggsave2(filename = "Ch2_distributions/Figures/Figure4.png")
+#ggsave2(filename = "Ch2_distributions/Figures/Figure4.png")
 ``` 
 
-Figure 4 - Delta BIC values for each bootstrap in the three pooling scenarios. Each bootstrap is represented in the y axis, with BIC units from the best model shown in the x axis. For the first panel, the CP scenario shows significant overlap among models for each bootstrap. Given that multi distribution models for the PP and NP scenarios have 100% support, this means they have the lowest BIC score, or a $\Delta$ BIC equal to zero, and thus show as a straight line at x=0 in the plots above.
 
+
+```{r Figure4}
+
+cp.bic %>% 
+  bind_rows(., pp.bic) %>% 
+  bind_rows(., np.bic) %>% 
+  mutate(dist = factor(dist, levels = c("gamma", "lnorm", "weibull", "multi")),
+         model = factor(model, levels = c("CP", "PP", "NP"))) -> all.bic
+  
+all.bic %>% 
+  filter(., deltaBIC != 0) %>% 
+  ggplot(., aes(x = model, y = deltaBIC)) +
+  #geom_violin() +
+  #geom_boxplot(width = 0.4, coef = 0, outlier.shape = NA) +
+  geom_jitter(data = all.bic, 
+              #%>% group_by(model) %>% slice_sample(n=400),
+              aes(x = model, y = deltaBIC, color = dist), width = 0.3, alpha = 0.6) +
+  #geom_boxplot(color = "black", width = 0.4, fill = "white", alpha = 0.8) +
+  geom_violin(color = "black", width = 0.4, fill = "white", alpha = 0.6) +
+  geom_boxplot(width = 0.1, coef = 0, outlier.shape = NA) +
+  scale_color_manual(values = mod_col, drop = FALSE) +
+  theme_classic() + 
+  labs(x = "", y = "BIC units from best model") +
+  theme(legend.position = "bottom") +
+  guides(color=guide_legend(title = "Distribution", override.aes = list(size = 5, alpha = 0.9))) 
+
+ggsave2(filename = "Ch2_distributions/Figures/Figure4.png")
+
+```
+
+Figure 4 - Distributions of $\Delta BIC$ values for models under the three different pooling scenarios. Best fit model is aligned at y = 0, thus in the case of the PP and NP scenario, the orange bar at y=0 is actually the $\Delta BIC$ value being zero for the multi-distribution model for all bootstraps. The violin plots describe the density of $\Delta BIC$ units away from the best model. The box overlay shows the median, and lower and upper quartiles of this distribution for the three different pooling levels. 
 
 # Table 2 - Average BIC units from best model
 
@@ -857,11 +890,9 @@ cp.bic %>%
 
 
 
-
-
 # Figure X - angles
 
-```{r fig.width=8, fig.height=6, eval = FALSE}
+```{r fig.width=8, fig.height=6}
 p1_angles <- ptpl %>% 
   drop_na(rel.angle) %>% 
   mutate(d.angle = ifelse(rel.angle > 0, rel.angle * 180/pi,
@@ -889,7 +920,7 @@ p2_angles <- ptpl %>%
   theme(axis.title = element_blank(),
         axis.text.y = element_blank(),
         legend.position = "none") +
-  facet_wrap(~group, nrow = 2) +
+  facet_wrap(~sgroup, nrow = 2) +
   theme(axis.text = element_blank()) +
   labs(title = "Partial pooling")
 
@@ -906,7 +937,7 @@ p3_angles <- ptpl %>%
   theme(axis.title = element_blank(),
         axis.text.y = element_blank(),
         legend.position = "none") +
-  facet_wrap(~B_id, nrow = 2) +
+  facet_wrap(~Bird_ID, nrow = 2) +
   theme(axis.text = element_blank()) +
   labs(title = "No pooling")
 
