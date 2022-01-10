@@ -162,10 +162,79 @@ fig1leg <- get_legend(ptpl %>%
                                 override.aes = list(alpha = 0.8)))+
     theme(legend.position = "bottom"))
 
-plot_grid(toprow, fig1leg, ncol = 1, rel_heights = c(1, 0.1))
+#plot_grid(toprow, fig1leg, ncol = 1, rel_heights = c(1, 0.1))
 
-ggsave2(filename = "Ch2_distributions/Figures/Figure1_color.png")
+#ggsave2(filename = "Ch2_distributions/Figures/Figure1_color.png")
 ```  
+
+
+```{r fig.width=12, fig.height=4.5}
+ptpl %>%
+  drop_na(mpm) %>%
+  filter(mpm != 0) %>%
+  group_by(Bird_ID) %>%
+  add_tally() %>%
+  filter(n >= 30) -> nonzerompm
+
+
+nonzerompm %>%
+  mutate(individual = paste0("B", Bird_ID),
+         individual = factor(individual, levels = c("B1", "B3", "B5", "B7", "B13", "B19", "B22", "B28", "B49", "B84", "B30", "B29"))) %>% 
+  group_by(individual, T_minutes) %>%
+  count() %>%
+  ggplot(aes(x = individual, y = n, fill = as.factor(T_minutes))) +
+  geom_bar(stat = "identity") +
+  theme_classic() +
+  labs(x = "Individual bird tag",
+       y = "Number of intervals recorded") +
+  #scale_fill_viridis_d(option = "magma", direction = -1) +
+  guides(fill = guide_legend(title = "Tracking interval\n in minutes")) +
+  scale_fill_manual(values = met.brewer("Hiroshige", n = 14)) +
+  theme(legend.position = "none") -> np_ints
+
+nonzerompm %>%
+  mutate(individual = paste0("B", Bird_ID),
+         individual = factor(individual, levels = c("B1", "B3", "B5", "B7", "B13", "B19", "B22", "B28", "B49", "B84", "B30", "B29"))) %>% 
+  group_by(sgroup, T_minutes) %>%
+  count() %>%
+  ggplot(aes(x = sgroup, y = n, fill = as.factor(T_minutes))) +
+  geom_bar(stat = "identity") +
+  theme_classic() +
+  labs(x = "Social group",
+       y = "Number of intervals recorded") +
+  #scale_fill_viridis_d(option = "magma", direction = -1) +
+  guides(fill = guide_legend(title = "Tracking interval\n in minutes")) +
+  scale_fill_manual(values = met.brewer("Hiroshige", n = 14)) +
+  theme(legend.position = "none") -> pp_ints
+
+legend_row <- get_legend(nonzerompm %>%
+  mutate(individual = paste0("B", Bird_ID),
+         individual = factor(individual, levels = c("B1", "B3", "B5", "B7", "B13", "B19", "B22", "B28", "B49", "B84", "B30", "B29"))) %>% 
+  group_by(sgroup, T_minutes) %>%
+  count() %>%
+  ggplot(aes(x = sgroup, y = n, fill = as.factor(T_minutes))) +
+  geom_bar(stat = "identity") +
+  theme_classic() +
+  labs(x = "Individual bird tag",
+       y = "Number of intervals recorded") +
+  #scale_fill_viridis_d(option = "magma", direction = -1) +
+  guides(fill = guide_legend(title = "Time interval\n in minutes", nrow = 1)) +
+  scale_fill_manual(values = met.brewer("Hiroshige", n = 14)) +
+  theme(legend.position = "bottom"))
+
+plot_row <- plot_grid(pp_ints, np_ints, nrow = 1, labels = c("C)", "D)"))
+#plot_grid(plot_row, legend_row, ncol = 1, rel_heights = c(1, 0.1))
+```
+
+```{r Figure1, fig.height=9, fig.width=12}
+
+a <- plot_grid(toprow, fig1leg, ncol = 1, rel_heights = c(1, 0.1))
+b <- plot_grid(plot_row, legend_row, ncol = 1, rel_heights = c(1, 0.1))
+
+plot_grid(a, NULL, b, ncol = 1, rel_heights = c(1, 0.1, 1))
+ggsave2(filename = "Ch2_distributions/Figures/Figure1.png")
+
+```
 
 <!-- ## F1 - BW  -->
 
@@ -236,7 +305,7 @@ plot_grid(b, a, labels = c("A)", "B)"))
 ggsave2(filename = "Ch2_distributions/Figures/Figure1_bw.png")
 ```  
 
-Figure 1 - Kernel density estimates for the distribution of velocity data at different pooling levels, with the dark black density curve showing complete pooling. A) Partial pooling representation of the data, where each curve displays the density of velocities across a social group. B) No pooling scenario, where each density curve is associated to a single individual's velocity data. Individuals belonging to the same social group share the line color. Plot inserts show a zoom to the tail of the distribution of velocity data in both panels. We observe considerable variation for both partial and no pooling scenarios, when compared to the single black density curve that represents the complete pooling. Particular focus towards the tails, where certain individuals possess much higher densities for large velocities, something that gets dampened when considering pooled data for velocity densities. 
+Figure 1 - Kernel density estimates for the distribution of velocity data at different pooling levels, with the dark black density curve showing complete pooling. A) Partial pooling representation of the data, where each curve displays the density of velocities across a social group. B) No pooling scenario, where each density curve is associated to a single individual's velocity data. Individuals belonging to the same social group share the line color. Plot inserts show a zoom to the tail of the distribution of velocity data in both panels. We observe considerable variation for both partial and no pooling scenarios, when compared to the single black density curve that represents the complete pooling. Particular focus towards the tails, where certain individuals possess much higher densities for large velocities, something that gets dampened when considering pooled data for velocity densities. Panels C) and D) show the variation in number of observations and the length of time intervals recorded at the group and individual level.
 
 
 
