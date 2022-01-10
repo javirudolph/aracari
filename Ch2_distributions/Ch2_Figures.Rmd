@@ -960,9 +960,9 @@ write.csv(bic_2nd, file = "Ch2_distributions/Figures/bic_2nd.csv")
 
 
 
-# Figure X - angles
+# Figure 5 - angles
 
-```{r fig.width=8, fig.height=6}
+```{r Figure5, fig.width=8, fig.height=6}
 p1_angles <- ptpl %>% 
   drop_na(rel.angle) %>% 
   mutate(d.angle = ifelse(rel.angle > 0, rel.angle * 180/pi,
@@ -1013,6 +1013,195 @@ p3_angles <- ptpl %>%
 
 plot_grid(plot_grid(p1_angles, p2_angles), p3_angles, nrow = 2)
 
+ggsave("Ch2_distributions/Figures/Figure5.png")
+
 ```
 
+```{r}
+
+
+# Relative angle requires at least three consecutive observations since it is looking at changes in direction. Whereas, the absolute angle is just the direction of movement based on the absolute plane, and thus it only requires two consecutive observations. 
+ptpl %>% 
+  ungroup() %>% 
+  mutate(individual = paste0("B", Bird_ID),
+         individual = factor(individual, levels = c("B1", "B3", "B5", "B7", "B13", "B19", "B22", "B28", "B49", "B84", "B30", "B29"))) %>% 
+  dplyr::select(individual, sgroup, rel.angle, abs.angle) -> angles_df
+```
+
+```{r eval = FALSE}
+p1_angles <- angles_df %>% 
+  drop_na(abs.angle) %>% 
+  mutate(d.angle = ifelse(abs.angle > 0, abs.angle * 180/pi,
+                          abs.angle * 180/pi + 360)) %>% 
+  ggplot(., aes(x = d.angle)) +
+  geom_histogram(color = "grey", fill = "grey") +
+  coord_polar(theta = "x", start = -pi/2, direction = -1) +
+  scale_x_continuous(breaks = seq(0, 360, 30), limits = c(0, 360)) +
+  theme_minimal() +
+  theme(axis.title = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position = "none") +
+  labs(title = "Complete pooling")
+
+
+p2_angles <- angles_df %>% 
+  drop_na(abs.angle) %>% 
+  mutate(d.angle = ifelse(abs.angle > 0, abs.angle * 180/pi,
+                          abs.angle * 180/pi + 360)) %>% 
+  ggplot(., aes(x = d.angle)) +
+  geom_histogram(color = "grey", fill = "grey") +
+  coord_polar(theta = "x", start = -pi/2, direction = -1) +
+  scale_x_continuous(breaks = seq(0, 360, 30), limits = c(0, 360)) +
+  theme_minimal() +
+  theme(axis.title = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position = "none") +
+  facet_wrap(~sgroup, nrow = 2) +
+  theme(axis.text = element_blank()) +
+  labs(title = "Partial pooling")
+
+p3_angles <- angles_df %>% 
+  drop_na(abs.angle) %>% 
+  mutate(d.angle = ifelse(abs.angle > 0, abs.angle * 180/pi,
+                          abs.angle * 180/pi + 360)) %>% 
+  ggplot(., aes(x = d.angle)) +
+  geom_histogram(color = "grey", fill = "grey") +
+  coord_polar(theta = "x", start = -pi/2, direction = -1) +
+  scale_x_continuous(breaks = seq(0, 360, 30), limits = c(0, 360)) +
+  theme_minimal() +
+  theme(axis.title = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position = "none") +
+  facet_wrap(~ individual, nrow = 2) +
+  theme(axis.text = element_blank()) +
+  labs(title = "No pooling")
+
+plot_grid(plot_grid(p1_angles, p2_angles), p3_angles, nrow = 2)
+```
+
+```{r}
+
+library(CircStats)
+
+ptpl %>%
+  drop_na(rel.angle) %>% 
+  group_by(Bird_ID) %>%
+  add_tally() %>%
+  filter(n >= 30)  %>% 
+  mutate(individual = paste0("B", Bird_ID),
+         individual = factor(individual, levels = c("B1", "B3", "B5", "B7", "B13", "B19", "B22", "B28", "B49", "B84", "B30", "B29"))) %>% 
+  dplyr::select(individual, sgroup, rel.angle, abs.angle) %>%
+  drop_na(individual, rel.angle) -> angles_df
+
+# Estimate for complete pooling
+
+mu0 <- circ.mean(angles_df$rel.angle)
+rho0 <- est.rho(angles_df$rel.angle)
+angle.params <- as.data.frame(wrpcauchy.ml(angles_df$rel.angle, mu0 = mu0, rho0 = rho0)) %>%
+  mutate(model = "CP",
+         group = NA)
+
+
+# Partial pooling
+
+sgroups <- paste0("G", 1:7)
+
+
+
+for(i in 1:7){
+
+  sub_data <- angles_df %>%
+    drop_na(rel.angle) %>%
+    filter(., sgroup == sgroups[i])
+
+  mu0 <- circ.mean(sub_data$rel.angle)
+  rho0 <- est.rho(sub_data$rel.angle)
+  a <- as.data.frame(wrpcauchy.ml(sub_data$rel.angle, mu0 = mu0, rho0 = rho0)) %>%
+    mutate(model = "PP",
+           group = sgroups[i])
+
+  angle.params <- rbind.data.frame(angle.params, a)
+
+}
+
+# No pooling
+
+individuals <- unique(angles_df$individual)
+
+
+
+for(i in 1:12){
+
+  sub_data <- angles_df %>%
+    drop_na(rel.angle) %>%
+    filter(., individual == individuals[i])
+
+  mu0 <- circ.mean(sub_data$rel.angle)
+  rho0 <- est.rho(sub_data$rel.angle)
+  a <- as.data.frame(wrpcauchy.ml(sub_data$rel.angle, mu0 = mu0, rho0 = rho0)) %>%
+    mutate(model = "NP",
+           group = individuals[i])
+
+  angle.params <- rbind.data.frame(angle.params, a)
+
+}
+
+```
+
+```{r Figure6, fig.width=6, fig.height=3}
+cp.mu <- angle.params$mu[which(angle.params$model=="CP")]
+cp.rho <- angle.params$rho[which(angle.params$model=="CP")]
+
+angle.params %>% 
+  mutate(id = ifelse(str_detect(group, "B"), str_replace(group, "B", ""), group),
+         id = case_when(
+    id %in% c(1,3,5) ~ "G1",
+    id %in% c(7) ~ "G2",
+    id %in% c(13, 19) ~ "G3",
+    id %in% c(22) ~ "G4",
+    id %in% c(28) ~ "G5",
+    id %in% c(49, 84) ~ "G6",
+    id %in% c(29, 30) ~ "G7",
+    str_detect(id, "G") ~ id
+  ),
+  id = as.factor(id)) -> angle.params
+
+angle.params %>% 
+  filter(., model != "CP") %>% 
+  ggplot(., aes(x = model, y = mu)) +
+  geom_boxplot() +
+  geom_jitter(width = 0.1, aes(color = id)) +
+  scale_color_manual(values=sgroup_col, drop=FALSE) +
+  geom_hline(yintercept = cp.mu, color = my.cols1[4], size = 1) +
+  labs(x = "Pooling scenario") +
+  theme_classic() +
+  theme(legend.position = "none") -> muplot
+
+angle.params %>% 
+  filter(., model != "CP") %>% 
+  ggplot(., aes(x = model, y = rho)) +
+  geom_boxplot() +
+  geom_jitter(width = 0.1, aes(color = id)) +
+  scale_color_manual(values=sgroup_col, drop=FALSE) +
+  geom_hline(yintercept = cp.rho, color = my.cols1[4], size = 1) +
+  labs(x = "Pooling scenario") +
+  theme_classic() +
+  theme(legend.position = "none") -> rhoplot
+
+cir.legend <- get_legend(angle.params %>% 
+  filter(., model != "CP") %>% 
+  ggplot(., aes(x = model, y = rho)) +
+  geom_boxplot() +
+  geom_jitter(width = 0.1, aes(color = id)) +
+  scale_color_manual(values=sgroup_col, drop=FALSE) +
+  guides(color = guide_legend(title = "Social \n group")) +
+  geom_hline(yintercept = cp.rho, color = my.cols1[4], size = 1) +
+  labs(x = "Pooling scenario") +
+  theme_classic())
+
+A <- plot_grid(muplot, rhoplot, nrow = 1, labels = c("A)", "B)"), label_size = 10)
+plot_grid(A, cir.legend, nrow = 1, rel_widths = c(1, 0.1))
+
+ggsave("Ch2_distributions/Figures/Figure6.png")
+```
 
