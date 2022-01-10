@@ -369,7 +369,7 @@ np.boot.fits %>%
 ```
 # Table 1 - BIC values for models across pooling levels  
 
-Table 1 - BIC values obtained for models fitted to velocity data across pooling levels. Probability density functions considered included the Gamma, Weibull, and Lognormal distributions. Multi distribution models selected the best fitting distribution model for each family group or individual, allowing for variation not only in estimated parameters, but also in the distribution used. Based on BIC values, the best fitting model is the Multi-distribution with Partial Pooling, closely followed by the Complete Pooling Lognormal model. 
+Table 1 - BIC values obtained for models fitted to velocity data across pooling levels. Probability density functions considered included the Gamma, Weibull, and Lognormal distributions. Multi distribution models selected the best fitting distribution model for each social group or individual, allowing for variation not only in estimated parameters, but also in the distribution used. Based on BIC values, the best fitting model is the Multi-distribution with Partial Pooling, followed by the Lognormal PP, and Lognormal CP. 
 
 
 ```{r GenerateBICtable}
@@ -381,12 +381,13 @@ BIC_table %>%
   arrange(., model) -> BIC_table
 
 BIC_table
+write.csv(BIC_table, file = "Ch2_distributions/Figures/bic_table.csv")
 
 ```
 
 ```{r Generate_gt_Table, eval=FALSE}
 
-#library(gt)
+library(gt)
 
 gt_tbl <- gt(BIC_table[, 2:5], rowname_col = "dist")
 
@@ -415,11 +416,9 @@ gt_tbl %>%
   cols_label(
     deltaBIC_withinmodels = html("&Delta; BIC<sub>within</sub>"),
     deltaBIC_acrossmodels = html("&Delta; BIC<sub>across</sub>"),
-  ) 
+  ) -> gt_table_bic
 
-# -> gt_table_bic
-#   
-# gtsave(gt_table_bic, "Ch2_distributions/aic_bic_table.png") 
+gtsave(gt_table_bic, "Ch2_distributions/Figures/bic_table.png")
 ```
 
 
@@ -881,7 +880,11 @@ cp.bic %>%
             median = median(min),
             mean = mean(min),
             q2.5 = quantile(min, probs = 0.025),
-            q97.5 = quantile(min, probs = 0.975))
+            q97.5 = quantile(min, probs = 0.975)) -> bic_2nd
+
+bic_2nd
+
+write.csv(bic_2nd, file = "Ch2_distributions/Figures/bic_2nd.csv")
 
 ```
 
