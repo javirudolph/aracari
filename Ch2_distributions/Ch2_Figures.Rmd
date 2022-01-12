@@ -101,11 +101,11 @@ nonzerompm %>%
   geom_bar(stat = "identity") +
   theme_classic() +
   labs(x = "Individual bird tag",
-       y = "Number of intervals recorded") +
+       y = "Number of observations") +
   #scale_fill_viridis_d(option = "magma", direction = -1) +
   guides(fill = guide_legend(title = "Tracking interval\n in minutes", nrow = 1)) +
   scale_fill_manual(values = met.brewer("Hiroshige", n = 14)) +
-  theme(legend.position = "top") -> np_ints
+  theme(legend.position = "bottom") -> np_ints
   
   #theme(legend.position = "none") -> np_ints
 
@@ -194,7 +194,7 @@ plot_row <- plot_grid(pp_ints, np_ints, nrow = 1, labels = c("C)", "D)"))
 zoom_dims <- c(90, 200, 0, 0.01)
 annot_xy <- c(50, 200, 0.025, 0.045)
 box_color <- "blue"
-aval <- 0.6
+aval <- 0.7
 
 ind_dens_plot <- ptpl %>%
   ggplot(., aes((x = mpm))) +
@@ -273,7 +273,7 @@ fig1leg <- get_legend(ptpl %>%
                                 override.aes = list(alpha = 0.8)))+
     theme(legend.position = "bottom"))
 
-#plot_grid(toprow, fig1leg, ncol = 1, rel_heights = c(1, 0.1))
+plot_grid(toprow, fig1leg, ncol = 1, rel_heights = c(1, 0.1))
 
 ggsave2(filename = "Ch2_distributions/Figures/Figure2.png")
 ```  
@@ -551,7 +551,7 @@ knitr::include_graphics("Ch2_distributions/aic_bic_table.png")
 
 
 
-# Figure 2 - Best fit parameters
+# Figure 3 - Best fit parameters
 
 To tell the same story, we see variation in the parameters estimated for each bootstrap under various models.  
 
@@ -603,7 +603,7 @@ np.boot.fits %>%
 ```
 
 
-```{r Figure2, fig.height=9, fig.width=9}
+```{r Figure3, fig.height=9, fig.width=9}
 
 #colsx <- met.brewer("Tiepolo", n = 7)
 aval <- 0.5
@@ -705,15 +705,15 @@ row1 <- plot_grid(legend.grid, cp.grid, ncol = 2, rel_widths = c(1,2))
 
 plot_grid(row1, pp.grid, np.grid, nrow = 3)
 
-ggsave2(filename = "Ch2_distributions/Figures/Figure2.png")
+ggsave2(filename = "Ch2_distributions/Figures/Figure3.png")
 ``` 
 
-Figure 2 -Parameter space for best fitting models under the three pooling scenarios for 1000 bootstrap replicas. Complete pooling approaches showed best fitting models under the lognormal (panel A.) and weibull (B.) distributions, but no models under a gamma distribution. C)-E) Panels show placement of best fitting models under the three distributions with each color representing a different social group. Under the NP scenario (panels F.-H.) individuals belongig to the same social group are represented with a different shape. 
+Figure 3 -Parameter space for best fitting models under the three pooling scenarios for 1000 bootstrap replicas. Complete pooling approaches showed best fitting models under the lognormal (panel A.) and weibull (B.) distributions, but no models under a gamma distribution. C)-E) Panels show placement of best fitting models under the three distributions with each color representing a different social group. Under the NP scenario (panels F.-H.) individuals belongig to the same social group are represented with a different shape. 
 
-# Figure 3 - Percent Support
+# Figure 4 - Percent Support
 
 
-```{r Figure3, fig.width=12, fig.height=5}
+```{r Figure4, fig.width=12, fig.height=5}
 
 cols.fig2 <- c("#b9bec3", 
                "#0d907a", "#DEB41E", "#9C1D29", "#23262f")
@@ -829,11 +829,11 @@ bar_col <- plot_grid(pooling.support + theme(legend.position = "none"),
                      labels = c("A)", "B)", "C)"), label_size = 10)
 plot_grid(bar_col, model.legend, nrow = 2, rel_heights = c(1, 0.1))
 
-ggsave2(filename = "Ch2_distributions/Figures/Figure3.png")
+ggsave2(filename = "Ch2_distributions/Figures/Figure4.png")
 
 ```   
 
-Figure 3 - Percent support for the different distribution models at the three pooling levels. Percent support is based on 1000 bootstrapped replicas for each scenario. Labels on the x axis show the best fitting model for the original datasets. A) percent support at the three pooling levels, with CP having over 50% support for the lognormal distribution, in agreement with the model fit to the complete dataset. PP and NP scenarios show 100% support for the multi-distribution model, which considers the best fitting model for each family group or individual, respectively. B) Percent support for each model in the family groups. C) Support for each model at the individual level.  
+Figure 4 - Percent support for the different distribution models at the three pooling levels. Percent support is based on 1000 bootstrapped replicas for each scenario. Labels on the x axis show the best fitting model for the original datasets. A) percent support at the three pooling levels, with CP having over 50% support for the lognormal distribution, in agreement with the model fit to the complete dataset. PP and NP scenarios show 100% support for the multi-distribution model, which considers the best fitting model for each family group or individual, respectively. B) Percent support for each model in the family groups. C) Support for each model at the individual level.  
 
 
 ```{r BICboxplots, eval=FALSE}
@@ -855,7 +855,7 @@ cp.bic %>%
 
 
 
-# Figure 4 - BIC units from best model
+# Figure 5 - BIC units from best model
 
 <!-- Fix this. The idea is that each bootstrap is represented here with their BIC value for each model. We see that there's very strong evidence for the multi distribution model at both PP and NP levels. The summary quantiles later show very high support for this. Difference here between incorporating variation at the expense of sample size, and getting high support, or staying with high sample size without variation. -->
 
@@ -936,7 +936,7 @@ cp.bic %>%
 
 
 
-```{r Figure4}
+```{r Figure5}
 
 cp.bic %>% 
   bind_rows(., pp.bic) %>% 
@@ -961,11 +961,11 @@ all.bic %>%
   theme(legend.position = "bottom") +
   guides(color=guide_legend(title = "Distribution", override.aes = list(size = 5, alpha = 0.9))) 
 
-ggsave2(filename = "Ch2_distributions/Figures/Figure4.png")
+ggsave2(filename = "Ch2_distributions/Figures/Figure5.png")
 
 ```
 
-Figure 4 - Distributions of $\Delta BIC$ values for models under the three different pooling scenarios. Best fit model is aligned at y = 0, thus in the case of the PP and NP scenario, the orange bar at y=0 is actually the $\Delta BIC$ value being zero for the multi-distribution model for all bootstraps. The violin plots describe the density of $\Delta BIC$ units away from the best model. The box overlay shows the median, and lower and upper quartiles of this distribution for the three different pooling levels. 
+Figure 5 - Distributions of $\Delta BIC$ values for models under the three different pooling scenarios. Best fit model is aligned at y = 0, thus in the case of the PP and NP scenario, the orange bar at y=0 is actually the $\Delta BIC$ value being zero for the multi-distribution model for all bootstraps. The violin plots describe the density of $\Delta BIC$ units away from the best model. The box overlay shows the median, and lower and upper quartiles of this distribution for the three different pooling levels. 
 
 # Table 2 - Average BIC units from best model
 
@@ -1014,9 +1014,9 @@ write.csv(bic_2nd, file = "Ch2_distributions/Figures/bic_2nd.csv")
 
 
 
-# Figure 5 - angles
+# Figure 6 - angles
 
-```{r Figure5, fig.width=8, fig.height=6}
+```{r FigureNA, eval=FALSE, fig.width=8, fig.height=6}
 p1_angles <- ptpl %>% 
   drop_na(rel.angle) %>% 
   mutate(d.angle = ifelse(rel.angle > 0, rel.angle * 180/pi,
@@ -1084,8 +1084,8 @@ ptpl %>%
 
 # Some info on the angles df
 
-angles_df %>% 
-  drop_na(rel.angle)
+# angles_df %>% 
+#   drop_na(rel.angle) %>% group_by(individual) %>% count() %>% arrange(n)
 ```
 
 ```{r eval = FALSE}
@@ -1139,7 +1139,7 @@ p3_angles <- angles_df %>%
 plot_grid(plot_grid(p1_angles, p2_angles), p3_angles, nrow = 2)
 ```
 
-```{r}
+```{r FitAngleDists}
 
 library(CircStats)
 
@@ -1265,3 +1265,5 @@ plot_grid(A, cir.legend, nrow = 1, rel_widths = c(1, 0.1))
 ggsave("Ch2_distributions/Figures/Figure6.png")
 ```
 
+
+Figure 6 - Parameters estimated for a wrapped Cauchy distribution for relative angles for individuals, and social groups across the different pooling levels. Color is used to describe the social groups to which individuals belong to. The orange line on both plots represents the parameter values estimated using all the data under the complete pooling approach.
