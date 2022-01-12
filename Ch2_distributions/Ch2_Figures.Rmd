@@ -34,6 +34,7 @@ set.seed(20211207)
 # The script for this data is in the Orig_data_KH
 load("Ch2_distributions/Orig_data_KH/tidy_data.RData")
 
+rawptpl <- ptpl
 
 ptpl %>%
   mutate(T_minutes = dt/60,
@@ -76,7 +77,7 @@ scales::show_col(mod_col)
 
 # Figure 1 - Descriptions of the data
 
-```{r fig.width=12, fig.height=4.5}
+```{r Figure1, fig.width=12, fig.height=4.5}
 ptpl %>%
   drop_na(mpm) %>%
   filter(mpm != 0) %>%
@@ -103,8 +104,28 @@ nonzerompm %>%
        y = "Number of intervals recorded") +
   #scale_fill_viridis_d(option = "magma", direction = -1) +
   guides(fill = guide_legend(title = "Tracking interval\n in minutes")) +
-  scale_fill_manual(values = met.brewer("Hiroshige", n = 14)) +
-  theme(legend.position = "none") -> np_ints
+  scale_fill_manual(values = met.brewer("Hiroshige", n = 14))
+  
+  #theme(legend.position = "none") -> np_ints
+
+# This is the information on the bursts and number of relocations per individual 
+
+# ptpl %>% group_by(burst) %>% add_tally(name = "burstn") %>% 
+#   dplyr::select(Bird_ID, burstn) %>% 
+#   filter(., burstn >= 2) %>% 
+#   distinct() %>% #summary()
+#   #group_by(., Bird_ID) %>% count() %>% arrange(n)
+#   ggplot(., aes(x = Bird_ID, y = burstn)) + 
+#   geom_violin() +
+#   geom_boxplot(width = 0.1)
+
+ggsave("Ch2_distributions/Figures/Figure1.png")
+```
+
+```{r eval = FALSE}
+
+# These are the plot and legend for the number of observations and intervals when we consider the data at the family level. 
+
 
 nonzerompm %>%
   mutate(individual = paste0("B", Bird_ID),
@@ -233,16 +254,6 @@ fig1leg <- get_legend(ptpl %>%
 #ggsave2(filename = "Ch2_distributions/Figures/Figure1_color.png")
 ```  
 
-```{r eval=FALSE}
-# Getting some data for the results
-ptpl %>% group_by(burst) %>% add_tally(name = "burstn") %>% 
-  dplyr::select(Bird_ID, burstn) %>% 
-  filter(., burstn >=2) %>% 
-  distinct() %>% #summary()
-  ggplot(., aes(x = Bird_ID, y = burstn)) + 
-  geom_boxplot()
-
-```
 
 
 
