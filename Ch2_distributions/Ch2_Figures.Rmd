@@ -77,7 +77,7 @@ scales::show_col(mod_col)
 
 # Figure 1 - Descriptions of the data
 
-```{r Figure1, fig.width=12, fig.height=4.5}
+```{r Figure1, fig.width=12, fig.height=5.5}
 ptpl %>%
   drop_na(mpm) %>%
   filter(mpm != 0) %>%
@@ -103,8 +103,9 @@ nonzerompm %>%
   labs(x = "Individual bird tag",
        y = "Number of intervals recorded") +
   #scale_fill_viridis_d(option = "magma", direction = -1) +
-  guides(fill = guide_legend(title = "Tracking interval\n in minutes")) +
-  scale_fill_manual(values = met.brewer("Hiroshige", n = 14))
+  guides(fill = guide_legend(title = "Tracking interval\n in minutes", nrow = 1)) +
+  scale_fill_manual(values = met.brewer("Hiroshige", n = 14)) +
+  theme(legend.position = "top") -> np_ints
   
   #theme(legend.position = "none") -> np_ints
 
@@ -119,8 +120,29 @@ nonzerompm %>%
 #   geom_violin() +
 #   geom_boxplot(width = 0.1)
 
+ptpl %>% 
+  drop_na(rel.angle) %>% 
+  mutate(d.angle = ifelse(rel.angle > 0, rel.angle * 180/pi,
+                          rel.angle * 180/pi + 360),
+         individual = paste0("B", Bird_ID),
+         individual = factor(individual, levels = c("B1", "B3", "B5", "B7", "B13", "B19", "B22", "B28", "B49", "B84", "B30", "B29"))) %>% 
+  ggplot(., aes(x = d.angle)) +
+  geom_histogram(color = "grey", fill = "grey") +
+  coord_polar(theta = "x", start = -pi/2, direction = -1) +
+  scale_x_continuous(breaks = seq(0, 360, 30), limits = c(0, 360)) +
+  theme_minimal() +
+  theme(axis.title = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position = "none") +
+  facet_wrap(~individual, nrow = 1) +
+  theme(axis.text = element_blank()) -> np_angles
+
+plot_grid(np_ints, np_angles, nrow = 2, rel_heights = c(1, 0.7), labels = c("A)", "B)"), label_size = 10)
+ 
 ggsave("Ch2_distributions/Figures/Figure1.png")
 ```
+
+Figure 1 - A)Breakdown of the time intervals in the available data for each individual tagged bird. The majority of relocation points are recorded at 15 or 30 minute intervals. However, the intervals between relocations can get up to 210 minutes. Each relocation estimates the position of the animal, and a minimum of two consecutive relocations are necessary to estimate a trajectory, direction, and velocity. B) Distribution of relative angles for each individual. Relative angles require a minimum of three consecutive relocations to estimate the change in direction. 
 
 ```{r eval = FALSE}
 
@@ -161,11 +183,13 @@ plot_row <- plot_grid(pp_ints, np_ints, nrow = 1, labels = c("C)", "D)"))
 #plot_grid(plot_row, legend_row, ncol = 1, rel_heights = c(1, 0.1))
 ```
 
-# Figure 1 - Density plots for velocity
+
+
+# Figure 2 - Density plots for velocity
 
 <!-- Color version - each social group has a different color.   -->
 
-```{r Figure1col, fig.width=12, fig.height=4.5}
+```{r Figure2, fig.width=12, fig.height=4.5}
 
 zoom_dims <- c(90, 200, 0, 0.01)
 annot_xy <- c(50, 200, 0.025, 0.045)
@@ -251,14 +275,12 @@ fig1leg <- get_legend(ptpl %>%
 
 #plot_grid(toprow, fig1leg, ncol = 1, rel_heights = c(1, 0.1))
 
-#ggsave2(filename = "Ch2_distributions/Figures/Figure1_color.png")
+ggsave2(filename = "Ch2_distributions/Figures/Figure2.png")
 ```  
 
 
 
-
-
-```{r Figure1, fig.height=9, fig.width=12}
+```{r Figure1old, fig.height=9, fig.width=12, eval = FALSE}
 
 a <- plot_grid(toprow, fig1leg, ncol = 1, rel_heights = c(1, 0.1))
 b <- plot_grid(plot_row, legend_row, ncol = 1, rel_heights = c(1, 0.1))
@@ -337,7 +359,7 @@ plot_grid(b, a, labels = c("A)", "B)"))
 ggsave2(filename = "Ch2_distributions/Figures/Figure1_bw.png")
 ```  
 
-Figure 1 - Kernel density estimates for the distribution of velocity data at different pooling levels, with the dark black density curve showing complete pooling. A) Partial pooling representation of the data, where each curve displays the density of velocities across a social group. B) No pooling scenario, where each density curve is associated to a single individual's velocity data. Individuals belonging to the same social group share the line color. Plot inserts show a zoom to the tail of the distribution of velocity data in both panels. We observe considerable variation for both partial and no pooling scenarios, when compared to the single black density curve that represents the complete pooling. Particular focus towards the tails, where certain individuals possess much higher densities for large velocities, something that gets dampened when considering pooled data for velocity densities. Panels C) and D) show the variation in number of observations and the length of time intervals recorded at the group and individual level.
+Figure 2 - Kernel density estimates for the distribution of velocity data at different pooling levels, with the dark black density curve showing complete pooling. A) Partial pooling representation of the data, where each curve displays the density of velocities across a social group. B) No pooling scenario, where each density curve is associated to a single individual's velocity data. Individuals belonging to the same social group share the line color. Plot inserts show a zoom to the tail of the distribution of velocity data in both panels. We observe considerable variation for both partial and no pooling scenarios, when compared to the single black density curve that represents the complete pooling. Particular focus towards the tails, where certain individuals possess much higher densities for large velocities, something that gets dampened when considering pooled data for velocity densities.
 
 
 
