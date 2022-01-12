@@ -74,6 +74,72 @@ scales::show_col(mod_col)
 ```
 
 
+# Figure 1 - Descriptions of the data
+
+```{r fig.width=12, fig.height=4.5}
+ptpl %>%
+  drop_na(mpm) %>%
+  filter(mpm != 0) %>%
+  group_by(Bird_ID) %>%
+  add_tally() %>%
+  filter(n >= 30) -> nonzerompm
+
+# To know the number of speed data points for each individual
+# nonzerompm %>% group_by(Bird_ID) %>% count() %>% arrange(n)
+
+# To know the number of speed data points per interval category
+# nonzerompm %>% group_by(T_minutes) %>% count() %>% mutate(percent = n/nrow(nonzerompm))
+
+
+nonzerompm %>%
+  mutate(individual = paste0("B", Bird_ID),
+         individual = factor(individual, levels = c("B1", "B3", "B5", "B7", "B13", "B19", "B22", "B28", "B49", "B84", "B30", "B29"))) %>% 
+  group_by(individual, T_minutes) %>%
+  count() %>%
+  ggplot(aes(x = individual, y = n, fill = as.factor(T_minutes))) +
+  geom_bar(stat = "identity") +
+  theme_classic() +
+  labs(x = "Individual bird tag",
+       y = "Number of intervals recorded") +
+  #scale_fill_viridis_d(option = "magma", direction = -1) +
+  guides(fill = guide_legend(title = "Tracking interval\n in minutes")) +
+  scale_fill_manual(values = met.brewer("Hiroshige", n = 14)) +
+  theme(legend.position = "none") -> np_ints
+
+nonzerompm %>%
+  mutate(individual = paste0("B", Bird_ID),
+         individual = factor(individual, levels = c("B1", "B3", "B5", "B7", "B13", "B19", "B22", "B28", "B49", "B84", "B30", "B29"))) %>% 
+  group_by(sgroup, T_minutes) %>%
+  count() %>%
+  ggplot(aes(x = sgroup, y = n, fill = as.factor(T_minutes))) +
+  geom_bar(stat = "identity") +
+  theme_classic() +
+  labs(x = "Social group",
+       y = "Number of intervals recorded") +
+  #scale_fill_viridis_d(option = "magma", direction = -1) +
+  guides(fill = guide_legend(title = "Tracking interval\n in minutes")) +
+  scale_fill_manual(values = met.brewer("Hiroshige", n = 14)) +
+  theme(legend.position = "none") -> pp_ints
+
+legend_row <- get_legend(nonzerompm %>%
+  mutate(individual = paste0("B", Bird_ID),
+         individual = factor(individual, levels = c("B1", "B3", "B5", "B7", "B13", "B19", "B22", "B28", "B49", "B84", "B30", "B29"))) %>% 
+  group_by(sgroup, T_minutes) %>%
+  count() %>%
+  ggplot(aes(x = sgroup, y = n, fill = as.factor(T_minutes))) +
+  geom_bar(stat = "identity") +
+  theme_classic() +
+  labs(x = "Individual bird tag",
+       y = "Number of intervals recorded") +
+  #scale_fill_viridis_d(option = "magma", direction = -1) +
+  guides(fill = guide_legend(title = "Time interval\n in minutes", nrow = 1)) +
+  scale_fill_manual(values = met.brewer("Hiroshige", n = 14)) +
+  theme(legend.position = "bottom"))
+
+plot_row <- plot_grid(pp_ints, np_ints, nrow = 1, labels = c("C)", "D)"))
+#plot_grid(plot_row, legend_row, ncol = 1, rel_heights = c(1, 0.1))
+```
+
 # Figure 1 - Density plots for velocity
 
 <!-- Color version - each social group has a different color.   -->
@@ -167,64 +233,19 @@ fig1leg <- get_legend(ptpl %>%
 #ggsave2(filename = "Ch2_distributions/Figures/Figure1_color.png")
 ```  
 
+```{r eval=FALSE}
+# Getting some data for the results
+ptpl %>% group_by(burst) %>% add_tally(name = "burstn") %>% 
+  dplyr::select(Bird_ID, burstn) %>% 
+  filter(., burstn >=2) %>% 
+  distinct() %>% #summary()
+  ggplot(., aes(x = Bird_ID, y = burstn)) + 
+  geom_boxplot()
 
-```{r fig.width=12, fig.height=4.5}
-ptpl %>%
-  drop_na(mpm) %>%
-  filter(mpm != 0) %>%
-  group_by(Bird_ID) %>%
-  add_tally() %>%
-  filter(n >= 30) -> nonzerompm
-
-
-nonzerompm %>%
-  mutate(individual = paste0("B", Bird_ID),
-         individual = factor(individual, levels = c("B1", "B3", "B5", "B7", "B13", "B19", "B22", "B28", "B49", "B84", "B30", "B29"))) %>% 
-  group_by(individual, T_minutes) %>%
-  count() %>%
-  ggplot(aes(x = individual, y = n, fill = as.factor(T_minutes))) +
-  geom_bar(stat = "identity") +
-  theme_classic() +
-  labs(x = "Individual bird tag",
-       y = "Number of intervals recorded") +
-  #scale_fill_viridis_d(option = "magma", direction = -1) +
-  guides(fill = guide_legend(title = "Tracking interval\n in minutes")) +
-  scale_fill_manual(values = met.brewer("Hiroshige", n = 14)) +
-  theme(legend.position = "none") -> np_ints
-
-nonzerompm %>%
-  mutate(individual = paste0("B", Bird_ID),
-         individual = factor(individual, levels = c("B1", "B3", "B5", "B7", "B13", "B19", "B22", "B28", "B49", "B84", "B30", "B29"))) %>% 
-  group_by(sgroup, T_minutes) %>%
-  count() %>%
-  ggplot(aes(x = sgroup, y = n, fill = as.factor(T_minutes))) +
-  geom_bar(stat = "identity") +
-  theme_classic() +
-  labs(x = "Social group",
-       y = "Number of intervals recorded") +
-  #scale_fill_viridis_d(option = "magma", direction = -1) +
-  guides(fill = guide_legend(title = "Tracking interval\n in minutes")) +
-  scale_fill_manual(values = met.brewer("Hiroshige", n = 14)) +
-  theme(legend.position = "none") -> pp_ints
-
-legend_row <- get_legend(nonzerompm %>%
-  mutate(individual = paste0("B", Bird_ID),
-         individual = factor(individual, levels = c("B1", "B3", "B5", "B7", "B13", "B19", "B22", "B28", "B49", "B84", "B30", "B29"))) %>% 
-  group_by(sgroup, T_minutes) %>%
-  count() %>%
-  ggplot(aes(x = sgroup, y = n, fill = as.factor(T_minutes))) +
-  geom_bar(stat = "identity") +
-  theme_classic() +
-  labs(x = "Individual bird tag",
-       y = "Number of intervals recorded") +
-  #scale_fill_viridis_d(option = "magma", direction = -1) +
-  guides(fill = guide_legend(title = "Time interval\n in minutes", nrow = 1)) +
-  scale_fill_manual(values = met.brewer("Hiroshige", n = 14)) +
-  theme(legend.position = "bottom"))
-
-plot_row <- plot_grid(pp_ints, np_ints, nrow = 1, labels = c("C)", "D)"))
-#plot_grid(plot_row, legend_row, ncol = 1, rel_heights = c(1, 0.1))
 ```
+
+
+
 
 ```{r Figure1, fig.height=9, fig.width=12}
 
@@ -1026,6 +1047,12 @@ ptpl %>%
   mutate(individual = paste0("B", Bird_ID),
          individual = factor(individual, levels = c("B1", "B3", "B5", "B7", "B13", "B19", "B22", "B28", "B49", "B84", "B30", "B29"))) %>% 
   dplyr::select(individual, sgroup, rel.angle, abs.angle) -> angles_df
+
+
+# Some info on the angles df
+
+angles_df %>% 
+  drop_na(rel.angle)
 ```
 
 ```{r eval = FALSE}
