@@ -1,5 +1,5 @@
 ---
-  title: "Mixture distribution data generation"
+title: "Mixture distribution data generation"
 author: "Javiera Rudolph"
 date: "1/20/2022"
 output:
@@ -9,7 +9,8 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
-knitr::opts_chunk$set(fig.width=12, fig.height=6)
+#knitr::opts_chunk$set(fig.width=12, fig.height=6)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 ```
 
 ```{r message=FALSE, warning=FALSE}
@@ -24,3 +25,83 @@ library(Hmisc)
 ```{r LoadFitData}
 load("Ch2_distributions/Ch2_fits.RData")
 ```
+
+Thinking that to parameterize the distributions for the simulation in Ch3, I could use the fits from Ch2 under the PP model with the lognormal distribution:
+
+```{r}
+# Some theme stuff
+
+library(MetBrewer)
+
+sgroup_col <- met.brewer("Tiepolo", n = 7)
+aval <- 0.3
+
+figx.theme <- theme_bw() +
+  theme(legend.position = "right",
+        axis.title = element_text(size = 8))
+
+# Select only the PP lnorm data
+pp.boot.fits %>%
+  #filter(., dBIC == 0) %>% 
+  filter(., dist == "lnorm") %>% 
+  dplyr::select(group, boot, estimate, param, dist) %>% 
+  pivot_wider(names_from = param, values_from = estimate) %>% 
+  mutate(group = as.factor(group)) -> lnpp.params
+  
+lnpp.params %>% 
+  ggplot(., aes(x = meanlog, y = sdlog, color = group)) +
+    geom_point(alpha = aval) +
+    scale_color_manual(values=sgroup_col, drop=FALSE) +
+    lims(x = c(0.7, 3.7), y = c(0.5, 2.1)) +
+    labs(subtitle = "PP - lnorm") +
+    figx.theme +
+  guides(color = guide_legend(title = "Group", override.aes = list(alpha = 1, size = 5)))
+
+```
+
+```{r}
+# Use the parameters from the figure above to simulate data?
+
+lnpp.params %>% 
+  group_by(group) %>% 
+  summarise(meanlogs = median(meanlog),
+            sdlogs = median(sdlog)) -> logparams
+
+meanlogs <- logparams$meanlogs
+sdlogs <- logparams$sdlogs
+
+density_curves <- purrr::map(1:7, function(y) stat_function(fun = dlnorm,
+                                                            args = list(meanlog = meanlogs[y], sdlog = sdlogs[y]),
+                                                            color = sgroup_col[y]))
+
+ggplot() +
+  density_curves +
+  figx.theme +
+  lims(x = c(0, 30), y = c(0, 0.2))
+
+```  
+
+
+
+Using base R
+
+
+```{r}
+meanlogs <- c(3.011376, 2.670338, 2.842328, 2.830963, 1.637819, 2.351636, 2.117476)
+sdlogs <- c(1.343584, 1.114171, 1.032824, 1.010781, 1.487352, 1.139045, 1.150798)
+
+
+
+xs <- seq(0,20, by = 0.1)
+
+par(mfrow=c(2,1))
+plot(xs, dlnorm(x = xs, meanlog = meanlogs[1], sdlog = sdlogs[1]), type = "l", col = "grey", ylab = "Density")
+points(xs, dlnorm(x = xs, meanlog = meanlogs[2], sdlog = sdlogs[2]), type = "l", col = "grey")
+points(xs, dlnorm(x = xs, meanlog = meanlogs[3], sdlog = sdlogs[3]), type = "l", col = "grey")
+points(xs, dlnorm(x = xs, meanlog = meanlogs[4], sdlog = sdlogs[4]), type = "l", col = "grey")
+points(xs, dlnorm(x = xs, meanlog = meanlogs[5], sdlog = sdlogs[5]), type = "l", col = "grey")
+points(xs, dlnorm(x = xs, meanlog = meanlogs[6], sdlog = sdlogs[6]), type = "l", col = "grey")
+points(xs, dlnorm(x = xs, meanlog = meanlogs[7], sdlog = sdlogs[7]), type = "l", col = "grey")
+
+```
+
