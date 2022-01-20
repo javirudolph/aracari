@@ -9,7 +9,7 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
-#knitr::opts_chunk$set(fig.width=12, fig.height=6)
+knitr::opts_chunk$set(fig.width=6, fig.height=4)
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 ```
 
@@ -86,11 +86,21 @@ ggplot() +
 Using base R
 
 
-```{r}
+```{r fig.height=12, fig.width=12}
 meanlogs <- c(3.011376, 2.670338, 2.842328, 2.830963, 1.637819, 2.351636, 2.117476)
 sdlogs <- c(1.343584, 1.114171, 1.032824, 1.010781, 1.487352, 1.139045, 1.150798)
 
+samepis <- 1/7
+pis <- rep(samepis, 7)
 
+
+samp.size <- 50000
+all.samples <- rep(0,samp.size)
+for(i in 1:samp.size){
+
+  which.group <- sample(1:7, size=1, replace=TRUE, prob=pis)
+  all.samples[i] <- rlnorm(n=1,mean=meanlogs[which.group], sd=sdlogs[which.group])
+}
 
 xs <- seq(0,20, by = 0.1)
 
@@ -102,6 +112,8 @@ points(xs, dlnorm(x = xs, meanlog = meanlogs[4], sdlog = sdlogs[4]), type = "l",
 points(xs, dlnorm(x = xs, meanlog = meanlogs[5], sdlog = sdlogs[5]), type = "l", col = "grey")
 points(xs, dlnorm(x = xs, meanlog = meanlogs[6], sdlog = sdlogs[6]), type = "l", col = "grey")
 points(xs, dlnorm(x = xs, meanlog = meanlogs[7], sdlog = sdlogs[7]), type = "l", col = "grey")
+
+hist(all.samples, main= paste0("Sample"))
 
 ```
 

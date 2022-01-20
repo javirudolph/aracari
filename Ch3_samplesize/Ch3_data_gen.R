@@ -25,13 +25,30 @@ hist(all.samples, main= paste0("Sample from proportions 0.4, 0.2,0.20,0.15,0.05"
 
 # JAVI - using a lognormal
 
-meanlogs <- c(1, 1.5, 2, 2.5)
-sdlogs <- c(0.5, 0.3, 1, 0.75)
-xs <- seq(0,10, by = 0.1)
+meanlogs <- c(3.011376, 2.670338, 2.842328, 2.830963, 1.637819, 2.351636, 2.117476)
+sdlogs <- c(1.343584, 1.114171, 1.032824, 1.010781, 1.487352, 1.139045, 1.150798)
+
+samepis <- 1/7
+pis <- rep(samepis, 7)
 
 
+samp.size <- 50000
+all.samples <- rep(0,samp.size)
+for(i in 1:samp.size){
+
+  which.group <- sample(1:7, size=1, replace=TRUE, prob=pis)
+  all.samples[i] <- rlnorm(n=1,mean=meanlogs[which.group], sd=sdlogs[which.group])
+}
+
+xs <- seq(0,20, by = 0.1)
+
+par(mfrow=c(2,1))
 plot(xs, dlnorm(x = xs, meanlog = meanlogs[1], sdlog = sdlogs[1]), type = "l", col = "grey", ylab = "Density")
-points(xs, dlnorm(x = xs, meanlog = meanlogs[2], sdlog = sdlogs[2]), type = "l", col = "red")
-points(xs, dlnorm(x = xs, meanlog = meanlogs[3], sdlog = sdlogs[3]), type = "l", col = "blue")
-points(xs, dlnorm(x = xs, meanlog = meanlogs[4], sdlog = sdlogs[4]), type = "l", col = "green")
+points(xs, dlnorm(x = xs, meanlog = meanlogs[2], sdlog = sdlogs[2]), type = "l", col = "grey")
+points(xs, dlnorm(x = xs, meanlog = meanlogs[3], sdlog = sdlogs[3]), type = "l", col = "grey")
+points(xs, dlnorm(x = xs, meanlog = meanlogs[4], sdlog = sdlogs[4]), type = "l", col = "grey")
+points(xs, dlnorm(x = xs, meanlog = meanlogs[5], sdlog = sdlogs[5]), type = "l", col = "grey")
+points(xs, dlnorm(x = xs, meanlog = meanlogs[6], sdlog = sdlogs[6]), type = "l", col = "grey")
+points(xs, dlnorm(x = xs, meanlog = meanlogs[7], sdlog = sdlogs[7]), type = "l", col = "grey")
 
+hist(all.samples, main= paste0("Sample"))
