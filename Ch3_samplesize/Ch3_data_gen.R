@@ -1,3 +1,52 @@
+##########################################
+## DATA GENERATION CH3
+#########################################
+
+# I think the overall question for this is chapter is:
+#         Can we accurately estimate the true proportion of rare events produced by a complex model using a simpler hierarchical model?
+
+# Our complex model is one that considers individual variation in animal movement, with increasing mean and variance for specific groups
+# We use a mixture modeling approach, where each component distribution is associated to an individual's state or age
+
+# The overall assumption for this model is that individuals vary in how much they move, which we determine based on step lengths only.
+# With some groups having an overall larger variance and mean than other groups.
+# The proportions, or weights, of the mixture, are only assumed for now to follow a bell-shaped curve.
+
+# Libraries -----------------------------------------------
+set.seed(20220201)
+
+library(aracari)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(purrr)
+library(fitdistrplus)
+
+###########################
+# Mixture components
+###########################
+# Since we will be modeling step lengths, we will use a lognormal distribution, which is limited to only positive numbers.
+# We get our parameters inspiration from the rediscretized step lengths to 15 minutes from the ptpl dataset
+load("Ch2_distributions/Orig_data_KH/tidy_data.RData")
+
+ptpl %>%
+  drop_na(rel.angle) %>%
+  ggplot(., aes(x = R2n)) +
+  geom_histogram() +
+  scale_x_log10()
+
+
+# Building this function so that we get the parameters for a desired mean and standard deviation.
+get_lnorm_params <- function(mean, sd){
+  mu <- log(mean*2/(sqrt(mean*2+sd*2)))
+  sigmasqrd <- log(1+(sd*/mean*2))
+
+  return(c(mu, sigmasqrd))
+}
+
+desired_mean_var(30, 10)
+
+
 mus <- c(3,5,7,11,20,30)
 sigsqs <- c(1,1.5,1.5,2,2,3)
 xs <- seq(0,35,by=0.1)
@@ -25,8 +74,16 @@ hist(all.samples, main= paste0("Sample from proportions 0.4, 0.2,0.20,0.15,0.05"
 
 # JAVI - using a lognormal
 
-meanlogs <- c(3.011376, 2.670338, 2.842328, 2.830963, 1.637819, 2.351636, 2.117476)
-sdlogs <- c(1.343584, 1.114171, 1.032824, 1.010781, 1.487352, 1.139045, 1.150798)
+meanlogs <- c(3.011376, 2.670338, 2.842328,
+              #2.830963,
+              1.637819
+              #,2.351636, 2.117476
+              )
+sdlogs <- c(1.343584, 1.114171, 1.032824,
+            #1.010781,
+            1.487352
+            #, 1.139045, 1.150798,
+            )
 
 samepis <- 1/7
 pis <- rep(samepis, 7)
