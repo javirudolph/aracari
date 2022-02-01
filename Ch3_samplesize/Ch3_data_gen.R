@@ -22,6 +22,7 @@ library(tidyr)
 library(purrr)
 library(fitdistrplus)
 library(Hmisc)
+library(plotly)
 
 ###########################
 # Mixture components
@@ -36,32 +37,59 @@ load("Ch2_distributions/Orig_data_KH/tidy_data.RData")
 ptpl %>% drop_na(rel.angle) %>% mutate(stp.len = (dist/dt)*900) %>%
   dplyr::select(id, sgroup, stp.len) -> lengths_df
 
-# Looking at the mean and sd at the group or indidivual level
+# Looking at the mean and sd at the group or individual level
 
 lengths_df %>%
   as_tibble() %>%
+  # group_by(id) %>%
   group_by(sgroup) %>%
   summarise(across(c(stp.len), list(mean = mean, sd = sd))) %>%
   arrange(stp.len_mean) %>%
-  summary()
+  rename(mean = stp.len_mean, sd = stp.len_sd) %>%
+  ggplot(., aes(x = mean, y = sd)) +
+  geom_point() +
+  theme_minimal()
+ggplotly()
 
 
+# We see that mean and sd are correlated, with a range between 100 to 700 when looking at individuals, or 100-600 with social groups
+
+####################################################################
+# Values used for lognormal distributions
+# Use four groups
+
+means <- c(135, 340, 430, 630)
+sds <- c(115, 315, 480, 680)
 
 # Building this function so that we get the parameters for a desired mean and standard deviation.
 get_lnorm_params <- function(mean, sd){
-  mu <- log(mean*2/(sqrt(mean*2+sd*2)))
-  sigmasqrd <- log(1+(sd*/mean*2))
 
-  return(c(mu, sigmasqrd))
+  mu <- log(mean*2/(sqrt(mean*2+sd*2)))
+  sigma2 <- log(1+(sd*2/mean*2))
+
+  return(data.frame(mu = mu, sigma2 = sigma2))
 }
 
 
-# We will consider a range from 100-600 meters for both mean and sd to use in the lognormal distribution.
-# And build 4 different groups
+lnorm_params <- get_lnorm_params(means, sds)
 
 
-mus <- c(3,5,7,11,20,30)
-sigsqs <- c(1,1.5,1.5,2,2,3)
+
+meanlogs <- lnorm_params$mu
+sdlogs <- sqrt(lnorm_params$sigma2)
+
+# Visualize the curves
+
+lnorm_densities <- purrr::map(1:4, function(y) stat_function(fun = dlnorm,
+                                                            args = list(meanlog = meanlogs[y], sdlog = sdlogs[y])))
+ggplot() +
+  lnorm_densities +
+  lims(x = c(0, 1000))
+
+ggplot() +
+  density_curves +
+  figx.theme +
+  lims(x = c(0, 30), y = c(0, 0.2))
 xs <- seq(0,35,by=0.1)
 # Pyramid age structure
 pis <- c(0.4, 0.2,0.20,0.10,0.07,0.03)
