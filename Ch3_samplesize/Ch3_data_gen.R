@@ -21,6 +21,7 @@ library(ggplot2)
 library(tidyr)
 library(purrr)
 library(fitdistrplus)
+library(Hmisc)
 
 ###########################
 # Mixture components
@@ -29,11 +30,21 @@ library(fitdistrplus)
 # We get our parameters inspiration from the rediscretized step lengths to 15 minutes from the ptpl dataset
 load("Ch2_distributions/Orig_data_KH/tidy_data.RData")
 
-ptpl %>%
-  drop_na(rel.angle) %>%
-  ggplot(., aes(x = R2n)) +
-  geom_histogram() +
-  scale_x_log10()
+# Rediscretizing the data
+# Big assumptions here, we are ignoring potential correlation between consecutive relocations
+# Assuming each observation is independent
+ptpl %>% drop_na(rel.angle) %>% mutate(stp.len = (dist/dt)*900) %>%
+  dplyr::select(id, sgroup, stp.len) -> lengths_df
+
+# Looking at the mean and sd at the group or indidivual level
+
+lengths_df %>%
+  as_tibble() %>%
+  group_by(sgroup) %>%
+  summarise(across(c(stp.len), list(mean = mean, sd = sd))) %>%
+  arrange(stp.len_mean) %>%
+  summary()
+
 
 
 # Building this function so that we get the parameters for a desired mean and standard deviation.
@@ -44,7 +55,9 @@ get_lnorm_params <- function(mean, sd){
   return(c(mu, sigmasqrd))
 }
 
-desired_mean_var(30, 10)
+
+# We will consider a range from 100-600 meters for both mean and sd to use in the lognormal distribution.
+# And build 4 different groups
 
 
 mus <- c(3,5,7,11,20,30)
