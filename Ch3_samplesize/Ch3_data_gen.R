@@ -21,11 +21,10 @@ set.seed(20220201)
 library(aracari)
 library(dplyr)
 library(ggplot2)
+library(cowplot)
 library(tidyr)
 library(purrr)
 library(fitdistrplus)
-library(Hmisc)
-library(plotly)
 
 ## Functions ----------------------------------------------------
 # Building this function so that we get the parameters for a desired mean and standard deviation.
@@ -45,8 +44,9 @@ exp.val <- function(mu, sigsq){
 # MIXTURE MODEL --------------------------------------------------
 ## Mixture proportions ----------------------------------------
 # We assume four categories of individuals with increasing movement.
-pis <- c( 0.15, 0.3, 0.5, 0.05)
-histogram(pis)
+pis <- c( 0.1, 0.2, 0.3, 0.4)
+sum(pis)
+hist(pis)
 
 ## Mixture components --------------------------------------
 # Since movement lengths are only positive, we use a lognormal distribution to describe them
@@ -60,26 +60,43 @@ pars <- desired_mean_sd(mean = c(160, 300, 600, 1000), sd = c(90, 120, 160, 200)
 
 mus <- pars$mu
 sigsqs <- pars$sigsq
-dens_cols <- c("black", "blue", "green", "red")
+dens_cols <- c("#264653", "#2a9d8f", "#f4a261", "#e76f51")
 
 ### PLOT the mixture components -------------------------------
 lnorm_densities <- purrr::map(1:4, function(y) stat_function(fun = dlnorm,
                                                              args = list(meanlog = mus[y], sdlog = sigsqs[y]),
-                              color = dens_cols[y]))
+                              color = dens_cols[y], size=1))
 ggplot() +
   lnorm_densities +
   theme_minimal() +
-  lims(x = c(0, 150))
+  labs(y = "Density") +
+  lims(x = c(0, 150)) -> densities_plot
 
 
 # SAMPLING --------------------------------------------------------------
 
+samp.size <- 50000
+all.samples <- rep(0,samp.size)
+for(i in 1:samp.size){
+
+  which.cat <- sample(1:4, size=1, replace=TRUE, prob=pis)
+  all.samples[i] <- rlnorm(n=1,meanlog=mus[which.cat], sdlog=sigsqs[which.cat])
+}
+
+## PLOT the samples ---------------------------------------------
+# This is our f(x) from the main text
+data.tail <- data.frame(values = all.samples, y = 100) %>% arrange(desc(values)) %>% filter(values >=250)
+head(data.tail)
+
+ggplot(data.frame(all.samples), aes(x = all.samples)) +
+  geom_histogram(bins = 100) +
+  geom_point(data = data.tail[1:50,], aes(x = values, y = y), color = "black", alpha = 0.5) +
+  labs(y = "Frequency", x = "Distance") +
+  theme_minimal() -> sampleshist
 
 
+# VIZ -----------------------------------
+plot_grid(densities_plot, sampleshist, nrow=2, labels="AUTO")
+ggsave("Ch3_samplesize/Fig1.png")
 
-
-
-
-
-
-
+summary(all.samples)
