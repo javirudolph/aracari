@@ -1,7 +1,7 @@
 ---
-title: "Mixture distribution data generation"
+title: "Brainstorm for Ch3"
 author: "Javiera Rudolph"
-date: "1/20/2022"
+date: "2/4/2022"
 output:
   html_document:
   toc: true
@@ -42,6 +42,11 @@ First, we simulate a 'master' dataset which we assume to be the 'true' process
 Then, we design a sampling scheme.   
 My hypothesis is that there will be a critical threshold, after which increasing the number of observations per individual won't matter to understand the tail of dispersal kernels, and we will benefit from sampling more individuals, instead of sampling fewer individuals with more observations.   
 
-1.    The sampling scheme should have this variation between individuals and number of observations per individual. *What are we sampling? locations?*  
-2.       
+1.    The sampling scheme should have this variation between individuals and number of observations per individual. *What are we sampling? locations? of individuals or the seeds?*  
+    *       We are trying to answer if it is better to sample 3 individuals and follow them for months, getting 100s of observations for each individual.  
+    *       OR if it is better that we sample 10 or 20 individuals, and follow them for a couple of weeks only and get maybe only 30, 50 observations for each. 
+    
+      **My guess, is that it will be better to sample more individuals for shorter time frames, because the question is trying to capture these long distance movements which may vary by individual.**  
+      
+2.   We use     
 
