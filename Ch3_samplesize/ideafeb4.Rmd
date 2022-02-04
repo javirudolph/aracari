@@ -27,5 +27,21 @@ Q: What type of sampling scheme gives the highest probability of recovering the 
 
 In the previous two chapters we have set the stage to show that individual and social group variation matter, they have consequences for the seed dispersal services that these animals provide. In particular, we showed that when we include individual heterogeneity in animal movement, then frugivore-generated seed dispersal kernels have fatter tails, which means a larger number of long-distance dispersal events. 
 
-Based on that background, what we will be trying to show here is which sampling scheme is better to recover the highest number of long-distance dispersal events. We will do this by changing the number of individuals sampled versus the length of the time series or number of observations, to which we will evaluate the resulting seed dispersal kernel tails. 
+Based on that background, what we will be trying to show here is which sampling scheme is better to recover the highest number of long-distance dispersal events. We will do this by changing the number of individuals sampled versus the length of the time series or number of observations, to which we will evaluate the resulting seed dispersal kernel tails.   
+
+
+**What is the mathematical framework for this simulation?**  
+First, we simulate a 'master' dataset which we assume to be the 'true' process  
+
+1.    Define the process used to generate animal movement  
+2.    Define how to incorporate social group and individual variation  
+3.    Establish any potential movement boundaries (max of 3000m in 15min from the data)  
+4.    Generate seed dispersal kernels  
+5.    Use Extreme values approach to describe the tail of seed dispersal kernels  
+
+Then, we design a sampling scheme.   
+My hypothesis is that there will be a critical threshold, after which increasing the number of observations per individual won't matter to understand the tail of dispersal kernels, and we will benefit from sampling more individuals, instead of sampling fewer individuals with more observations.   
+
+1.    The sampling scheme should have this variation between individuals and number of observations per individual. *What are we sampling? locations?*  
+2.       
 
