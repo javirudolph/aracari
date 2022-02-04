@@ -1,0 +1,31 @@
+---
+title: "Mixture distribution data generation"
+author: "Javiera Rudolph"
+date: "1/20/2022"
+output:
+  html_document:
+  toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+knitr::opts_chunk$set(fig.width=6, fig.height=4)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(cowplot)
+library(fitdistrplus)
+library(Hmisc)
+```
+
+
+Q: What type of sampling scheme gives the highest probability of recovering the true distribution of long distance seed dispersal events?  
+
+In the previous two chapters we have set the stage to show that individual and social group variation matter, they have consequences for the seed dispersal services that these animals provide. In particular, we showed that when we include individual heterogeneity in animal movement, then frugivore-generated seed dispersal kernels have fatter tails, which means a larger number of long-distance dispersal events. 
+
+Based on that background, what we will be trying to show here is which sampling scheme is better to recover the highest number of long-distance dispersal events. We will do this by changing the number of individuals sampled versus the length of the time series or number of observations, to which we will evaluate the resulting seed dispersal kernel tails. 
+
