@@ -37,22 +37,26 @@ ptpl %>%
   dplyr::select(burst, mpm) %>%
   group_by(Bird_ID, burst) %>%
   nest() %>%
-  mutate(out = map_int(data, nrow)) %>%
-  filter(., out > 3) %>%
+  mutate(out = map_int(data, nrow),
+         nperms = choose(out, out) * factorial(out)) %>%
+  filter(., out > 2) %>%
   mutate(velvec = map(data, pull),
          ref_SL = map(velvec, S_L)) -> b
 
 
 SL_permute <- function(d.vector, ntimes){
 
+  out <- vector()
   for(i in 1:ntimes){
     perm <- sample(d.vector, size = length(d.vector), replace = FALSE)
-    perm_SL <- S_L(perm)
+    out[i] <- S_L(perm)
   }
 
+  return(out)
 
 }
 
-
+b %>%
+  mutate(perms = map(velvec, SL_permute, ntimes = 6)) -> c
 
 
