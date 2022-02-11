@@ -143,7 +143,7 @@ for(j in 1:length(g.id)){
 # Bootstrapping --------------------------------------------------
 ## CP bootstrapping -----------------------------------------
 
-nboots <- 10
+nboots <- 200
 nsamples <- length(r2n_ptpl$vel.R2n)
 
 cp.boot.fits <- NULL
