@@ -97,7 +97,7 @@ ggplot(data.frame(all.samples), aes(x = all.samples)) +
 
 # VIZ -----------------------------------
 plot_grid(densities_plot, sampleshist, nrow=2, labels="AUTO")
-ggsave("Ch3_samplesize/Fig1.png")
+#ggsave("Ch3_samplesize/TestFig.png")
 
 summary(all.samples)
 
@@ -159,7 +159,7 @@ lomax.glm <- function(formula=~1, my.dataf, response){
   k.hat         <- n/(sumlogapy.hat - sum(Xbeta.hat))
 
   out.list <- list(opt.out = opt.out, designmat=designmat,Y=Y, mles=mles, nll.hat=nll.hat, BIC.mod = BIC.mod,
-                   alphas.hat=alphas.hat, k.hat=k.hat,data=data)
+                   alphas.hat=alphas.hat, k.hat=k.hat,data=my.dataf)
 
   return(out.list)
 
@@ -171,7 +171,7 @@ my.df <- data.frame(x = sample(all.samples, 1000))
 mod1 <- lomax.glm(formula = ~1, my.dataf = my.df, response = my.df$x)
 
 # What are the estimated parameters?
-alpha <- mod1$alphas.hat[1]
+alpha <- mod1$alphas.hat[1] # equals exp(mod1$mles)
 k <- mod1$k.hat
 
 # Estimate the Pr(X <= x)
@@ -196,7 +196,7 @@ lomax.mean <- function(alpha=alpha, k=k){
 
 lomax.mean(alpha, k)
 
-# Assess the fit using model quantiles
+# Assess the fit using model quantiles to make a qqplot
 lomax.quantile <- function(alpha, k, p){
   return(alpha*(((1-p)^(1/k))-1))
 }
@@ -231,8 +231,66 @@ c(alpha, alpha.gp)
 c(k, k.gp)
 
 
+#########  playing with a simulation trial to assess how good hat(P(X>x)) is
+#########  assuming data came from a lomax (when in fact it didn't)
 
 
+
+samp.size <- 50000
+all.samples <- rep(0,samp.size)
+categ <- rep(0,samp.size)
+
+for(i in 1:samp.size){
+  
+  which.cat <- sample(1:4, size=1, replace=TRUE, prob=pis)
+  all.samples[i] <- rlnorm(n=1,meanlog=mus[which.cat], sdlog=sigsqs[which.cat])
+  categ[i] <- which.cat
+}
+
+sim.df <- data.frame(dists= all.samples, categ=categ)
+
+
+
+samp.sizes <- c(80, 200, 500, 800, 1000, 1600)
+num.ns <- length(samp.sizes)
+q.tests <- c(100, 250,500,1000)
+num.qs <- length(q.tests)
+
+all.sampsizes <- rep(samp.sizes,each=num.qs)
+all.qtests <- rep(q.tests,num.ns)
+ntests <- length(all.sampsizes)
+
+cdfs.hat <- rep(0, ntests)
+
+
+for(i in 1:ntests){
+
+      ith.n   <- all.sampsizes[i]
+      ith.samples <- data.frame(x = sample(all.samples, ith.n))
+      mod1 <- lomax.glm(formula = ~1, my.dataf = ith.samples, response = ith.samples$x)
+      ith.a <- mod1$alphas.hat[1]
+      ith.k <- mod1$k.hat
+      
+      ith.q <- all.qtests[i]
+      ith.cdf <- 1- lomax.cdf(x = ith.q, alpha = ith.a, k = ith.k)
+      cdfs.hat[i] <- ith.cdf
+
+}
+
+true.cdfs <- rep(0,num.qs)
+for(i in 1:num.qs){
+  
+  iq <- q.tests[i]
+  
+  true.cdfs[i] <- sum(all.samples>iq)/length(all.samples)
+
+}
+
+all.true.cdfs <- rep(true.cdfs,num.ns)
+
+
+sim.test.df <- data.frame(all.sampsizes=all.sampsizes, all.qtests=all.qtests,cdfs.hat=cdfs.hat,
+                          true.cdfs = all.true.cdfs)
 
 
 
