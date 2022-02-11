@@ -143,14 +143,14 @@ for(j in 1:length(g.id)){
 # Bootstrapping --------------------------------------------------
 ## CP bootstrapping -----------------------------------------
 
-nboots <- 1000
-nsamples <- length(ptpl$mpm)
+nboots <- 10
+nsamples <- length(r2n_ptpl$vel.R2n)
 
 cp.boot.fits <- NULL
 
 for(i in 1:nboots){
 
-  boot.df <- sample(ptpl$mpm, size = nsamples, replace = TRUE)
+  boot.df <- sample(r2n_ptpl$vel.R2n, size = nsamples, replace = TRUE)
 
   fit <- lapply(dist.used, function(x){fitdist(boot.df, distr = x)})
 
@@ -167,16 +167,16 @@ for(i in 1:nboots){
 
 # No pooling fits ----------------------------------
 
-ids <- unique(ptpl$id)
+ids <- unique(r2n_ptpl$id)
 
 np.boot.fits <- NULL
 
 
 for(i in 1:nboots){
 
-  boot.df <- ptpl %>%
+  boot.df <- r2n_ptpl %>%
     ungroup() %>%
-    dplyr::select(.,id, mpm) %>%
+    dplyr::select(.,id, vel.R2n) %>%
     group_by(id) %>%
     nest() %>%
     ungroup() %>%
@@ -190,7 +190,7 @@ for(i in 1:nboots){
     indv.df <- boot.df %>%
       filter(., id == ids[j])
 
-    fit <- lapply(dist.used, function(x){fitdist(indv.df$mpm, distr = x)})
+    fit <- lapply(dist.used, function(x){fitdist(indv.df$vel.R2n, distr = x)})
 
     out <- build_fits_df(fit) %>%
       mutate(param = param,
@@ -217,9 +217,9 @@ pp.boot.fits <- NULL
 
 for(i in 1:nboots){
 
-  boot.df <- ptpl %>%
+  boot.df <- r2n_ptpl %>%
     ungroup() %>%
-    dplyr::select(., sgroup, mpm) %>%
+    dplyr::select(., sgroup, vel.R2n) %>%
     group_by(sgroup) %>%
     nest() %>%
     ungroup() %>%
@@ -233,7 +233,7 @@ for(i in 1:nboots){
     fg.df <- boot.df %>%
       filter(., sgroup == g.id[j])
 
-    fit <- lapply(dist.used, function(x){fitdist(fg.df$mpm, distr = x)})
+    fit <- lapply(dist.used, function(x){fitdist(fg.df$vel.R2n, distr = x)})
 
     out <- build_fits_df(fit) %>%
       mutate(param = param,
@@ -254,4 +254,4 @@ for(i in 1:nboots){
 # save.image(file = "Ch2_distributions/fits_df.RData")
 save(nboots, dist, dist.used, ids, g.id, kpars, param, reg_fits_info,
      cp.boot.fits, pp.boot.fits, np.boot.fits,
-     file = "Ch2_distributions/Ch2_fits.RData")
+     file = "Ch2_distributions/Ch2_R2n_fits.RData")
