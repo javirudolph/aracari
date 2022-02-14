@@ -241,7 +241,7 @@ all.samples <- rep(0,samp.size)
 categ <- rep(0,samp.size)
 
 for(i in 1:samp.size){
-  
+
   which.cat <- sample(1:4, size=1, replace=TRUE, prob=pis)
   all.samples[i] <- rlnorm(n=1,meanlog=mus[which.cat], sdlog=sigsqs[which.cat])
   categ[i] <- which.cat
@@ -270,7 +270,7 @@ for(i in 1:ntests){
       mod1 <- lomax.glm(formula = ~1, my.dataf = ith.samples, response = ith.samples$x)
       ith.a <- mod1$alphas.hat[1]
       ith.k <- mod1$k.hat
-      
+
       ith.q <- all.qtests[i]
       ith.cdf <- 1- lomax.cdf(x = ith.q, alpha = ith.a, k = ith.k)
       cdfs.hat[i] <- ith.cdf
@@ -279,9 +279,9 @@ for(i in 1:ntests){
 
 true.cdfs <- rep(0,num.qs)
 for(i in 1:num.qs){
-  
+
   iq <- q.tests[i]
-  
+
   true.cdfs[i] <- sum(all.samples>iq)/length(all.samples)
 
 }
@@ -291,6 +291,7 @@ all.true.cdfs <- rep(true.cdfs,num.ns)
 
 sim.test.df <- data.frame(all.sampsizes=all.sampsizes, all.qtests=all.qtests,cdfs.hat=cdfs.hat,
                           true.cdfs = all.true.cdfs)
+
 
 
 
