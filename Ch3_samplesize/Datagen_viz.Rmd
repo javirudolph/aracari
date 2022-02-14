@@ -89,7 +89,7 @@ sigsqs <- pars$sigsq
 dens_cols <- c("#264653", "#2a9d8f", "#f4a261", "#e76f51")
 
 ### PLOT the mixture components -------------------------------
-lnorm_densities <- purrr::map(1:4, function(y) stat_function(fun = dlnorm,
+lnorm_densities <- purrr::map(1:ngroup, function(y) stat_function(fun = dlnorm,
                                                              args = list(meanlog = mus[y], sdlog = sigsqs[y]),
                               color = dens_cols[y], size=1))
 ggplot() +
@@ -144,7 +144,7 @@ for(i in 1:ngroup){
 
 indiv_densities <- purrr::map(1:nrow(indiv_pars), function(y) stat_function(fun = dlnorm,
                                                              args = list(meanlog = indiv_pars$mu[y], sdlog = indiv_pars$sigsq[y]),
-                              color = dens_cols[indiv_pars$sgroup[y]], size=1, alpha = 0.5))
+                              color = dens_cols[indiv_pars$sgroup[y]], size=1, alpha = 0.3))
 ggplot() +
   indiv_densities +
   lnorm_densities +
