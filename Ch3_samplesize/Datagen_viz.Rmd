@@ -18,6 +18,118 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(cowplot)
-library(fitdistrplus)
-library(Hmisc)
 ```
+
+```{r}
+set.seed(20220214)
+
+## Functions ----------------------------------------------------
+# Building this function so that we get the parameters for a desired mean and standard deviation using a lognormal distribution
+desired_mean_sd <- function(mean, sd){
+
+  mu <- log(mean*2/(sqrt(mean*2+sd*2)))
+  sigsq <- log(1+(sd*2/mean*2))
+
+  return(data.frame(mu = mu, sigsq = sigsq))
+}
+
+exp.val <- function(mu, sigsq){
+  exp(mu + sqrt(sigsq))
+}
+```
+
+
+We use a mixture model to simulate step lengths for animal movement using a lognormal distribution for step length. We incorporate two levels of heterogeneity by including social group and individual variation. The assumption follows that individuals belonging to the same group will follow a similar movement but with a different variance.  
+
+We use a mixture model since this is a common approach to characterize subpopulations, and the mixture distribution is sort of a weighted average for the contributions of each subpopulation to the general population. 
+$$ 
+f(x) = \sum_{i=1}^{n} \pi_{i} f_i(x)
+$$
+Where $\pi_i$ represents the weight associated to social group $i$ and $f_i(x)$ is the distribution describing the step lengths of the social group. We incorporate individual variation by describing the distribution of social group step lengths $f_i(x)$ as a mixture as well.
+
+
+$$
+f_i(x) = \sum_{j=1}^s w_j g_j(x)
+$$
+
+We assume that each individual has the same weight (i.e., $w_1 = w_2 = \cdots = w_s$), and that the proportion of individuals in each social group determines the weight for the social group (i.e., $\pi_i$) relative to the overall population.
+
+For our toy model, we assume four social groups ($i=4$), where each group has between 4-7 individuals assigned randomly, with a total of 22 individuals in our simulated population.
+
+
+```{r echo=TRUE}
+# MIXTURE MODEL --------------------------------------------------
+## Mixture proportions ----------------------------------------
+# We assume four categories of individuals with increasing movement.
+
+ngroup <- 4
+npergroup <- sample(3:7, ngroup, replace = TRUE) 
+npop <- sum(npergroup)
+
+pis <- npergroup/npop
+#sum(pis)
+#hist(pis)
+
+## Mixture components --------------------------------------
+### Each of these curves represents the average of the social group.
+# Since movement lengths are only positive, we use a lognormal distribution to describe them
+
+# CASE1
+
+pars <- desired_mean_sd(mean = c(160, 300, 600, 1000), sd = c(90, 120, 160, 200))
+
+# Special case I am considering where for each category the mean doubles, and then sd=mean*0.6
+# pars <- desired_mean_sd(mean = c(150, 300, 600, 1200), sd = c(90, 180, 360, 720))
+
+mus <- pars$mu
+sigsqs <- pars$sigsq
+dens_cols <- c("#264653", "#2a9d8f", "#f4a261", "#e76f51")
+
+### PLOT the mixture components -------------------------------
+lnorm_densities <- purrr::map(1:4, function(y) stat_function(fun = dlnorm,
+                                                             args = list(meanlog = mus[y], sdlog = sigsqs[y]),
+                              color = dens_cols[y], size=1))
+ggplot() +
+  lnorm_densities +
+  theme_minimal() +
+  labs(y = "Density") +
+  lims(x = c(0, 150)) -> densities_plot
+densities_plot
+
+```
+
+
+```{r}
+
+
+# SAMPLING --------------------------------------------------------------
+
+samp.size <- 50000
+all.samples <- rep(0,samp.size)
+for(i in 1:samp.size){
+
+  which.cat <- sample(1:4, size=1, replace=TRUE, prob=pis)
+  all.samples[i] <- rlnorm(n=1,meanlog=mus[which.cat], sdlog=sigsqs[which.cat])
+}
+
+## PLOT the samples ---------------------------------------------
+# This is our f(x) from the main text
+data.tail <- data.frame(values = all.samples, y = 100) %>% arrange(desc(values)) %>% filter(values >=250)
+head(data.tail)
+
+ggplot(data.frame(all.samples), aes(x = all.samples)) +
+  geom_histogram(bins = 100) +
+  geom_point(data = data.tail[1:50,], aes(x = values, y = y), color = "black", alpha = 0.5) +
+  labs(y = "Frequency", x = "Distance") +
+  theme_minimal() -> sampleshist
+
+
+# VIZ -----------------------------------
+plot_grid(densities_plot, sampleshist, nrow=2, labels="AUTO")
+#ggsave("Ch3_samplesize/TestFig.png")
+
+summary(all.samples)
+
+```
+
+
