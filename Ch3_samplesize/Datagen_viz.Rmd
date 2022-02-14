@@ -57,7 +57,7 @@ We assume that each individual has the same weight (i.e., $w_1 = w_2 = \cdots = 
 For our toy model, we assume four social groups ($i=4$), where each group has between 4-7 individuals assigned randomly, with a total of 22 individuals in our simulated population.
 
 
-```{r echo=TRUE}
+```{r echo=TRUE, fig.width=9, fig.height=4}
 # MIXTURE MODEL --------------------------------------------------
 ## Mixture proportions ----------------------------------------
 # We assume four categories of individuals with increasing movement.
@@ -75,11 +75,14 @@ pis <- npergroup/npop
 # Since movement lengths are only positive, we use a lognormal distribution to describe them
 
 # CASE1
-
-pars <- desired_mean_sd(mean = c(160, 300, 600, 1000), sd = c(90, 120, 160, 200))
+means <- c(160, 300, 600, 1000)
+sds <- c(90, 120, 160, 200)
 
 # Special case I am considering where for each category the mean doubles, and then sd=mean*0.6
-# pars <- desired_mean_sd(mean = c(150, 300, 600, 1200), sd = c(90, 180, 360, 720))
+# means <- c(150, 300, 600, 1200)
+# sds <- c(90, 180, 360, 720)
+
+pars <- desired_mean_sd(mean = means, sd = sds)
 
 mus <- pars$mu
 sigsqs <- pars$sigsq
@@ -93,13 +96,70 @@ ggplot() +
   lnorm_densities +
   theme_minimal() +
   labs(y = "Density") +
-  lims(x = c(0, 150)) -> densities_plot
+  lims(x = c(0, 150)) +
+  #scale_y_sqrt(limits = c(0, NA)) +
+  NULL -> densities_plot
 densities_plot
+
+```  
+
+Now, let's simulate the individuals
+
+
+```{r}
+pars_df <- data.frame(sgroup = 1:ngroup, npergroup = npergroup, pis = pis, mu = mus, sigsqs = sigsqs, mean = means, sd = sds)
+#pars_df
+
+```
+
+Thinking out loud: Let's make the variation for the individuals normal. So, we multiply the variance for that percentage and then estimate it? The mu stays the same, we do a sample from the standard normal? Or do we follow percentages. Since we have a different number of individuals per group, I'd go with the standard normal approach. 
+
+```{r}
+
+indiv_pars <- data.frame()
+
+for(i in 1:ngroup){
+  nindiv <- pars_df$npergroup[i]
+  indiv.means <- rep(pars_df$mean[i], nindiv)
+  indiv.var <- rnorm(nindiv, sd = 0.3)
+  indiv.sds <- pars_df$sd[i] + (pars_df$sd[i]*indiv.var)
+  
+  indiv.pars <- desired_mean_sd(mean = indiv.means, sd = indiv.sds)
+  
+  sgroup <- pars_df$sgroup[i]
+  id <- paste0("G", sgroup, ".I", 1:nindiv)
+  
+  a <- cbind(id, sgroup, indiv.means, indiv.var, indiv.sds, indiv.pars)
+  
+  indiv_pars <- rbind.data.frame(indiv_pars, a)
+
+}
 
 ```
 
 
 ```{r}
+# make the curves for each individual
+
+
+indiv_densities <- purrr::map(1:nrow(indiv_pars), function(y) stat_function(fun = dlnorm,
+                                                             args = list(meanlog = indiv_pars$mu[y], sdlog = indiv_pars$sigsq[y]),
+                              color = dens_cols[indiv_pars$sgroup[y]], size=1, alpha = 0.5))
+ggplot() +
+  indiv_densities +
+  lnorm_densities +
+  theme_minimal() +
+  labs(y = "Density") +
+  lims(x = c(0, 150)) +
+  #scale_y_sqrt(limits = c(0, NA)) +
+  NULL -> indiv_densities
+indiv_densities
+
+
+```
+
+
+```{r eval=FALSE}
 
 
 # SAMPLING --------------------------------------------------------------
