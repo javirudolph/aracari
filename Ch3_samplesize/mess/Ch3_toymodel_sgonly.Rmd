@@ -1,0 +1,219 @@
+---
+title: "Toy Model"
+author: "Javiera Rudolph"
+date: "1/20/2022"
+output:
+  html_document:
+  toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+knitr::opts_chunk$set(fig.width=6, fig.height=4)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r message=FALSE, warning=FALSE}
+set.seed(20220201)
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(cowplot)
+```
+
+```{r Functions}
+## Functions ----------------------------------------------------
+# Building this function so that we get the parameters for a desired mean and standard deviation.
+desired_mean_sd <- function(mean, sd){
+
+  mu <- log(mean*2/(sqrt(mean*2+sd*2)))
+  sigsq <- log(1+(sd*2/mean*2))
+
+  return(data.frame(mu = mu, sigsq = sigsq))
+}
+
+exp.val <- function(mu, sigsq){
+  exp(mu + sqrt(sigsq))
+}
+
+
+### Lomax functions --------------------------
+
+lomax.pdf <- function(x,alpha,k, log.scale=FALSE){
+
+  if(log.scale==FALSE){out <- (k/(alpha+x))*(alpha/(alpha+x))^k
+  }else{
+    out <- log(k) + k*log(alpha) - (k+1)*log(alpha+x)
+  }
+
+  return(out)
+}
+
+
+lomax.cdf <- function(x,alpha,k){
+
+  return(1-(alpha/(alpha+x))^k)
+
+}
+
+ft.nllike <- function(guess=init.betas, designmat=designmat,Y=Y){
+
+  Xbeta         <- designmat%*%guess
+  alphas        <- exp(Xbeta) # because alpha = ln(X*betas)
+  n             <- length(Y)
+  sumlogapy     <- sum(log(alphas+Y))
+  k.hat         <- n/(sumlogapy - sum(Xbeta))
+  lnft.yis     <- lomax.pdf(x=Y, alpha=alphas,k=k.hat,log.scale=TRUE)
+  lnL           <- sum(lnft.yis)
+  nll           <- -lnL
+  return(nll)
+}
+
+lomax.glm <- function(formula=~1, my.dataf, response){
+
+  Y           <- response
+  n           <- length(Y)
+  designmat   <- model.matrix(formula, data=my.dataf)
+  nbetas      <- ncol(designmat)
+  init.betas  <- rep(1.5,nbetas)
+
+  opt.out <- optim(par=init.betas, fn=ft.nllike, method="BFGS",
+                   designmat=designmat, Y=Y)
+
+  mles          <- opt.out$par
+  nll.hat       <- opt.out$value
+  BIC.mod       <- 2*nll.hat + nbetas*log(length(Y))
+  Xbeta.hat     <- designmat%*%mles
+  alphas.hat    <- exp(Xbeta.hat)
+  sumlogapy.hat <- sum(log(alphas.hat+Y))
+  k.hat         <- n/(sumlogapy.hat - sum(Xbeta.hat))
+
+  out.list <- list(opt.out = opt.out, designmat=designmat,Y=Y, mles=mles, nll.hat=nll.hat, BIC.mod = BIC.mod,
+                   alphas.hat=alphas.hat, k.hat=k.hat,data=my.dataf)
+
+  return(out.list)
+
+}
+
+
+# Probability that it is greater.
+lomax.st <- function(x=x, alpha=alpha, k=k){
+  out <- alpha/(alpha+x)
+  return(out^k)
+}
+
+
+
+# calculate the mean of the fit
+
+lomax.mean <- function(alpha=alpha, k=k){
+  return(alpha/(k+1))
+}
+
+
+# Assess the fit using model quantiles to make a qqplot
+lomax.quantile <- function(alpha, k, p){
+  return(alpha*(((1-p)^(1/k))-1))
+}
+
+```
+
+
+```{r}
+
+#########  playing with a simulation trial to assess how good hat(P(X>x)) is
+#########  assuming data came from a lomax (when in fact it didn't)
+
+## Mixture proportions ----------------------------------------
+# We assume four categories of individuals with increasing movement.
+pis <- c( 0.1, 0.2, 0.3, 0.4)
+
+
+pars <- desired_mean_sd(mean = c(160, 300, 600, 1000), sd = c(90, 120, 160, 200))
+
+mus <- pars$mu
+sigsqs <- pars$sigsq
+dens_cols <- c("#264653", "#2a9d8f", "#f4a261", "#e76f51")
+
+### PLOT the mixture components -------------------------------
+lnorm_densities <- purrr::map(1:4, function(y) stat_function(fun = dlnorm,
+                                                             args = list(meanlog = mus[y], sdlog = sigsqs[y]),
+                              color = dens_cols[y], size=1))
+ggplot() +
+  lnorm_densities +
+  theme_minimal() +
+  labs(y = "Density") +
+  lims(x = c(0, 150)) -> densities_plot
+densities_plot
+
+```
+
+```{r}
+
+# Create the TRUE data
+
+samp.size <- 50000
+all.samples <- rep(0,samp.size)
+categ <- rep(0,samp.size)
+
+for(i in 1:samp.size){
+
+  which.cat <- sample(1:4, size=1, replace=TRUE, prob=pis)
+  all.samples[i] <- rlnorm(n=1,meanlog=mus[which.cat], sdlog=sigsqs[which.cat])
+  categ[i] <- which.cat
+}
+
+sim.df <- data.frame(dists= all.samples, categ=categ)
+```
+
+```{r}
+# Now the experiments and sampling
+
+samp.sizes <- c(80, 200, 500, 800, 1000, 1600)
+num.ns <- length(samp.sizes)
+q.tests <- c(100, 250,500,1000)
+num.qs <- length(q.tests)
+
+all.sampsizes <- rep(samp.sizes,each=num.qs)
+all.qtests <- rep(q.tests,num.ns)
+ntests <- length(all.sampsizes)
+
+cdfs.hat <- rep(0, ntests)
+
+for(i in 1:ntests){
+
+      ith.n   <- all.sampsizes[i]
+      ith.samples <- data.frame(x = sample(all.samples, ith.n))
+      mod1 <- lomax.glm(formula = ~1, my.dataf = ith.samples, response = ith.samples$x)
+      ith.a <- mod1$alphas.hat[1]
+      ith.k <- mod1$k.hat
+
+      ith.q <- all.qtests[i]
+      ith.cdf <- 1- lomax.cdf(x = ith.q, alpha = ith.a, k = ith.k)
+      cdfs.hat[i] <- ith.cdf
+
+}
+
+true.cdfs <- rep(0,num.qs)
+for(i in 1:num.qs){
+
+  iq <- q.tests[i]
+
+  true.cdfs[i] <- sum(all.samples>iq)/length(all.samples)
+
+}
+
+all.true.cdfs <- rep(true.cdfs,num.ns)
+
+
+sim.test.df <- data.frame(all.sampsizes=all.sampsizes, all.qtests=all.qtests,cdfs.hat=cdfs.hat,
+                          true.cdfs = all.true.cdfs)
+
+
+
+
+
+
+```
+

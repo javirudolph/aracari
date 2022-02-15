@@ -54,7 +54,9 @@ $$
 
 We assume that each individual has the same weight (i.e., $w_1 = w_2 = \cdots = w_s$), and that the proportion of individuals in each social group determines the weight for the social group (i.e., $\pi_i$) relative to the overall population.
 
-For our toy model, we assume four social groups ($i=4$), where each group has between 4-7 individuals assigned randomly, with a total of 22 individuals in our simulated population.
+For our toy model, we assume four social groups ($i=4$), where each group has between 4-7 individuals assigned randomly. 
+
+Initially, we only consider the four groups:
 
 
 ```{r echo=TRUE, fig.width=9, fig.height=4}
@@ -103,7 +105,51 @@ densities_plot
 
 ```  
 
-Now, let's simulate the individuals
+
+We simulate the data coming from this process and then use different sample sizes and thresholds to estimate the tail. 
+I think this means that increasing sample size is fine, but it is actually selecting low thresholds that creates the most variation in the estimates.
+
+```{r}
+load("Ch3_samplesize/resamp.RData")
+# Keep in mind that the pis for this are different and chosen randomly from the toymodel script. 
+# pis <- c( 0.1, 0.2, 0.3, 0.4)
+
+
+resamp.df %>% 
+  mutate(diff = (cdfs.hat-true.cdfs), 
+         sampsize = factor(all.sampsizes),
+         tailthresh = factor(all.qtests))-> resamp.df
+  
+resamp.df %>% 
+  #filter(., all.sampsizes == "80") %>%  
+  ggplot(., aes(x = sampsize, y = diff, color = tailthresh)) +
+  geom_boxplot() +
+  labs(x = "Sample size", y = "Estimated/True") +
+  #scale_y_log10() +
+  theme_minimal()
+
+
+```  
+
+We want to know how "off" the estimates are from the truth.
+```{r}
+resamp.df %>% 
+  group_by(sampsize, tailthresh) %>% 
+  summarise(est.bias = signif(mean(diff), 3)) 
+
+resamp.df %>% 
+  group_by(sampsize, tailthresh) %>% 
+  summarise(est.bias = signif(mean(diff), 3)) %>% 
+  ggplot(., aes(x = sampsize, color = tailthresh, y = est.bias)) +
+  geom_point() +
+  scale_y_continuous(labels = scales::percent) +
+  theme_minimal()
+
+```
+
+
+
+### Now, let's simulate the individuals
 
 
 ```{r}
@@ -112,7 +158,6 @@ pars_df <- data.frame(sgroup = 1:ngroup, npergroup = npergroup, pis = pis, mu = 
 
 ```
 
-Thinking out loud: Let's make the variation for the individuals normal. So, we multiply the variance for that percentage and then estimate it? The mu stays the same, we do a sample from the standard normal? Or do we follow percentages. Since we have a different number of individuals per group, I'd go with the standard normal approach. 
 
 ```{r}
 
@@ -191,5 +236,15 @@ plot_grid(densities_plot, sampleshist, nrow=2, labels="AUTO")
 summary(all.samples)
 
 ```
+
+
+```{r}
+# Generate the data
+
+
+
+
+```
+
 
 
