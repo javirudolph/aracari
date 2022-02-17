@@ -508,7 +508,7 @@ est.lomax.mles %>%
   mutate(nice.tails = signif(gp.tails.ratio, 3)) %>% 
   ggplot(., aes(x = samp.size, y = gp.tails.ratio, color = thresh)) +
   geom_point() +
-  labs(title = "GP")
+  labs(title = "GP") +
   theme_minimal() -> gp.tail
 
 plot_grid(lomax.tail, gp.tail)
@@ -521,7 +521,7 @@ Now, we repeat the process to see how much this varies...
 
 
 ```{r results='hide'}
-nreps <- 100
+nreps <- 2
 gp.mles.reps <- data.frame(NULL)
 
 for(j in 1:nreps){
@@ -547,16 +547,60 @@ for(j in 1:nreps){
   ith.mle.df$nllh[i]  <- nll.hat
   ith.mle.df$rep[i] <- paste0("rep", j)
   
-  ith.thresh   <- fevd.mles$threshold[i]
-  fevd.mles$gp.tail[i] <- pextRemes(ith.fit, ith.thresh, lower.tail = FALSE)
+  ith.thresh   <- ith.mle.df$threshold[i]
+  ith.mle.df$gp.tail[i] <- pextRemes(ith.fit, ith.thresh, lower.tail = FALSE)
   
   }
   
   gp.mles.reps <- rbind.data.frame(gp.mles.reps, ith.mle.df)
   
 }
-save.image(gp.mles.reps, "Ch3_samplesize/testdf.RData")
-```
 
+
+
+gp.mles.reps %>% 
+  mutate(ks = 1/shape,
+         alphas = scale*ks) %>% 
+  #dplyr::select(-c(scale, shape)) %>% 
+  mutate(est.cdf = lomax.cdf(threshold, alphas, ks),
+         tail = 1- est.cdf, 
+         mean = lomax.mean(alphas, ks)) -> gp.mles.reps
+
+save(gp.mles.reps, file = "Ch3_samplesize/testdf.RData")
+```  
+
+Let's see
+
+
+```{r fig.width=8}
+
+n.tru.cdfs <- nrow(gp.mles.reps)/length(tru.cdfs$w.cdfs)
+
+gp.mles.reps %>% 
+  mutate(tru.tails = rep(tru.cdfs$w.cdfs, n.tru.cdfs),
+         tails.ratio = tail/tru.tails,
+         thresh = factor(threshold)) %>%
+  drop_na(tails.ratio) %>% 
+  mutate(nice.tails = signif(tails.ratio, 3)) %>% 
+  ggplot(., aes(x = samp.size, y = tails.ratio, color = thresh)) +
+  geom_boxplot() +
+  labs(title = "Lomax") +
+  theme_minimal() -> lomax.tail
+
+
+gp.mles.reps %>% 
+  mutate(tru.tails = rep(tru.cdfs$w.cdfs, n.tru.cdfs),
+         gp.tails.ratio = gp.tail/tru.tails,
+         thresh = factor(threshold)) %>%
+  mutate(nice.tails = signif(gp.tails.ratio, 3)) %>% 
+  ggplot(., aes(x = samp.size, y = gp.tails.ratio, color = thresh)) +
+  geom_boxplot() +
+  labs(title = "GP") +
+  theme_minimal() -> gp.tail
+
+plot_grid(lomax.tail, gp.tail)
+
+
+```
 
 
