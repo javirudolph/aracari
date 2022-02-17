@@ -193,7 +193,9 @@ tibble(thresh.vals) %>%
   mutate(w.cdfs = w.cdfs,
          w.cdfs = round(w.cdfs, 5),
          samp.n = map_dbl(1:length(thresh.vals), function(y) length(which(simplsamps$data >= thresh.vals[y]))),
-         samp.p = signif(samp.n/samp.size, 3)) %>% 
+         samp.p = signif(samp.n/samp.size, 3)) -> tru.cdfs
+
+tru.cdfs %>% 
   knitr::kable()
 
 
@@ -415,14 +417,11 @@ fevd.mles <- data.frame(samp.size = rep(samp.sizes, length(thresh.vals)), thresh
 for(i in 1:nrow(fevd.mles)){
   ith.n        <- fevd.mles$samp.size[i]
   ith.samples  <- data.frame(x = sample(simplsamps$data, ith.n))
-  # Can't use this because by setting those higher thresholds we have one data point and can't fit anything to it. 
-  #ith.thresh   <- fevd.mles$threshold[i]
   
   # So, setting the threshold to 0 so we can compare to Lomax.
-  ith.thresh <- 0
   
   
-  ith.fit      <- fevd(ith.samples$x, threshold = ith.thresh, type = "GP") 
+  ith.fit      <- fevd(ith.samples$x, threshold = 0, type = "GP") 
   
   mles          <- summary(ith.fit)$par
   nll.hat       <- summary(ith.fit)$nllh
@@ -432,6 +431,8 @@ for(i in 1:nrow(fevd.mles)){
   fevd.mles$shape[i] <- mles[2]
   fevd.mles$nllh[i]  <- nll.hat
   
+  ith.thresh   <- fevd.mles$threshold[i]
+  fevd.mles$gp.tail[i] <- pextRemes(ith.fit, ith.thresh, lower.tail = FALSE)
 }
 
 ```
@@ -439,7 +440,8 @@ for(i in 1:nrow(fevd.mles)){
 
 
 ```{r}
-fevd.mles
+fevd.mles %>% 
+  knitr::kable()
 ```
 
 
@@ -473,19 +475,87 @@ So, now we use the parameter estimates from the GP to get the parameters as a Lo
 fevd.mles %>% 
   mutate(ks = 1/shape,
          alphas = scale*ks) %>% 
-  dplyr::select(-c(scale, shape)) %>% 
+  #dplyr::select(-c(scale, shape)) %>% 
   mutate(est.cdf = lomax.cdf(threshold, alphas, ks),
          tail = 1- est.cdf, 
          mean = lomax.mean(alphas, ks)) -> est.lomax.mles
 est.lomax.mles %>% knitr::kable()
 
 ```  
+The NaN I get in the previous dataframe are due to 0/0, so, undefined? What should I make of it?
+
+So, now I will estimate the ratio between the estimated cdf and the true cdf.
+
+```{r fig.width=8}
 
 
-And visually, we 
+est.lomax.mles %>% 
+  mutate(tru.tails = rep(tru.cdfs$w.cdfs, length(samp.sizes)),
+         tails.ratio = tail/tru.tails,
+         thresh = factor(threshold)) %>%
+  drop_na(tails.ratio) %>% 
+  mutate(nice.tails = signif(tails.ratio, 3)) %>% 
+  ggplot(., aes(x = samp.size, y = tails.ratio, color = thresh)) +
+  geom_point() +
+  labs(title = "Lomax") +
+  theme_minimal() -> lomax.tail
 
-```{r}
 
+est.lomax.mles %>% 
+  mutate(tru.tails = rep(tru.cdfs$w.cdfs, length(samp.sizes)),
+         gp.tails.ratio = gp.tail/tru.tails,
+         thresh = factor(threshold)) %>%
+  mutate(nice.tails = signif(gp.tails.ratio, 3)) %>% 
+  ggplot(., aes(x = samp.size, y = gp.tails.ratio, color = thresh)) +
+  geom_point() +
+  labs(title = "GP")
+  theme_minimal() -> gp.tail
+
+plot_grid(lomax.tail, gp.tail)
+
+
+```
+
+
+Now, we repeat the process to see how much this varies...  
+
+
+```{r results='hide'}
+nreps <- 100
+gp.mles.reps <- data.frame(NULL)
+
+for(j in 1:nreps){
+  
+  ith.mle.df <- data.frame(samp.size = rep(samp.sizes, length(thresh.vals)), threshold = thresh.vals,
+                           scale = 0, shape = 0, nllh = 0, gp.tail = 0, rep = 0)
+  
+  for(i in 1:nrow(ith.mle.df)){
+  ith.n        <- ith.mle.df$samp.size[i]
+  ith.samples  <- data.frame(x = sample(simplsamps$data, ith.n))
+  
+  # So, setting the threshold to 0 so we can compare to Lomax.
+
+  
+  ith.fit      <- fevd(ith.samples$x, threshold = 0, type = "GP") 
+  
+  mles          <- summary(ith.fit)$par
+  nll.hat       <- summary(ith.fit)$nllh
+  BIC.mod       <- summary(ith.fit)$BIC
+  
+  ith.mle.df$scale[i] <- mles[1]
+  ith.mle.df$shape[i] <- mles[2]
+  ith.mle.df$nllh[i]  <- nll.hat
+  ith.mle.df$rep[i] <- paste0("rep", j)
+  
+  ith.thresh   <- fevd.mles$threshold[i]
+  fevd.mles$gp.tail[i] <- pextRemes(ith.fit, ith.thresh, lower.tail = FALSE)
+  
+  }
+  
+  gp.mles.reps <- rbind.data.frame(gp.mles.reps, ith.mle.df)
+  
+}
+save.image(gp.mles.reps, "Ch3_samplesize/testdf.RData")
 ```
 
 
