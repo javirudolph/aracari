@@ -66,7 +66,8 @@ pis <- c( 0.1, 0.2, 0.3, 0.4)
 
 # TEST 1
 
-pars <- desired_mean_sd(mean = c(160, 300, 600, 1000), sd = c(90, 120, 160, 200))
+pars <- desired_mean_sd(mean = c(160, 300, 600, 1000), sd = c(90, 120, 160, 250))
+
 
 # thinking of how to calculate the cdf for a mixture
 #plnorm(80, meanlog = pars$mu[1], sdlog = pars$sigsq[1], lower.tail = FALSE)
@@ -84,62 +85,34 @@ ggplot() +
   lims(x = c(0, 150), y = c(0,0.05)) -> densities_plot
 densities_plot
 
+
+# ### PLOT the mixture components CDF -------------------------------
+# lnorm_cdfs <- purrr::map(1:4, function(y) stat_function(fun = plnorm,
+#                                                              args = list(meanlog = pars$mu[y], sdlog = pars$sigsq[y]),
+#                                                              color = dens_cols[y], size=1))
+# ggplot() +
+#   lnorm_cdfs +
+#   theme_minimal() +
+#   labs(y = "Density") +
+#   lims(x = c(50, 250), y = c(0.9, 1))
+#        
 ```
 
 We sample step lengths and generate a single distribution using the following weights: `r pis`
 
 ```{r fig.width=8}
-# SAMPLING --------------------------------------------------------------
-
+# Using purrr to get samples instead of a for loop. More efficient.
 samp.size <- 50000
-all.samples <- rep(0,samp.size)
-categ <- rep(0,samp.size)
-
-for(i in 1:samp.size){
-
-  which.cat <- sample(1:4, size=1, replace=TRUE, prob=pis)
-  all.samples[i] <- rlnorm(n=1,meanlog=pars$mu[which.cat], sdlog=pars$sigsq[which.cat])
-  categ[i] <- which.cat
-}
-
-
-## PLOT the samples ---------------------------------------------
-# This is our f(x) from the main text
-data.tail <- data.frame(values = all.samples, y = 100) %>% arrange(desc(values)) %>% filter(values >=250)
-#head(data.tail)
-
-ggplot(data.frame(all.samples), aes(x = all.samples)) +
-  geom_histogram(bins = 100) +
-  geom_point(data = data.tail[1:50,], aes(x = values, y = y), color = "black", alpha = 0.5) +
-  labs(y = "Frequency", x = "Distance") +
-  #lims(x = c(0, 150)) +
-  theme_minimal() -> sampleshist
-
-ggplot(data.frame(all.samples), aes(x = all.samples)) +
-  geom_density() +
-  labs(y = "Density", x = "Distance") +
-  lims(x = c(0, 150), y = c(0,0.05)) +
-  theme_minimal() -> samplesdens
-
-plot_grid(sampleshist, samplesdens)
-
-```
-
-
-Testing the results if using purrr instead of a for loop:  
-
-```{r fig.width=8}
-#Trying an alternative way of drawing the samples
-
 cat.samp.sizes <- samp.size*pis
 
 purrrsampls <- tibble(gID = c(1:4), pars) %>% 
   mutate(data = purrr::map(gID, function(y) rlnorm(cat.samp.sizes[y], mu[y], sigsq[y]))) 
 
-
 purrrsampls %>% 
   dplyr::select(., gID, data) %>% 
   unnest(cols = c(data)) -> simplsamps
+
+data.tail <- data.frame(values = simplsamps$data, y = 100) %>% arrange(desc(values)) %>% filter(values >=250)
 
 simplsamps %>%
   ggplot(., aes(x = data)) +
@@ -161,6 +134,74 @@ plot_grid(sampleshist, samplesdens)
 
 
 ```
+
+Answering some questions about the underlying process. 
+
+What is the true CDF of the function that generates the process? This is the CDF of the mixture distribution, which is straightforward to calculate.
+
+$$
+f(x) = \sum_{i=1}^n w_i p_i(x) \Rightarrow F(x) = \sum_{i=1}^n w_i P_i(x)
+$$
+
+```{r}
+thresh.vals <- c(100, 250, 500, 750, 1000)
+samp.sizes <- c(80, 200, 500, 800, 1000, 1600)
+
+```
+
+
+
+The thresholds we want to consider are the following:`r thresh.vals` and the weights haven't changed. So, we get the cdf for each $p_i(x)$ for each threshold. This means we get $P(x >= c(100, 250, 500, 1000))$ for each curve and weigh it. 
+
+```{r eval = FALSE}
+# Getting weird stuff so taking this step by step
+y <- 4
+
+ggplot() +
+  stat_function(fun = dlnorm, args = list(meanlog = pars$mu[y], sdlog = pars$sigsq[y]),
+                                                             color = dens_cols[y], size=1) +
+  theme_minimal() +
+  labs(y = "Density") +
+  lims(x = c(0, 150), y = c(0,0.05))
+
+cdfs <- NULL
+for(y in 1:4){
+  a <- plnorm(thresh.vals, meanlog = pars$mu[y], sdlog = pars$sigsq[y], lower.tail = FALSE)
+  b <- plnorm(thresh.vals, meanlog = pars$mu[y], sdlog = pars$sigsq[y], lower.tail = FALSE) * pis[y]
+
+  c <- rbind(a,b)
+  
+  out <- cbind(c, c(y, y))
+  
+  cdfs <- rbind.data.frame(cdfs, out)
+}
+names(cdfs) <- c(thresh.vals, "curve")
+cdfs
+
+```
+
+
+
+```{r}
+weighted.cdfs <- NULL
+for(y in 1:4){
+  a <- plnorm(thresh.vals, meanlog = pars$mu[y], sdlog = pars$sigsq[y], lower.tail = FALSE) * pis[y]
+  weighted.cdfs <- rbind(weighted.cdfs, a)
+}
+w.cdfs <- colSums(weighted.cdfs)
+
+
+tibble(thresh.vals) %>% 
+  mutate(w.cdfs = w.cdfs,
+         w.cdfs = round(w.cdfs, 5),
+         samp.n = map_dbl(1:length(thresh.vals), function(y) length(which(simplsamps$data >= thresh.vals[y]))),
+         samp.p = signif(samp.n/samp.size, 3)) %>% 
+  knitr::kable()
+
+
+```
+
+
 
 ```{r LOMAX}
 # All the lomax functions
@@ -237,7 +278,7 @@ lomax.glm <- function(formula=~1, my.dataf, response){
 
 Running the experiment once:  
 
-```{r echo=TRUE}
+```{r eval = FALSE, echo=TRUE}
 ###################################
 # Run the experiments with different sample sizes and tail thresholds
 
