@@ -341,9 +341,6 @@ mles.sampsizes %>%
 1-lomax.cdf(thresh.vals, alpha = mles.sampsizes$alphas[1], k = mles.sampsizes$khats[1])
 
 ```
-
-
-
 ```{r eval=FALSE, echo=FALSE}
 ###################################
 # Run the experiments with different sample sizes and tail thresholds
@@ -406,6 +403,90 @@ for(i in 1:ntests){
 
 
 
+# GP approach  
+
+Going off script here and going to try and do this in a way I understand it and with functions I already know. 
+
+```{r results='hide'}
+library(extRemes)
+
+fevd.mles <- data.frame(samp.size = rep(samp.sizes, length(thresh.vals)), threshold = thresh.vals, scale = 0, shape = 0, nllh = 0)
+
+for(i in 1:nrow(fevd.mles)){
+  ith.n        <- fevd.mles$samp.size[i]
+  ith.samples  <- data.frame(x = sample(simplsamps$data, ith.n))
+  # Can't use this because by setting those higher thresholds we have one data point and can't fit anything to it. 
+  #ith.thresh   <- fevd.mles$threshold[i]
+  
+  # So, setting the threshold to 0 so we can compare to Lomax.
+  ith.thresh <- 0
+  
+  
+  ith.fit      <- fevd(ith.samples$x, threshold = ith.thresh, type = "GP") 
+  
+  mles          <- summary(ith.fit)$par
+  nll.hat       <- summary(ith.fit)$nllh
+  BIC.mod       <- summary(ith.fit)$BIC
+  
+  fevd.mles$scale[i] <- mles[1]
+  fevd.mles$shape[i] <- mles[2]
+  fevd.mles$nllh[i]  <- nll.hat
+  
+}
+
+```
+
+
+
+```{r}
+fevd.mles
+```
+
+
+So, we try to make the link to a Generalized Pareto distribution with the Lomax.The Lomax distribution is a special case of a Pareto where the parameters are as follows:  
+- The location is $\mu = 0$ 
+- The shape parameter is $\xi = 1/\alpha$
+- The scale parameter is $\sigma = \lambda/\alpha$  
+
+Where the pdf of the lomax follows:
+$$
+p(x) = \frac{\alpha}{\lambda}\left[ 1 +  \frac{x}{\lambda}  \right]^{-\alpha + 1} = \left( \frac{\lambda}{x+\lambda} \right)^{\alpha} \left( \frac{\alpha}{x+\lambda} \right)
+$$
+And in JM Ponciano's parameterization: $\alpha = k$ and $\lambda = \alpha$, which means in comparison to the Generalized Pareto:  
+
+- The location is $\mu = 0$ 
+- The shape parameter is $\xi = 1/k$
+- The scale parameter is $\sigma = \alpha/k$  
+
+
+```{r}
+gp2lomax.jmp <- function(shape, scale){
+  k     <- 1/shape
+  alpha <- scale*k
+}
+```
+
+So, now we use the parameter estimates from the GP to get the parameters as a Lomax, and use those parameters to get the cdfs and means.
+
+```{r}
+
+fevd.mles %>% 
+  mutate(ks = 1/shape,
+         alphas = scale*ks) %>% 
+  dplyr::select(-c(scale, shape)) %>% 
+  mutate(est.cdf = lomax.cdf(threshold, alphas, ks),
+         tail = 1- est.cdf, 
+         mean = lomax.mean(alphas, ks)) -> est.lomax.mles
+est.lomax.mles %>% knitr::kable()
+
+```  
+
+
+And visually, we 
+
+```{r}
+
+```
 
 
 

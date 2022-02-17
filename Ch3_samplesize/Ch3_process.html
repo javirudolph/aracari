@@ -481,6 +481,406 @@ mles.sampsizes %&gt;%
 <pre><code>## [1] 0.9999905 0.9999761 0.9999523 0.9999284 0.9999046</code></pre>
 </div>
 </div>
+<div id="gp-approach" class="section level1">
+<h1>GP approach</h1>
+<p>Going off script here and going to try and do this in a way I understand it and with functions I already know.</p>
+<pre class="r"><code>library(extRemes)
+
+fevd.mles &lt;- data.frame(samp.size = rep(samp.sizes, length(thresh.vals)), threshold = thresh.vals, scale = 0, shape = 0, nllh = 0)
+
+for(i in 1:nrow(fevd.mles)){
+  ith.n        &lt;- fevd.mles$samp.size[i]
+  ith.samples  &lt;- data.frame(x = sample(simplsamps$data, ith.n))
+  # Can&#39;t use this because by setting those higher thresholds we have one data point and can&#39;t fit anything to it. 
+  #ith.thresh   &lt;- fevd.mles$threshold[i]
+  
+  # So, setting the threshold to 0 so we can compare to Lomax.
+  ith.thresh &lt;- 0
+  
+  
+  ith.fit      &lt;- fevd(ith.samples$x, threshold = ith.thresh, type = &quot;GP&quot;) 
+  
+  mles          &lt;- summary(ith.fit)$par
+  nll.hat       &lt;- summary(ith.fit)$nllh
+  BIC.mod       &lt;- summary(ith.fit)$BIC
+  
+  fevd.mles$scale[i] &lt;- mles[1]
+  fevd.mles$shape[i] &lt;- mles[2]
+  fevd.mles$nllh[i]  &lt;- nll.hat
+  
+}</code></pre>
+<pre class="r"><code>fevd.mles</code></pre>
+<pre><code>##    samp.size threshold    scale         shape      nllh
+## 1         80       100 33.94149  9.241531e-08  367.7158
+## 2        200       250 42.43853  3.389347e-03  950.3140
+## 3        500       500 56.01413  9.047160e-09 2412.9628
+## 4        800       750 44.70408  5.907610e-09 3800.4933
+## 5       1000      1000 43.48213 -4.547729e-02 4726.8754
+## 6       1600       100 44.69525 -7.430289e-02 7560.9065
+## 7         80       250 35.71507  9.999919e-09  383.6843
+## 8        200       500 38.08543  1.000000e-08  942.2548
+## 9        500       750 42.22731  2.170381e-07 2377.1221
+## 10       800      1000 41.87684  4.123303e-04 3824.9474
+## 11      1000       100 44.02812 -8.198335e-02 4702.8457
+## 12      1600       250 46.52854 -9.647739e-02 7589.8154
+## 13        80       500 42.49833  8.443133e-02  386.7056
+## 14       200       750 51.33916 -1.709769e-01  953.4917
+## 15       500      1000 42.55305 -2.396452e-02 2363.3751
+## 16       800       100 45.88898 -1.234934e-01 3762.1991
+## 17      1000       250 44.67671 -8.979814e-02 4709.9844
+## 18      1600       500 44.16604 -7.863623e-02 7534.8917
+## 19        80       750 52.67864 -3.293171e-01  370.7964
+## 20       200      1000 48.88981 -1.839628e-01  941.1454
+## 21       500       100 42.39392  2.711766e-02 2387.0330
+## 22       800       250 39.36291  3.668625e-09 3793.5162
+## 23      1000       500 39.02150  8.501195e-05 4706.3939
+## 24      1600       750 45.25719 -2.674449e-02 7656.9412
+## 25        80      1000 53.39692  2.436309e-07  391.9360
+## 26       200       100 33.83822  9.973707e-09  950.9235
+## 27       500       250 41.21337 -6.720338e-05 2344.8440
+## 28       800       500 38.40805  9.998707e-09 3804.9980
+## 29      1000       750 42.47000 -1.628929e-04 4768.0892
+## 30      1600      1000 39.73943  3.216601e-02 7543.2158</code></pre>
+<p>So, we try to make the link to a Generalized Pareto distribution with the Lomax.The Lomax distribution is a special case of a Pareto where the parameters are as follows:<br />
+- The location is <span class="math inline">\(\mu = 0\)</span> - The shape parameter is <span class="math inline">\(\xi = 1/\alpha\)</span> - The scale parameter is <span class="math inline">\(\sigma = \lambda/\alpha\)</span></p>
+<p>Where the pdf of the lomax follows: <span class="math display">\[
+p(x) = \frac{\alpha}{\lambda}\left[ 1 +  \frac{x}{\lambda}  \right]^{-\alpha + 1} = \left( \frac{\lambda}{x+\lambda} \right)^{\alpha} \left( \frac{\alpha}{x+\lambda} \right)
+\]</span> And in JM Ponciano’s parameterization: <span class="math inline">\(\alpha = k\)</span> and <span class="math inline">\(\lambda = \alpha\)</span>, which means in comparison to the Generalized Pareto:</p>
+<ul>
+<li>The location is <span class="math inline">\(\mu = 0\)</span></li>
+<li>The shape parameter is <span class="math inline">\(\xi = 1/k\)</span></li>
+<li>The scale parameter is <span class="math inline">\(\sigma = \alpha/k\)</span></li>
+</ul>
+<pre class="r"><code>gp2lomax.jmp &lt;- function(shape, scale){
+  k     &lt;- 1/shape
+  alpha &lt;- scale*k
+}</code></pre>
+<p>So, now we use the parameter estimates from the GP to get the parameters as a Lomax, and use those parameters to get the cdfs and means.</p>
+<pre class="r"><code>fevd.mles %&gt;% 
+  mutate(ks = 1/shape,
+         alphas = scale*ks) %&gt;% 
+  dplyr::select(-c(scale, shape)) %&gt;% 
+  mutate(est.cdf = lomax.cdf(threshold, alphas, ks),
+         tail = 1- est.cdf, 
+         mean = lomax.mean(alphas, ks)) -&gt; est.lomax.mles
+est.lomax.mles %&gt;% knitr::kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="right">samp.size</th>
+<th align="right">threshold</th>
+<th align="right">nllh</th>
+<th align="right">ks</th>
+<th align="right">alphas</th>
+<th align="right">est.cdf</th>
+<th align="right">tail</th>
+<th align="right">mean</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">80</td>
+<td align="right">100</td>
+<td align="right">367.7158</td>
+<td align="right">1.082072e+07</td>
+<td align="right">3.672713e+08</td>
+<td align="right">0.9474635</td>
+<td align="right">0.0525365</td>
+<td align="right">33.94149</td>
+</tr>
+<tr class="even">
+<td align="right">200</td>
+<td align="right">250</td>
+<td align="right">950.3140</td>
+<td align="right">2.950421e+02</td>
+<td align="right">1.252116e+04</td>
+<td align="right">0.9970702</td>
+<td align="right">0.0029298</td>
+<td align="right">42.29518</td>
+</tr>
+<tr class="odd">
+<td align="right">500</td>
+<td align="right">500</td>
+<td align="right">2412.9628</td>
+<td align="right">1.105319e+08</td>
+<td align="right">6.191350e+09</td>
+<td align="right">0.9998672</td>
+<td align="right">0.0001328</td>
+<td align="right">56.01413</td>
+</tr>
+<tr class="even">
+<td align="right">800</td>
+<td align="right">750</td>
+<td align="right">3800.4933</td>
+<td align="right">1.692732e+08</td>
+<td align="right">7.567201e+09</td>
+<td align="right">0.9999999</td>
+<td align="right">0.0000001</td>
+<td align="right">44.70407</td>
+</tr>
+<tr class="odd">
+<td align="right">1000</td>
+<td align="right">1000</td>
+<td align="right">4726.8754</td>
+<td align="right">-2.198900e+01</td>
+<td align="right">-9.561283e+02</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+<td align="right">45.55379</td>
+</tr>
+<tr class="even">
+<td align="right">1600</td>
+<td align="right">100</td>
+<td align="right">7560.9065</td>
+<td align="right">-1.345843e+01</td>
+<td align="right">-6.015278e+02</td>
+<td align="right">0.9134408</td>
+<td align="right">0.0865592</td>
+<td align="right">48.28281</td>
+</tr>
+<tr class="odd">
+<td align="right">80</td>
+<td align="right">250</td>
+<td align="right">383.6843</td>
+<td align="right">1.000008e+08</td>
+<td align="right">3.571536e+09</td>
+<td align="right">0.9990880</td>
+<td align="right">0.0009120</td>
+<td align="right">35.71507</td>
+</tr>
+<tr class="even">
+<td align="right">200</td>
+<td align="right">500</td>
+<td align="right">942.2548</td>
+<td align="right">1.000000e+08</td>
+<td align="right">3.808543e+09</td>
+<td align="right">0.9999980</td>
+<td align="right">0.0000020</td>
+<td align="right">38.08543</td>
+</tr>
+<tr class="odd">
+<td align="right">500</td>
+<td align="right">750</td>
+<td align="right">2377.1221</td>
+<td align="right">4.607485e+06</td>
+<td align="right">1.945617e+08</td>
+<td align="right">1.0000000</td>
+<td align="right">0.0000000</td>
+<td align="right">42.22730</td>
+</tr>
+<tr class="even">
+<td align="right">800</td>
+<td align="right">1000</td>
+<td align="right">3824.9474</td>
+<td align="right">2.425240e+03</td>
+<td align="right">1.015614e+05</td>
+<td align="right">1.0000000</td>
+<td align="right">0.0000000</td>
+<td align="right">41.85958</td>
+</tr>
+<tr class="odd">
+<td align="right">1000</td>
+<td align="right">100</td>
+<td align="right">4702.8457</td>
+<td align="right">-1.219760e+01</td>
+<td align="right">-5.370373e+02</td>
+<td align="right">0.9189998</td>
+<td align="right">0.0810002</td>
+<td align="right">47.96004</td>
+</tr>
+<tr class="even">
+<td align="right">1600</td>
+<td align="right">250</td>
+<td align="right">7589.8154</td>
+<td align="right">-1.036512e+01</td>
+<td align="right">-4.822740e+02</td>
+<td align="right">0.9994857</td>
+<td align="right">0.0005143</td>
+<td align="right">51.49682</td>
+</tr>
+<tr class="odd">
+<td align="right">80</td>
+<td align="right">500</td>
+<td align="right">386.7056</td>
+<td align="right">1.184394e+01</td>
+<td align="right">5.033478e+02</td>
+<td align="right">0.9997170</td>
+<td align="right">0.0002830</td>
+<td align="right">39.18950</td>
+</tr>
+<tr class="even">
+<td align="right">200</td>
+<td align="right">750</td>
+<td align="right">953.4917</td>
+<td align="right">-5.848743e+00</td>
+<td align="right">-3.002696e+02</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+<td align="right">61.92730</td>
+</tr>
+<tr class="odd">
+<td align="right">500</td>
+<td align="right">1000</td>
+<td align="right">2363.3751</td>
+<td align="right">-4.172835e+01</td>
+<td align="right">-1.775669e+03</td>
+<td align="right">1.0000000</td>
+<td align="right">0.0000000</td>
+<td align="right">43.59785</td>
+</tr>
+<tr class="even">
+<td align="right">800</td>
+<td align="right">100</td>
+<td align="right">3762.1991</td>
+<td align="right">-8.097600e+00</td>
+<td align="right">-3.715906e+02</td>
+<td align="right">0.9210210</td>
+<td align="right">0.0789790</td>
+<td align="right">52.35440</td>
+</tr>
+<tr class="odd">
+<td align="right">1000</td>
+<td align="right">250</td>
+<td align="right">4709.9844</td>
+<td align="right">-1.113609e+01</td>
+<td align="right">-4.975238e+02</td>
+<td align="right">0.9995797</td>
+<td align="right">0.0004203</td>
+<td align="right">49.08440</td>
+</tr>
+<tr class="even">
+<td align="right">1600</td>
+<td align="right">500</td>
+<td align="right">7534.8917</td>
+<td align="right">-1.271678e+01</td>
+<td align="right">-5.616500e+02</td>
+<td align="right">1.0000000</td>
+<td align="right">0.0000000</td>
+<td align="right">47.93551</td>
+</tr>
+<tr class="odd">
+<td align="right">80</td>
+<td align="right">750</td>
+<td align="right">370.7964</td>
+<td align="right">-3.036587e+00</td>
+<td align="right">-1.599633e+02</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+<td align="right">78.54478</td>
+</tr>
+<tr class="even">
+<td align="right">200</td>
+<td align="right">1000</td>
+<td align="right">941.1454</td>
+<td align="right">-5.435881e+00</td>
+<td align="right">-2.657592e+02</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+<td align="right">59.91126</td>
+</tr>
+<tr class="odd">
+<td align="right">500</td>
+<td align="right">100</td>
+<td align="right">2387.0330</td>
+<td align="right">3.687634e+01</td>
+<td align="right">1.563333e+03</td>
+<td align="right">0.8983741</td>
+<td align="right">0.1016259</td>
+<td align="right">41.27465</td>
+</tr>
+<tr class="even">
+<td align="right">800</td>
+<td align="right">250</td>
+<td align="right">3793.5162</td>
+<td align="right">2.725817e+08</td>
+<td align="right">1.072961e+10</td>
+<td align="right">0.9982553</td>
+<td align="right">0.0017447</td>
+<td align="right">39.36291</td>
+</tr>
+<tr class="odd">
+<td align="right">1000</td>
+<td align="right">500</td>
+<td align="right">4706.3939</td>
+<td align="right">1.176305e+04</td>
+<td align="right">4.590119e+05</td>
+<td align="right">0.9999973</td>
+<td align="right">0.0000027</td>
+<td align="right">39.01818</td>
+</tr>
+<tr class="even">
+<td align="right">1600</td>
+<td align="right">750</td>
+<td align="right">7656.9412</td>
+<td align="right">-3.739088e+01</td>
+<td align="right">-1.692206e+03</td>
+<td align="right">1.0000000</td>
+<td align="right">0.0000000</td>
+<td align="right">46.50083</td>
+</tr>
+<tr class="odd">
+<td align="right">80</td>
+<td align="right">1000</td>
+<td align="right">391.9360</td>
+<td align="right">4.104569e+06</td>
+<td align="right">2.191714e+08</td>
+<td align="right">1.0000000</td>
+<td align="right">0.0000000</td>
+<td align="right">53.39691</td>
+</tr>
+<tr class="even">
+<td align="right">200</td>
+<td align="right">100</td>
+<td align="right">950.9235</td>
+<td align="right">1.002636e+08</td>
+<td align="right">3.392742e+09</td>
+<td align="right">0.9479337</td>
+<td align="right">0.0520663</td>
+<td align="right">33.83822</td>
+</tr>
+<tr class="odd">
+<td align="right">500</td>
+<td align="right">250</td>
+<td align="right">2344.8440</td>
+<td align="right">-1.488020e+04</td>
+<td align="right">-6.132634e+05</td>
+<td align="right">0.9976824</td>
+<td align="right">0.0023176</td>
+<td align="right">41.21614</td>
+</tr>
+<tr class="even">
+<td align="right">800</td>
+<td align="right">500</td>
+<td align="right">3804.9980</td>
+<td align="right">1.000129e+08</td>
+<td align="right">3.841301e+09</td>
+<td align="right">0.9999978</td>
+<td align="right">0.0000022</td>
+<td align="right">38.40805</td>
+</tr>
+<tr class="odd">
+<td align="right">1000</td>
+<td align="right">750</td>
+<td align="right">4768.0892</td>
+<td align="right">-6.139002e+03</td>
+<td align="right">-2.607234e+05</td>
+<td align="right">1.0000000</td>
+<td align="right">0.0000000</td>
+<td align="right">42.47692</td>
+</tr>
+<tr class="even">
+<td align="right">1600</td>
+<td align="right">1000</td>
+<td align="right">7543.2158</td>
+<td align="right">3.108872e+01</td>
+<td align="right">1.235448e+03</td>
+<td align="right">1.0000000</td>
+<td align="right">0.0000000</td>
+<td align="right">38.50100</td>
+</tr>
+</tbody>
+</table>
+</div>
 
 
 
