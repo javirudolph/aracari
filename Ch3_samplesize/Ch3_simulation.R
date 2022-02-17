@@ -107,9 +107,40 @@ plot_grid(densities_plot, sampleshist, nrow=2, labels="AUTO")
 summary(all.samples)
 
 # FUNCTIONS ---------------------------------
-source("Ch3_samplesize/Ch3_functions.R")
+lomax.pdf <- function(x,alpha,k, log.scale=FALSE){
 
-###################################
+  if(log.scale==FALSE){out <- (k/(alpha+x))*(alpha/(alpha+x))^k
+  }else{
+    out <- log(k) + k*log(alpha) - (k+1)*log(alpha+x)
+  }
+
+  return(out)
+}
+
+lomax.cdf <- function(x,alpha,k){
+
+  return(1-(alpha/(alpha+x))^k)
+
+}
+
+
+ft.nllike2 <- function(guess=init.betas, designmat=designmat,Y=Y){
+
+  nbetasp1      <- length(init.betas)
+  k             <- exp(guess[1])
+  Xbeta         <- designmat%*%guess[2:nbetasp1]
+  alphas        <- exp(Xbeta) # because alpha = ln(X*betas)
+  n             <- length(Y)
+
+  #sumlogapy     <- sum(log(alphas+Y))
+  #k.hat         <- n/(sumlogapy - sum(Xbeta))
+  lnft.yis     <- lomax.pdf(x=Y, alpha=alphas,k=k,log.scale=TRUE)
+  lnL           <- sum(lnft.yis)
+  nll           <- -lnL
+
+  return(nll)
+}
+
 # Run the experiments with different sample sizes and tail thresholds
 
 samp.sizes <- c(80, 200, 500, 800, 1000, 1600)
@@ -125,10 +156,35 @@ cdfs.hat <- rep(0, ntests)
 
 
 for(i in 1:ntests){
-
   ith.n   <- all.sampsizes[i]
   ith.samples <- data.frame(x = sample(all.samples, ith.n))
-  mod1 <- lomax.glm(formula = ~1, my.dataf = ith.samples, response = ith.samples$x)
+
+  formula=~1
+  my.dataf = ith.samples
+  response = ith.samples$x
+
+
+  Y           <- response
+  n           <- length(Y)
+  designmat   <- model.matrix(formula, data=my.dataf)
+  nbetas      <- ncol(designmat)
+  init.betas  <- c(4,rep(5,nbetas))
+
+  opt.out <- optim(par=init.betas, fn=ft.nllike2, method = "Nelder-Mead",
+                   designmat=designmat, Y=Y)
+
+  mles          <- opt.out$par
+  nll.hat       <- opt.out$value
+  BIC.mod       <- 2*nll.hat + nbetas*log(length(Y))
+  Xbeta.hat     <- designmat%*%mles[-1]
+  alphas.hat    <- exp(Xbeta.hat)
+  #sumlogapy.hat <- sum(log(alphas.hat+Y))
+  k.hat         <-  mles[1] #n/(sumlogapy.hat - sum(Xbeta.hat))
+
+  mod1 <- list(opt.out = opt.out, designmat=designmat,Y=Y, mles=mles, nll.hat=nll.hat, BIC.mod = BIC.mod,
+               alphas.hat=alphas.hat, k.hat=k.hat,data=my.dataf)
+
+
   ith.a <- mod1$alphas.hat[1]
   ith.k <- mod1$k.hat
 
@@ -137,6 +193,7 @@ for(i in 1:ntests){
   cdfs.hat[i] <- ith.cdf
 
 }
+
 
 true.cdfs <- rep(0,num.qs)
 for(i in 1:num.qs){
@@ -152,8 +209,6 @@ all.true.cdfs <- rep(true.cdfs,num.ns)
 
 sim.test.df <- data.frame(all.sampsizes=all.sampsizes, all.qtests=all.qtests,cdfs.hat=cdfs.hat,
                           true.cdfs = all.true.cdfs)
-
-
 # Now repeat but we do this 1000 times for each scenario of samples and tails.
 
 ksamps <- 100
@@ -177,7 +232,34 @@ for(k in 1:ksamps){
 
     ith.n   <- all.sampsizes[i]
     ith.samples <- data.frame(x = sample(all.samples, ith.n))
-    mod1 <- lomax.glm(formula = ~1, my.dataf = ith.samples, response = ith.samples$x)
+
+    formula=~1
+    my.dataf = ith.samples
+    response = ith.samples$x
+
+
+    Y           <- response
+    n           <- length(Y)
+    designmat   <- model.matrix(formula, data=my.dataf)
+    nbetas      <- ncol(designmat)
+    init.betas  <- c(4,rep(5,nbetas))
+
+    opt.out <- optim(par=init.betas, fn=ft.nllike2, method = "Nelder-Mead",
+                     designmat=designmat, Y=Y)
+
+    mles          <- opt.out$par
+    nll.hat       <- opt.out$value
+    BIC.mod       <- 2*nll.hat + nbetas*log(length(Y))
+    Xbeta.hat     <- designmat%*%mles[-1]
+    alphas.hat    <- exp(Xbeta.hat)
+    #sumlogapy.hat <- sum(log(alphas.hat+Y))
+    k.hat         <-  mles[1] #n/(sumlogapy.hat - sum(Xbeta.hat))
+
+    mod1 <- list(opt.out = opt.out, designmat=designmat,Y=Y, mles=mles, nll.hat=nll.hat, BIC.mod = BIC.mod,
+                 alphas.hat=alphas.hat, k.hat=k.hat,data=my.dataf)
+
+
+
     ith.a <- mod1$alphas.hat[1]
     ith.k <- mod1$k.hat
 
@@ -193,89 +275,11 @@ for(k in 1:ksamps){
   resamp.df <- rbind.data.frame(resamp.df, sim.test.df)
 }
 
+save(resamp.df, file = "Ch3_samplesize/resamp.RData")
 
-# Getting error: "
-#
-# Error in optim(par = init.betas, fn = ft.nllike, method = "BFGS", designmat = designmat,  :
-#                  non-finite finite-difference value [1]
-
-# So, change optimization method
-
-lomax.glm <- function(formula=~1, my.dataf, response){
-
-  Y           <- response
-  n           <- length(Y)
-  designmat   <- model.matrix(formula, data=my.dataf)
-  nbetas      <- ncol(designmat)
-  init.betas  <- rep(1.5,nbetas)
-
-  opt.out <- optim(par=init.betas, fn=ft.nllike, method = "Nelder-Mead",
-                   designmat=designmat, Y=Y)
-
-  mles          <- opt.out$par
-  nll.hat       <- opt.out$value
-  BIC.mod       <- 2*nll.hat + nbetas*log(length(Y))
-  Xbeta.hat     <- designmat%*%mles
-  alphas.hat    <- exp(Xbeta.hat)
-  sumlogapy.hat <- sum(log(alphas.hat+Y))
-  k.hat         <- n/(sumlogapy.hat - sum(Xbeta.hat))
-
-  out.list <- list(opt.out = opt.out, designmat=designmat,Y=Y, mles=mles, nll.hat=nll.hat, BIC.mod = BIC.mod,
-                   alphas.hat=alphas.hat, k.hat=k.hat,data=my.dataf)
-
-  return(out.list)
-
-}
-
-# Now repeat but we do this 1000 times for each scenario of samples and tails.
-
-ksamps <- 1000
-
-samp.sizes <- c(80, 200, 500, 800, 1000, 1600)
-num.ns <- length(samp.sizes)
-q.tests <- c(100, 250,500,1000)
-num.qs <- length(q.tests)
-
-all.sampsizes <- rep(samp.sizes,each=num.qs)
-all.qtests <- rep(q.tests,num.ns)
-ntests <- length(all.sampsizes)
-
-cdfs.hat <- rep(0, ntests)
-
-resamp.df <- NULL
-
-for(k in 1:ksamps){
-
-  for(i in 1:ntests){
-
-    ith.n   <- all.sampsizes[i]
-    ith.samples <- data.frame(x = sample(all.samples, ith.n))
-    mod1 <- lomax.glm(formula = ~1, my.dataf = ith.samples, response = ith.samples$x)
-    ith.a <- mod1$alphas.hat[1]
-    ith.k <- mod1$k.hat
-
-    ith.q <- all.qtests[i]
-    ith.cdf <- 1- lomax.cdf(x = ith.q, alpha = ith.a, k = ith.k)
-    cdfs.hat[i] <- ith.cdf
-
-  }
-
-  sim.test.df <- data.frame(all.sampsizes=all.sampsizes, all.qtests=all.qtests,cdfs.hat=cdfs.hat,
-                            true.cdfs = all.true.cdfs, ksamp = paste0("samp", k))
-
-  resamp.df <- rbind.data.frame(resamp.df, sim.test.df)
-}
-
-# I get results with warnings for using the Nelder-Mead estimation method. Says it's unreliable.
-
-#save(resamp.df, file = "Ch3_samplesize/resamp.RData")
-
-# Set working directory
-load("resamp.RData")
 
 resamp.df %>%
-  mutate(diff = (cdfs.hat-true.cdfs),
-         est.over.true = cdfs.hat/true.cdfs,
+  mutate(est.over.true = cdfs.hat/true.cdfs,
          sampsize = factor(all.sampsizes),
          tailthresh = factor(all.qtests))-> resamp.df
 
@@ -284,7 +288,7 @@ resamp.df %>%
   ggplot(., aes(x = sampsize, y = est.over.true, color = tailthresh)) +
   #ggplot(., aes(x = sampsize, y = diff/true.cdfs, color = tailthresh)) +
   geom_boxplot() +
-  labs(x = "Sample size", y = "y") +
+  labs(x = "Sample size", y = "ESt./True") +
   #scale_y_log10() +
   theme_minimal()
 

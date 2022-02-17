@@ -521,7 +521,7 @@ Now, we repeat the process to see how much this varies...
 
 
 ```{r results='hide'}
-nreps <- 100
+nreps <- 1000
 gp.mles.reps <- data.frame(NULL)
 
 for(j in 1:nreps){
@@ -602,7 +602,54 @@ gp.mles.reps %>%
 
 plot_grid(lomax.tail, gp.tail)
 
+```
+
+
+Restrict the y axis  
+
+```{r fig.width=8}
+
+n.tru.cdfs <- nrow(gp.mles.reps)/length(tru.cdfs$w.cdfs)
+
+gp.mles.reps %>% 
+  mutate(tru.tails = rep(tru.cdfs$w.cdfs, n.tru.cdfs),
+         tails.ratio = tail/tru.tails,
+         thresh = factor(threshold),
+         samp.size = factor(samp.size)) %>%
+  drop_na(tails.ratio) %>% 
+  mutate(nice.tails = signif(tails.ratio, 3)) %>% 
+  ggplot(., aes(x = samp.size, y = tails.ratio, color = thresh)) +
+  geom_boxplot() +
+  labs(title = "Lomax") +
+  lims(y = c(-1, 3)) +
+  theme_minimal() -> lomax.tail
+
+
+gp.mles.reps %>% 
+  mutate(tru.tails = rep(tru.cdfs$w.cdfs, n.tru.cdfs),
+         gp.tails.ratio = gp.tail/tru.tails,
+         thresh = factor(threshold),
+         samp.size = factor(samp.size)) %>%
+  mutate(nice.tails = signif(gp.tails.ratio, 3)) %>% 
+  ggplot(., aes(x = samp.size, y = gp.tails.ratio, color = thresh)) +
+  geom_boxplot() +
+  labs(title = "GP") +
+  lims(y = c(-1, 3)) +
+  theme_minimal() -> gp.tail
+
+plot_grid(lomax.tail, gp.tail)
 
 ```
 
+Check the mean:  
+
+```{r}
+gp.mles.reps %>% 
+  mutate(tru.tails = rep(tru.cdfs$w.cdfs, n.tru.cdfs),
+         tails.ratio = tail/tru.tails,
+         gp.tails.ratio = gp.tail/tru.tails) %>% 
+  group_by(samp.size, threshold) %>% 
+  summarise(mean.ratio = mean(tails.ratio),
+            mean.gp.ratio = mean(gp.tails.ratio))
+```
 
