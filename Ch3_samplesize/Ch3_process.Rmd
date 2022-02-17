@@ -8,7 +8,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 knitr::opts_chunk$set(fig.width=4, fig.height=3)
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 ```
@@ -152,7 +152,7 @@ samp.sizes <- c(80, 200, 500, 800, 1000, 1600)
 
 The thresholds we want to consider are the following:`r thresh.vals` and the weights haven't changed. So, we get the cdf for each $p_i(x)$ for each threshold. This means we get $P(x >= c(100, 250, 500, 1000))$ for each curve and weigh it. 
 
-```{r eval = FALSE}
+```{r echo=FALSE, eval = FALSE}
 # Getting weird stuff so taking this step by step
 y <- 4
 
@@ -324,12 +324,19 @@ for(i in 1:length(samp.sizes)){
 }
 
 mles.sampsizes %>% 
-  mutate(mean = lomax.mean(alphas, khats))
+  mutate(mean = lomax.mean(alphas, khats),
+         tail100 = lomax.cdf(100, alphas, khats),
+         tail250 = lomax.cdf(250, alphas, khats),
+         tail500 = lomax.cdf(500, alphas, khats),
+         tail750 = lomax.cdf(750, alphas, khats),
+         tail1k = lomax.cdf(1000, alphas, khats)) %>% 
+  #mutate(across(c(2:8), signif, digits=3)) %>% 
+  mutate(across(starts_with("tail"), signif, digits=3))
   
 
 ```
 ```{r}
-# Now calculate the cdfs for each distribution and for each threshold
+# But if we do 1-cdf, which should be P(X>=x) we get high numbers. 
 
 1-lomax.cdf(thresh.vals, alpha = mles.sampsizes$alphas[1], k = mles.sampsizes$khats[1])
 
@@ -337,7 +344,7 @@ mles.sampsizes %>%
 
 
 
-```{r echo=TRUE}
+```{r eval=FALSE, echo=FALSE}
 ###################################
 # Run the experiments with different sample sizes and tail thresholds
 
@@ -395,6 +402,8 @@ for(i in 1:ntests){
 }
 
 ```
+
+
 
 
 
