@@ -230,8 +230,18 @@ f(x) = \sum_{i=1}^n w_i p_i(x) \Rightarrow F(x) = \sum_{i=1}^n w_i P_i(x)
 </tbody>
 </table>
 <p>Running the experiment once:</p>
+<pre><code>##   samp.size       alphas     khats         mean
+## 1        80 1.601243e+08 15.276440 9837794.1726
+## 2       200 4.638494e+07 13.923334 3108215.2737
+## 3       500 3.949576e+03  4.558542     710.5417
+## 4       800 6.891936e+07 14.346907 4490765.1117
+## 5      1000 1.632209e+07 12.813300 1181621.0672
+## 6      1600 1.614859e+05  8.239163   17478.4170</code></pre>
+<pre><code>## [1] 0.9999905 0.9999761 0.9999523 0.9999284 0.9999046</code></pre>
 <pre class="r"><code>###################################
 # Run the experiments with different sample sizes and tail thresholds
+
+all.samples &lt;- simplsamps$data
 
 samp.sizes &lt;- c(80, 200, 500, 800, 1000, 1600)
 num.ns &lt;- length(samp.sizes)
@@ -282,23 +292,7 @@ for(i in 1:ntests){
   ith.cdf &lt;- 1- lomax.cdf(x = ith.q, alpha = ith.a, k = ith.k)
   cdfs.hat[i] &lt;- ith.cdf
 
-}
-
-
-true.cdfs &lt;- rep(0,num.qs)
-for(i in 1:num.qs){
-
-  iq &lt;- q.tests[i]
-
-  true.cdfs[i] &lt;- sum(all.samples&gt;iq)/length(all.samples)
-
-}
-
-all.true.cdfs &lt;- rep(true.cdfs,num.ns)
-
-
-sim.test.df &lt;- data.frame(all.sampsizes=all.sampsizes, all.qtests=all.qtests,cdfs.hat=cdfs.hat,
-                          true.cdfs = all.true.cdfs)</code></pre>
+}</code></pre>
 </div>
 </div>
 

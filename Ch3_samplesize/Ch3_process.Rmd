@@ -150,7 +150,6 @@ samp.sizes <- c(80, 200, 500, 800, 1000, 1600)
 ```
 
 
-
 The thresholds we want to consider are the following:`r thresh.vals` and the weights haven't changed. So, we get the cdf for each $p_i(x)$ for each threshold. This means we get $P(x >= c(100, 250, 500, 1000))$ for each curve and weigh it. 
 
 ```{r eval = FALSE}
@@ -181,7 +180,6 @@ cdfs
 ```
 
 
-
 ```{r}
 weighted.cdfs <- NULL
 for(y in 1:4){
@@ -200,7 +198,6 @@ tibble(thresh.vals) %>%
 
 
 ```
-
 
 
 ```{r LOMAX}
@@ -227,6 +224,15 @@ lomax.cdf <- function(x,alpha,k){
   
   return(1-(alpha/(alpha+x))^k)
   
+}
+
+lomax.st <- function(x=x, alpha=alpha, k=k){
+  out <- alpha/(alpha+x)
+  return(out^k)
+}
+
+lomax.mean <- function(alpha=alpha, k=k){
+  return(alpha/(k+1))
 }
 
 
@@ -278,9 +284,64 @@ lomax.glm <- function(formula=~1, my.dataf, response){
 
 Running the experiment once:  
 
-```{r eval = FALSE, echo=TRUE}
+```{r}
+# First estimate the mles for the different sample sizes
+
+mles.sampsizes <- data.frame(samp.size = samp.sizes, alphas = 0, khats = 0)
+
+for(i in 1:length(samp.sizes)){
+  ith.n   <- mles.sampsizes$samp.size[i]
+  ith.samples <- data.frame(x = sample(simplsamps$data, ith.n))
+  
+  # The glm.lomax was giving me an error. Kept saying it couldn't find the init betas but worked when I ran it line by line. 
+  
+  # From the glm framework, we are not including covariates here
+  # The next three lines are the arguments to the glm lomax function
+  formula=~1
+  my.dataf = ith.samples
+  response = ith.samples$x
+  
+  # This is the glm lomax function deconstructed
+  Y           <- response
+  n           <- length(Y)
+  designmat   <- model.matrix(formula, data=my.dataf)
+  nbetas      <- ncol(designmat)
+  init.betas  <- c(4,rep(5,nbetas))
+  
+  opt.out <- optim(par=init.betas, fn=ft.nllike2, method = "Nelder-Mead",
+                   designmat=designmat, Y=Y)
+  
+  mles          <- opt.out$par
+  nll.hat       <- opt.out$value
+  BIC.mod       <- 2*nll.hat + nbetas*log(length(Y))
+  Xbeta.hat     <- designmat%*%mles[-1]
+  alphas.hat    <- exp(Xbeta.hat)
+  #sumlogapy.hat <- sum(log(alphas.hat+Y))
+  k.hat         <-  mles[1] #n/(sumlogapy.hat - sum(Xbeta.hat))
+  
+  mles.sampsizes$alphas[i] <- alphas.hat
+  mles.sampsizes$khats[i] <- k.hat
+}
+
+mles.sampsizes %>% 
+  mutate(mean = lomax.mean(alphas, khats))
+  
+
+```
+```{r}
+# Now calculate the cdfs for each distribution and for each threshold
+
+1-lomax.cdf(thresh.vals, alpha = mles.sampsizes$alphas[1], k = mles.sampsizes$khats[1])
+
+```
+
+
+
+```{r echo=TRUE}
 ###################################
 # Run the experiments with different sample sizes and tail thresholds
+
+all.samples <- simplsamps$data
 
 samp.sizes <- c(80, 200, 500, 800, 1000, 1600)
 num.ns <- length(samp.sizes)
@@ -333,21 +394,6 @@ for(i in 1:ntests){
 
 }
 
-
-true.cdfs <- rep(0,num.qs)
-for(i in 1:num.qs){
-
-  iq <- q.tests[i]
-
-  true.cdfs[i] <- sum(all.samples>iq)/length(all.samples)
-
-}
-
-all.true.cdfs <- rep(true.cdfs,num.ns)
-
-
-sim.test.df <- data.frame(all.sampsizes=all.sampsizes, all.qtests=all.qtests,cdfs.hat=cdfs.hat,
-                          true.cdfs = all.true.cdfs)
 ```
 
 
