@@ -60,13 +60,10 @@ lnorm_mean_var <- function(mean_log, sd_log){
 # This is a function to make the multiple curves to plot
 # I always struggle to remember how to make this
 
-lnorm_densities_fx <- function(mu_x, sigsq_x, color_x){
+lnorm_densities_fx <- function(meanlog_x, sdlog_x, color_x){
 
-  # I'm assuming we are giving variances, so need to change into sd.
-  sd_x <- sqrt(sigsq_x)
-
-  my_curvs <- purrr::map(1:length(mu_x), function(y) stat_function(fun = dlnorm,
-                                                               args = list(meanlog = mu_x[y], sdlog = sd_x[y]),
+  my_curvs <- purrr::map(1:length(meanlog_x), function(y) stat_function(fun = dlnorm,
+                                                               args = list(meanlog = meanlog_x[y], sdlog = sdlog_x[y]),
                                                                color = color_x[y], size=1))
   return(my_curvs)
 }

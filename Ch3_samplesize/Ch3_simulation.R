@@ -30,17 +30,20 @@ pars <- desired_mean_sd(mu_x = c(28, 32, 40, 48), sd_x = c(49.7, 39.9, 33.3, 31.
 
 # Just checking that it makes sense now
 lnorm_mean_var(pars$meanlog, pars$sdlog)
-
 pars
+
 
 mus <- pars$meanlog
 sigsqs <- pars$sdlog
 dens_cols <- c("#264653", "#2a9d8f", "#f4a261", "#e76f51")
 
 ### PLOT the mixture components -------------------------------
-lnorm_densities <- purrr::map(1:4, function(y) stat_function(fun = dlnorm,
-                                                             args = list(meanlog = mus[y], sdlog = sigsqs[y]),
-                                                             color = dens_cols[y], size=1))
+
+# Using I function I wrote that I use to make a lot of these density curves for a plot
+# can be found in the functions script.
+
+lnorm_densities <- lnorm_densities_fx(pars$meanlog, pars$sdlog, dens_cols)
+
 ggplot() +
   lnorm_densities +
   theme_minimal() +
