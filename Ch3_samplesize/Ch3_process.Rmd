@@ -234,13 +234,13 @@ lomax.st <- function(x=x, alpha=alpha, k=k){
 }
 
 lomax.mean <- function(alpha=alpha, k=k){
-  return(alpha/(k+1))
+  return(alpha/(k-1))
 }
 
 
 ft.nllike2 <- function(guess=init.betas, designmat=designmat,Y=Y){
   
-  nbetasp1      <- length(init.betas)
+  nbetasp1      <- length(guess)
   k             <- exp(guess[1])
   Xbeta         <- designmat%*%guess[2:nbetasp1]
   alphas        <- exp(Xbeta) # because alpha = ln(X*betas)
@@ -271,7 +271,7 @@ lomax.glm <- function(formula=~1, my.dataf, response){
   nll.hat       <- opt.out$value
   BIC.mod       <- 2*nll.hat + nbetas*log(length(Y))
   Xbeta.hat     <- designmat%*%mles[-1]
-  alphas.hat    <- exp(Xbeta.hat)
+  alphas.hat    <- log(Xbeta.hat)
   #sumlogapy.hat <- sum(log(alphas.hat+Y))
   k.hat         <-  mles[1] #n/(sumlogapy.hat - sum(Xbeta.hat))
   
@@ -295,55 +295,29 @@ for(i in 1:length(samp.sizes)){
   ith.n   <- mles.sampsizes$samp.size[i]
   ith.samples <- data.frame(x = sample(simplsamps$data, ith.n))
   
-  # The glm.lomax was giving me an error. Kept saying it couldn't find the init betas but worked when I ran it line by line. 
+  mod1 <- lomax.glm(formula = ~1, my.dataf = ith.samples, response = ith.samples$x)
+  ith.a <- mod1$alphas.hat[1]
+  ith.k <- mod1$k.hat
   
-  # From the glm framework, we are not including covariates here
-  # The next three lines are the arguments to the glm lomax function
-  formula=~1
-  my.dataf = ith.samples
-  response = ith.samples$x
   
-  # This is the glm lomax function deconstructed
-  Y           <- response
-  n           <- length(Y)
-  designmat   <- model.matrix(formula, data=my.dataf)
-  nbetas      <- ncol(designmat)
-  init.betas  <- c(4,rep(5,nbetas))
-  
-  opt.out <- optim(par=init.betas, fn=ft.nllike2, method = "Nelder-Mead",
-                   designmat=designmat, Y=Y)
-  
-  mles          <- opt.out$par
-  nll.hat       <- opt.out$value
-  BIC.mod       <- 2*nll.hat + nbetas*log(length(Y))
-  Xbeta.hat     <- designmat%*%mles[-1]
-  alphas.hat    <- exp(Xbeta.hat)
-  #sumlogapy.hat <- sum(log(alphas.hat+Y))
-  k.hat         <-  mles[1] #n/(sumlogapy.hat - sum(Xbeta.hat))
-  
-  mles.sampsizes$alphas[i] <- alphas.hat
-  mles.sampsizes$khats[i] <- k.hat
+  mles.sampsizes$alphas[i] <- ith.a
+  mles.sampsizes$khats[i] <- ith.k
 }
 
 mles.sampsizes %>% 
   mutate(mean = lomax.mean(alphas, khats),
-         tail100 = lomax.cdf(100, alphas, khats),
-         tail250 = lomax.cdf(250, alphas, khats),
-         tail500 = lomax.cdf(500, alphas, khats),
-         tail750 = lomax.cdf(750, alphas, khats),
-         tail1k = lomax.cdf(1000, alphas, khats)) %>% 
+         tail100 = lomax.st(100, alphas, khats),
+         tail250 = lomax.st(250, alphas, khats),
+         tail500 = lomax.st(500, alphas, khats),
+         tail750 = lomax.st(750, alphas, khats),
+         tail1k = lomax.st(1000, alphas, khats)) %>% 
   #mutate(across(c(2:8), signif, digits=3)) %>% 
   mutate(across(starts_with("tail"), signif, digits=3))
   
 
 ```
+
 ```{r}
-# But if we do 1-cdf, which should be P(X>=x) we get high numbers. 
-
-1-lomax.cdf(thresh.vals, alpha = mles.sampsizes$alphas[1], k = mles.sampsizes$khats[1])
-
-```
-```{r eval=FALSE, echo=FALSE}
 ###################################
 # Run the experiments with different sample sizes and tail thresholds
 
@@ -365,37 +339,13 @@ for(i in 1:ntests){
   ith.n   <- all.sampsizes[i]
   ith.samples <- data.frame(x = sample(all.samples, ith.n))
   
-  formula=~1
-  my.dataf = ith.samples
-  response = ith.samples$x
-  
-  
-  Y           <- response
-  n           <- length(Y)
-  designmat   <- model.matrix(formula, data=my.dataf)
-  nbetas      <- ncol(designmat)
-  init.betas  <- c(4,rep(5,nbetas))
-  
-  opt.out <- optim(par=init.betas, fn=ft.nllike2, method = "Nelder-Mead",
-                   designmat=designmat, Y=Y)
-  
-  mles          <- opt.out$par
-  nll.hat       <- opt.out$value
-  BIC.mod       <- 2*nll.hat + nbetas*log(length(Y))
-  Xbeta.hat     <- designmat%*%mles[-1]
-  alphas.hat    <- exp(Xbeta.hat)
-  #sumlogapy.hat <- sum(log(alphas.hat+Y))
-  k.hat         <-  mles[1] #n/(sumlogapy.hat - sum(Xbeta.hat))
-  
-  mod1 <- list(opt.out = opt.out, designmat=designmat,Y=Y, mles=mles, nll.hat=nll.hat, BIC.mod = BIC.mod,
-                   alphas.hat=alphas.hat, k.hat=k.hat,data=my.dataf)
-  
+  mod1 <- lomax.glm(formula = ~1, my.dataf = ith.samples, response = ith.samples$x)
 
   ith.a <- mod1$alphas.hat[1]
   ith.k <- mod1$k.hat
 
   ith.q <- all.qtests[i]
-  ith.cdf <- 1- lomax.cdf(x = ith.q, alpha = ith.a, k = ith.k)
+  ith.cdf <- lomax.st(x = ith.q, alpha = ith.a, k = ith.k)
   cdfs.hat[i] <- ith.cdf
 
 }
@@ -520,7 +470,8 @@ plot_grid(lomax.tail, gp.tail)
 Now, we repeat the process to see how much this varies...  
 
 
-```{r results='hide'}
+```{r eval=FALSE, results='hide'}
+# I already ran this chunk and it takes a very long time (a night), so saved the result and I'm just loading it in the next chunk
 nreps <- 1000
 gp.mles.reps <- data.frame(NULL)
 
@@ -568,6 +519,11 @@ gp.mles.reps %>%
 
 save(gp.mles.reps, file = "Ch3_samplesize/testdf.RData")
 ```  
+
+
+```{r}
+load("Ch3_samplesize/testdf.RData")
+```
 
 Let's see
 
@@ -621,7 +577,7 @@ gp.mles.reps %>%
   ggplot(., aes(x = samp.size, y = tails.ratio, color = thresh)) +
   geom_boxplot() +
   labs(title = "Lomax") +
-  lims(y = c(-1, 3)) +
+  lims(y = c(-0.1, 3)) +
   theme_minimal() -> lomax.tail
 
 
@@ -634,7 +590,7 @@ gp.mles.reps %>%
   ggplot(., aes(x = samp.size, y = gp.tails.ratio, color = thresh)) +
   geom_boxplot() +
   labs(title = "GP") +
-  lims(y = c(-1, 3)) +
+  lims(y = c(-0.1, 3)) +
   theme_minimal() -> gp.tail
 
 plot_grid(lomax.tail, gp.tail)
@@ -650,6 +606,19 @@ gp.mles.reps %>%
          gp.tails.ratio = gp.tail/tru.tails) %>% 
   group_by(samp.size, threshold) %>% 
   summarise(mean.ratio = mean(tails.ratio),
-            mean.gp.ratio = mean(gp.tails.ratio))
+            mean.gp.ratio = mean(gp.tails.ratio),
+            ste.gp.ratio = sd(gp.tails.ratio)/sqrt(length(gp.tails.ratio))) -> tail.ratio.means 
+
+tail.ratio.means %>%
+  knitr::kable()
+```
+
+```{r fig.width=8}
+tail.ratio.means %>% 
+  ggplot(., aes(x = factor(threshold), y = mean.gp.ratio, color = factor(samp.size))) +
+  #geom_point() +
+  geom_jitter(size = 2, width = 0.2, alpha = 0.8) +
+  #scale_y_log10() +
+  theme_minimal()
 ```
 
