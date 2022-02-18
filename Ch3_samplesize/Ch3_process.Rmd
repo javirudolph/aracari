@@ -325,7 +325,7 @@ all.samples <- simplsamps$data
 
 samp.sizes <- c(80, 200, 500, 800, 1000, 1600)
 num.ns <- length(samp.sizes)
-q.tests <- c(100, 250,500,1000)
+q.tests <- c(100, 250,500,750,1000)
 num.qs <- length(q.tests)
 
 all.sampsizes <- rep(samp.sizes,each=num.qs)
@@ -334,6 +334,9 @@ ntests <- length(all.sampsizes)
 
 cdfs.hat <- rep(0, ntests)
 
+ith.a <- rep(0, ntests)
+ith.k <- rep(0, ntests)
+
 
 for(i in 1:ntests){
   ith.n   <- all.sampsizes[i]
@@ -341,17 +344,30 @@ for(i in 1:ntests){
   
   mod1 <- lomax.glm(formula = ~1, my.dataf = ith.samples, response = ith.samples$x)
 
-  ith.a <- mod1$alphas.hat[1]
-  ith.k <- mod1$k.hat
+  ith.a[i] <- mod1$alphas.hat[1]
+  ith.k[i] <- mod1$k.hat
 
   ith.q <- all.qtests[i]
-  ith.cdf <- lomax.st(x = ith.q, alpha = ith.a, k = ith.k)
+  ith.cdf <- lomax.st(x = ith.q, alpha = ith.a[i], k = ith.k[i])
   cdfs.hat[i] <- ith.cdf
 
 }
 
-```
+lomax.fits <- data.frame(samp.sizes = all.sampsizes, threshold = all.qtests, alphas = ith.a, ks = ith.k, lomax.tail = cdfs.hat,
+                         tru.tails = rep(tru.cdfs$w.cdfs, length(samp.sizes)))
+```  
 
+```{r eval=FALSE, echo=FALSE}
+lomax.fits %>% 
+  mutate(tails.ratio = lomax.tail/tru.tails,
+         thresh = factor(threshold),
+         samp.sizes = factor(samp.sizes)) %>%
+  mutate(nice.tails = signif(tails.ratio, 3)) %>% 
+  ggplot(., aes(x = samp.sizes, y = tails.ratio, color = thresh)) +
+  geom_jitter(alpha = 0.8, width = 0.2) +
+  labs(title = "Lomax") +
+  theme_minimal()
+```
 
 
 
