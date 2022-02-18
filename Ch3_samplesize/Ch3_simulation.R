@@ -44,8 +44,13 @@ dens_cols <- c("#264653", "#2a9d8f", "#f4a261", "#e76f51")
 
 lnorm_densities <- lnorm_densities_fx(pars$meanlog, pars$sdlog, dens_cols)
 
+weighted_densities <- purrr::map(1:4, function(y) stat_function(fun = dlnorm,
+                                                                args = list(meanlog = pars$meanlog[y], sdlog = pars$sdlog[y]),
+                                                                color = dens_cols[y], size=pis[y]*10, alpha = 0.8))
+
 ggplot() +
-  lnorm_densities +
+  #lnorm_densities +
+  weighted_densities +
   theme_minimal() +
   labs(y = "Density") +
   lims(x = c(0, 150)) -> densities_plot
@@ -99,27 +104,15 @@ simplsamps %>%
 plot_grid(sampleshist, samplesdens)
 
 
+# Generate Figure 1 that describes the mixture components, and the samples
+
+bottom_row <- plot_grid(sampleshist, samplesdens)
+plot_grid(densities_plot, bottom_row,nrow = 2)
+ggsave("Ch3_samplesize/Figure1.png")
 
 
 
 
-## PLOT the samples ---------------------------------------------
-# This is our f(x) from the main text
-data.tail <- data.frame(values = all.samples, y = 100) %>% arrange(desc(values)) %>% filter(values >=250)
-head(data.tail)
-
-ggplot(data.frame(all.samples), aes(x = all.samples)) +
-  geom_histogram(bins = 100) +
-  geom_point(data = data.tail[1:50,], aes(x = values, y = y), color = "black", alpha = 0.5) +
-  labs(y = "Frequency", x = "Distance") +
-  theme_minimal() -> sampleshist
-
-
-# VIZ -----------------------------------
-plot_grid(densities_plot, sampleshist, nrow=2, labels="AUTO")
-#ggsave("Ch3_samplesize/TestFig.png")
-
-summary(all.samples)
 
 # FUNCTIONS ---------------------------------
 lomax.pdf <- function(x,alpha,k, log.scale=FALSE){
