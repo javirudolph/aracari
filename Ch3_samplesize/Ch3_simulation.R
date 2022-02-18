@@ -54,16 +54,52 @@ densities_plot
 
 # SAMPLING --------------------------------------------------------------
 
+## Draw from mixture ----------------------------------------------------
+# Using purrr to get samples instead of a for loop. More efficient.
+
+# We are getting 50k samples from the mixture
 samp.size <- 50000
-all.samples <- rep(0,samp.size)
-categ <- rep(0,samp.size)
 
-for(i in 1:samp.size){
+# These category samples are based on the weights
+cat.samp.sizes <- samp.size*pis
 
-  which.cat <- sample(1:4, size=1, replace=TRUE, prob=pis)
-  all.samples[i] <- rlnorm(n=1,meanlog=mus[which.cat], sdlog=sigsqs[which.cat])
-  categ[i] <- which.cat
-}
+# Using purrr to pull values from each component of the mixture according to the weights
+purrrsampls <- tibble(gID = c(1:4), pars) %>%
+  mutate(data = purrr::map(gID, function(y) rlnorm(cat.samp.sizes[y], pars$meanlog[y], pars$sdlog[y])))
+
+# Making it an easier to read data frame with only the group ID (mixture components) and the sampled data
+purrrsampls %>%
+  dplyr::select(., gID, data) %>%
+  unnest(cols = c(data)) -> simplsamps
+
+# Extract the tail (the highest values) to visualize later in the histogram since they are too few to show in the bins
+data.tail <- data.frame(values = simplsamps$data, y = 100) %>% arrange(desc(values)) %>% filter(values >=100)
+
+## Visualization -----------------------------------------------------
+
+# Histogram plus the points in the tail.
+simplsamps %>%
+  ggplot(., aes(x = data)) +
+  geom_histogram(bins = 100) +
+  geom_point(data = data.tail[1:50,], aes(x = values, y = y), color = "black", alpha = 0.5) +
+  labs(y = "Frequency", x = "Distance") +
+  #lims(x = c(0, 150)) +
+  theme_minimal() -> sampleshist
+
+# Density curve for the mixture based on the 50k samples.
+
+simplsamps %>%
+  ggplot(., aes(x = data)) +
+  geom_density() +
+  labs(y = "Density", x = "Distance") +
+  lims(x = c(0, 150), y = c(0,0.05)) +
+  theme_minimal() -> samplesdens
+
+# Visualize both in one frame
+plot_grid(sampleshist, samplesdens)
+
+
+
 
 
 
