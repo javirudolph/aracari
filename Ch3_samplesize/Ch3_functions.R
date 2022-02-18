@@ -20,8 +20,8 @@
 
 # This is not created yet, but on the list
 
-generate.pis <- functions(n){
-  NULL
+generate.pis <- function(n){
+  n
 }
 
 
@@ -33,24 +33,23 @@ generate.pis <- functions(n){
 # parameters for a lognormal that has the
 # desired mean and variance:
 
-desired_mean_sd <- function(mu_x, sigsq_x){
+desired_mean_sd <- function(mu_x, sd_x){
 
-  mu <- log(mu_x^2/(sqrt(mu_x^2+sigsq_x)))
-  sigsq <- log(1+(sigsq_x/mu_x^2))
+  mu <- log(mu_x^2/(sqrt(mu_x^2+sd_x^2)))
+  sigma <- log(1+(sd_x/mu_x^2))
 
-  return(data.frame(mu, sigsq))
+  return(data.frame(mu, sigma))
 }
 
 # Now, for a Lnorm(mu, sigsq), get mean and var
 
-lnorm_mean_var <- function(mu, sigsq){
+lnorm_mean_var <- function(mu, sigma){
 
-  lnorm_mean <- exp(mu + (sigsq/2))
-  lnorm_var  <- (exp(sigsq)-1)*exp(2*mu+sigsq)
+  lnorm_mean <- exp(mu + ((sigma^2)/2))
+  lnorm_var  <- (exp(sigma^2)-1)*exp(2*mu+sigma^2)
 
   return(data.frame(lnorm_mean, lnorm_var))
 }
-
 
 #### Components --------------------------
 

@@ -2,19 +2,6 @@
 ## DATA GENERATION CH3
 #########################################
 
-# I think the overall question for this is chapter is:
-#         Can we accurately estimate the true proportion of rare events produced by a complex model using a simpler hierarchical model?
-
-# Our complex model is one that considers individual variation in animal movement, with increasing mean and variance for specific groups
-# We use a mixture modeling approach, where each component distribution is associated to an individual's state or age.
-# We assume that an individual's stage will affect their movement.
-# We assume, for example, very young birds might not move as far, as will nesting or molting birds, whereas adults will move more.
-
-# The overall assumption for this model is that individuals vary in how much they move, which we determine based on step lengths only.
-# With some groups having an overall larger variance and mean than other groups.
-# The proportions, or weights, of the mixture, should follow a bell curve for now
-# With the average movers being the majority of the group, and low or high movement individuals being less abundant.
-
 # Libraries -----------------------------------------------
 set.seed(20220201)
 
@@ -27,19 +14,7 @@ library(purrr)
 library(fitdistrplus)
 
 ## Functions ----------------------------------------------------
-# Building this function so that we get the parameters for a desired mean and standard deviation.
-desired_mean_sd <- function(mean, sd){
-
-  mu <- log(mean*2/(sqrt(mean*2+sd*2)))
-  sigsq <- log(1+(sd*2/mean*2))
-
-  return(data.frame(mu = mu, sigsq = sigsq))
-}
-
-exp.val <- function(mu, sigsq){
-  exp(mu + sqrt(sigsq))
-}
-
+source("Ch3_samplesize/Ch3_functions.R")
 
 # MIXTURE MODEL --------------------------------------------------
 ## Mixture proportions ----------------------------------------
@@ -51,15 +26,22 @@ hist(pis)
 ## Mixture components --------------------------------------
 # Since movement lengths are only positive, we use a lognormal distribution to describe them
 
-# CASE1: same variance for all, but change expected values
+# CASE1
 
-pars <- desired_mean_sd(mean = c(160, 300, 600, 1000), sd = c(90, 120, 160, 200))
+# desired_mean_sd <- function(mean, sd){
+#
+#   mu <- log(mean*2/(sqrt(mean*2+sd*2)))
+#   sigsq <- log(1+(sd*2/mean*2))
+#
+#   return(data.frame(mu = mu, sigsq = sigsq))
+# }
+#
+# pars <- desired_mean_sd(c(160, 300, 600, 1000), c(90, 120, 160, 200))
 
-# Special case I am considering where for each category the mean doubles, and then sd=mean*0.6
-# pars <- desired_mean_sd(mean = c(150, 300, 600, 1200), sd = c(90, 180, 360, 720))
+pars <- desired_mean_sd(mu_x = c(28, 32, 40, 48), sd_x = c(49.7, 39.9, 33.3, 31.1))
 
 mus <- pars$mu
-sigsqs <- pars$sigsq
+sigsqs <- pars$sigma
 dens_cols <- c("#264653", "#2a9d8f", "#f4a261", "#e76f51")
 
 ### PLOT the mixture components -------------------------------
@@ -71,6 +53,7 @@ ggplot() +
   theme_minimal() +
   labs(y = "Density") +
   lims(x = c(0, 150)) -> densities_plot
+densities_plot
 
 
 # SAMPLING --------------------------------------------------------------
