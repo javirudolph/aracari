@@ -35,20 +35,24 @@ generate.pis <- function(n){
 
 desired_mean_sd <- function(mu_x, sd_x){
 
-  mu <- log(mu_x^2/(sqrt(mu_x^2+sd_x^2)))
-  sigma <- log(1+(sd_x/mu_x^2))
+  sigsq <- sd_x^2
 
-  return(data.frame(mu, sigma))
+  mu <- log(mu_x^2/(sqrt(mu_x^2+sigsq)))
+  sigma_sq <- log(1+(sigsq/mu_x^2))
+  sigma <- sqrt(sigma_sq)
+
+  return(data.frame(meanlog = mu, sigma_sq = sigma_sq, sdlog = sigma))
 }
 
-# Now, for a Lnorm(mu, sigsq), get mean and var
+# Now, for a Lnorm(meanlog, sdlog), get mean and var
 
-lnorm_mean_var <- function(mu, sigma){
+lnorm_mean_var <- function(mean_log, sd_log){
 
-  lnorm_mean <- exp(mu + ((sigma^2)/2))
-  lnorm_var  <- (exp(sigma^2)-1)*exp(2*mu+sigma^2)
+  lnorm_mean <- exp(mean_log + ((sd_log^2)/2))
+  lnorm_var  <- (exp(sd_log^2)-1)*exp(2*mean_log+sd_log^2)
+  lnorm_sd   <- sqrt(lnorm_var)
 
-  return(data.frame(lnorm_mean, lnorm_var))
+  return(data.frame(lnorm_mean, lnorm_var, lnorm_sd))
 }
 
 #### Components --------------------------

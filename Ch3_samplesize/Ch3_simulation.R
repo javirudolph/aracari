@@ -28,17 +28,50 @@ hist(pis)
 
 # CASE1
 
-# desired_mean_sd <- function(mean, sd){
-#
-#   mu <- log(mean*2/(sqrt(mean*2+sd*2)))
-#   sigsq <- log(1+(sd*2/mean*2))
-#
-#   return(data.frame(mu = mu, sigsq = sigsq))
-# }
-#
-# pars <- desired_mean_sd(c(160, 300, 600, 1000), c(90, 120, 160, 200))
+desired_mean_sd2 <- function(mean, sd){
+
+  mu <- log(mean*2/(sqrt(mean*2+sd*2)))
+  sigsq <- log(1+(sd*2/mean*2))
+
+  return(data.frame(mu = mu, sigsq = sigsq))
+}
+
+pars2 <- desired_mean_sd2(c(160, 300, 600, 1000), c(90, 120, 160, 200))
+
+# ---------------------------------------------------------
+desired_mean_sd <- function(mu_x, sd_x){
+
+  sigsq <- sd_x^2
+
+  mu <- log(mu_x^2/(sqrt(mu_x^2+sigsq)))
+  sigma_sq <- log(1+(sigsq/mu_x^2))
+  sigma <- sqrt(sigma_sq)
+
+  return(data.frame(mu, sigma_sq, sigma))
+}
 
 pars <- desired_mean_sd(mu_x = c(28, 32, 40, 48), sd_x = c(49.7, 39.9, 33.3, 31.1))
+pars
+
+lnorm_mean_var(pars$meanlog, pars$sdlog)
+lnorm_mean_var(pars2$mu, pars2$sigsq)
+
+pars
+pars2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 mus <- pars$mu
 sigsqs <- pars$sigma
