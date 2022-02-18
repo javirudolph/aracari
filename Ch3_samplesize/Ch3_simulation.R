@@ -110,4 +110,7 @@ bottom_row <- plot_grid(sampleshist, samplesdens)
 plot_grid(densities_plot, bottom_row,nrow = 2)
 ggsave("Ch3_samplesize/Figure1.png")
 
+### TO DO
+# I would like to see the mean and variance for those log normals in the same frame. Sort of a figure where I can see all the components going into the data generation.
+
 
