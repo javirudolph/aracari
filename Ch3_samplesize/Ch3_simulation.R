@@ -17,15 +17,10 @@ library(fitdistrplus)
 source("Ch3_samplesize/Ch3_functions.R")
 
 # MIXTURE MODEL --------------------------------------------------
-## Mixture proportions ----------------------------------------
-# We assume four categories of individuals with increasing movement.
-pis <- c( 0.1, 0.2, 0.3, 0.4)
-sum(pis)
-hist(pis)
-
 ## Mixture components --------------------------------------
 # Since movement lengths are only positive, we use a lognormal distribution to describe them
-desired_means <- c(28, 32, 40, 48)
+scenario <- "_original"
+desired_means <- c(28, 32, 40, 50)
 desired_sds <- c(49.7, 39.9, 33.3, 31.1)
 
 
@@ -39,6 +34,12 @@ pars
 mus <- pars$meanlog
 sigsqs <- pars$sdlog
 dens_cols <- c("#264653", "#2a9d8f", "#f4a261", "#e76f51")
+
+## Mixture proportions ----------------------------------------
+# We assume four categories of individuals with increasing movement.
+pis <- c( 0.1, 0.2, 0.3, 0.4)
+sum(pis)
+hist(pis)
 
 ### Plot the mixture components -------------------------------
 
@@ -131,18 +132,11 @@ bottom_row <- plot_grid(sampleshist, samplesdens)
 
 plot_grid(top_row, bottom_row,nrow = 2)
 
-ggsave("Ch3_samplesize/Figure1.png")
-
-### TO DO
-# I would like to see the mean and variance for those log normals in the same frame. Sort of a figure where I can see all the components going into the data generation.
-
-
-
-
+ggsave(paste0("Ch3_samplesize/Figures/Figure1", scenario,".png"))
 
 
 ###
-## Fitting EVD ----------------------------------
+## FITTING EVD ----------------------------------
 ##
 
 
