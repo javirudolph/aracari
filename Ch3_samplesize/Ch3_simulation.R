@@ -101,6 +101,8 @@ purrrsampls %>%
   dplyr::select(., gID, data) %>%
   unnest(cols = c(data)) -> simplsamps
 
+save(simplsamps, file = paste0("Ch3_samplesize/simdata/mixturesamples", scenario, ".RData"))
+
 # Extract the tail (the highest values) to visualize later in the histogram since they are too few to show in the bins
 data.tail <- data.frame(values = simplsamps$data, y = 100) %>% arrange(desc(values)) %>% filter(values >=100)
 
