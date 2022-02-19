@@ -3,7 +3,7 @@
 ###
 
 # Libraries -----------------------------------------------
-set.seed(20220201)
+#set.seed(20220201)
 
 library(aracari)
 library(dplyr)
@@ -299,6 +299,7 @@ gp.mles.reps %>%
   ggplot(., aes(x = samp.size, y = gp.tail.ratio, color = threshold)) +
   geom_boxplot() +
   labs(y = "GP tail.ratio") +
+  lims(y = c(-0.1, 5)) +
   theme_bw()
 
 ggsave(paste0("Ch3_samplesize/Figures/GPtail_boxplt", scenario, ".png"))
@@ -318,14 +319,35 @@ gp.mles.reps %>%
 tail.ratio.means %>%
   mutate(lo = mean.ratio - ste.gp.ratio,
          hi = mean.ratio + ste.gp.ratio) %>%
+  ggplot(., aes(color = threshold,
+                y = mean.ratio,
+                # y = mse,
+                x = samp.size)) +
+  geom_jitter(size = 2, width = 0.2, alpha = 0.8) +
+  #scale_y_log10(name = "Log(mean.ratio)") +
+  theme_bw() -> a
+a
+
+
+tail.ratio.means %>%
+  mutate(lo = mean.ratio - ste.gp.ratio,
+         hi = mean.ratio + ste.gp.ratio) %>%
   ggplot(., aes(x = threshold,
                 y = mean.ratio,
-                #y = mse,
+                # y = mse,
                 color = samp.size)) +
-  facet_wrap(~samp.size) +
-  geom_point() +
-  geom_errorbar(aes(ymin = lo, ymax = hi), width = 0) +
-  #geom_jitter(size = 2, width = 0.2, alpha = 0.8) +
-  theme_bw()
+  # facet_wrap(~samp.size) +
+  # geom_point() +
+  # geom_errorbar(aes(ymin = lo, ymax = hi), width = 0) +
+  geom_jitter(size = 2, width = 0.2, alpha = 0.8) +
+  #scale_y_log10(name = "Log(mean.ratio)") +
+  theme_bw() -> b
+b
+
+top <- plot_grid(a,b, ncol=2)
+
+bottom <- plot_grid(a + scale_y_log10(name = "Log(mean.ratio)"), b + scale_y_log10(name = "Log(mean.ratio)"))
+
+plot_grid(top, bottom, nrow =2)
 
 ggsave(paste0("Ch3_samplesize/Figures/GPtail_mean", scenario, ".png"))
