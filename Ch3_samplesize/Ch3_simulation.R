@@ -1,6 +1,6 @@
-##########################################
-## DATA GENERATION CH3
-#########################################
+###
+## DATA GENERATION CH3 ------------------------------------
+###
 
 # Libraries -----------------------------------------------
 set.seed(20220201)
@@ -25,8 +25,11 @@ hist(pis)
 
 ## Mixture components --------------------------------------
 # Since movement lengths are only positive, we use a lognormal distribution to describe them
+desired_means <- c(28, 32, 40, 48)
+desired_sds <- c(49.7, 39.9, 33.3, 31.1)
 
-pars <- desired_mean_sd(mu_x = c(28, 32, 40, 48), sd_x = c(49.7, 39.9, 33.3, 31.1))
+
+pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
 
 # Just checking that it makes sense now
 lnorm_mean_var(pars$meanlog, pars$sdlog)
@@ -37,7 +40,7 @@ mus <- pars$meanlog
 sigsqs <- pars$sdlog
 dens_cols <- c("#264653", "#2a9d8f", "#f4a261", "#e76f51")
 
-### PLOT the mixture components -------------------------------
+### Plot the mixture components -------------------------------
 
 # Using I function I wrote that I use to make a lot of these density curves for a plot
 # can be found in the functions script.
@@ -46,7 +49,7 @@ lnorm_densities <- lnorm_densities_fx(pars$meanlog, pars$sdlog, dens_cols)
 # But choosing to use the weighted curves instead
 weighted_densities <- purrr::map(1:4, function(y) stat_function(fun = dlnorm,
                                                                 args = list(meanlog = pars$meanlog[y], sdlog = pars$sdlog[y]),
-                                                                color = dens_cols[y], size=pis[y]*10, alpha = 0.8))
+                                                                color = dens_cols[y], size=pis[y]*5, alpha = 0.8))
 
 ggplot() +
   #lnorm_densities +
@@ -56,6 +59,24 @@ ggplot() +
   lims(x = c(0, 150)) -> densities_plot
 densities_plot
 
+
+data.frame(desired_means, desired_sds, gID = factor(1:4)) %>%
+  mutate(lo = desired_means - desired_sds,
+         hi = desired_means + desired_sds) %>%
+  ggplot(., aes(x = gID, y = desired_means, color = gID)) +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.1, size = 1) +
+  scale_color_manual(values = dens_cols) +
+  labs(y = "Mean +/- SD") +
+  theme_minimal() +
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        legend.position = "none") -> means_sd_plot
+means_sd_plot
+
+
+top_row <- plot_grid(densities_plot, means_sd_plot, rel_widths = c(2,1))
+top_row
 
 # SAMPLING --------------------------------------------------------------
 
@@ -80,7 +101,7 @@ purrrsampls %>%
 # Extract the tail (the highest values) to visualize later in the histogram since they are too few to show in the bins
 data.tail <- data.frame(values = simplsamps$data, y = 100) %>% arrange(desc(values)) %>% filter(values >=100)
 
-## Visualization -----------------------------------------------------
+## Visualization and save -----------------------------------------------------
 
 # Histogram plus the points in the tail.
 simplsamps %>%
@@ -107,10 +128,22 @@ plot_grid(sampleshist, samplesdens)
 # Generate Figure 1 that describes the mixture components, and the samples
 
 bottom_row <- plot_grid(sampleshist, samplesdens)
-plot_grid(densities_plot, bottom_row,nrow = 2)
+
+plot_grid(top_row, bottom_row,nrow = 2)
+
 ggsave("Ch3_samplesize/Figure1.png")
 
 ### TO DO
 # I would like to see the mean and variance for those log normals in the same frame. Sort of a figure where I can see all the components going into the data generation.
+
+
+
+
+
+
+###
+## Fitting EVD ----------------------------------
+##
+
 
 
