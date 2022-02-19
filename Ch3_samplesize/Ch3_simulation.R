@@ -136,8 +136,103 @@ ggsave(paste0("Ch3_samplesize/Figures/Figure1", scenario,".png"))
 
 
 ###
+## Probability of tails
+###
+
+thresh.vals <- c(100, 250,500,750,1000)
+
+weighted.cdfs <- NULL
+for(y in 1:4){
+  a <- plnorm(thresh.vals, meanlog = pars$meanlog[y], sdlog = pars$sdlog[y], lower.tail = FALSE) * pis[y]
+  weighted.cdfs <- rbind(weighted.cdfs, a)
+}
+w.cdfs <- colSums(weighted.cdfs)
+
+
+tibble(thresh.vals) %>%
+  mutate(w.cdfs = w.cdfs,
+         w.cdfs = round(w.cdfs, 5),
+         samp.n = map_dbl(1:length(thresh.vals), function(y) length(which(simplsamps$data >= thresh.vals[y]))),
+         samp.p = signif(samp.n/samp.size, 3)) -> tru.cdfs
+
+
+
+###
 ## FITTING EVD ----------------------------------
 ##
 
+library(extRemes)
+
+samp.sizes <- c(80, 200, 500, 800, 1000, 1600)
+
+fevd.mles <- data.frame(samp.size = rep(samp.sizes, length(thresh.vals)), threshold = thresh.vals, scale = 0, shape = 0, nllh = 0)
+
+for(i in 1:nrow(fevd.mles)){
+  ith.n        <- fevd.mles$samp.size[i]
+  ith.samples  <- data.frame(x = sample(simplsamps$data, ith.n))
+
+  # So, setting the threshold to 0 so we can compare to Lomax.
+
+  ith.fit      <- fevd(ith.samples$x, threshold = 0, type = "GP")
+
+  mles          <- summary(ith.fit)$par
+  nll.hat       <- summary(ith.fit)$nllh
+  BIC.mod       <- summary(ith.fit)$BIC
+
+  fevd.mles$scale[i] <- mles[1]
+  fevd.mles$shape[i] <- mles[2]
+  fevd.mles$nllh[i]  <- nll.hat
+
+  ith.thresh   <- fevd.mles$threshold[i]
+  fevd.mles$gp.tail[i] <- pextRemes(ith.fit, ith.thresh, lower.tail = FALSE)
+}
+
+# Plot parameter space ---------------------------
+fevd.mles %>%
+  mutate(samp.size = factor(samp.size),
+         threshold = factor(threshold)) %>%
+  ggplot(., aes(x = shape, y = scale, color = threshold
+                #, shape = samp.size
+                )) +
+  facet_wrap(~samp.size) +
+  geom_point() +
+  theme_bw()
+
+# Plot tail estimates -----------------------------
+
+fevd.mles$tru.tail <- tru.cdfs$w.cdfs
+
+plot_grid(
+
+)
+
+fevd.mles %>%
+  mutate(threshold = factor(threshold),
+         samp.size = factor(samp.size),
+         tail.ratio = gp.tail/tru.tail) %>%
+  ggplot(., aes(x = samp.size, y = tail.ratio, color = threshold)) +
+  geom_point() +
+  labs(y = "GP tail.ratio") +
+  theme_bw() -> a
+a
+
+# This is the conversion to a Lomax using the GP parameters.
+# Then calculate the tail using the lomax function
+# And getting the ratio
+# We get the same plot as above
 
 
+fevd.mles %>%
+  mutate(k = 1/shape,
+         alpha = scale*k,
+         lomax.tail = lomax.st(threshold, alpha, k),
+         tail.ratio = gp.tail/tru.tail,
+         threshold = factor(threshold),
+         samp.size = factor(samp.size)) %>%
+  ggplot(., aes(x = samp.size, y = tail.ratio, color = threshold)) +
+  geom_point() +
+  labs(y = "Lomax tail.ratio") +
+  theme_bw() -> b
+b
+
+plot_grid(a,b)
