@@ -19,12 +19,14 @@ source("Ch3_samplesize/Ch3_functions.R")
 # MIXTURE MODEL --------------------------------------------------
 ## Mixture components --------------------------------------
 # Since movement lengths are only positive, we use a lognormal distribution to describe them
-scenario <- "_original"
-desired_means <- c(28, 32, 40, 50)
-desired_sds <- c(49.7, 39.9, 33.3, 31.1)
 
 
-pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
+# scenario <- "_original"
+# desired_means <- c(28, 32, 40, 50)
+# desired_sds <- c(49.7, 39.9, 33.3, 31.1)
+#
+#
+# pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
 
 # Just checking that it makes sense now
 lnorm_mean_var(pars$meanlog, pars$sdlog)
@@ -239,7 +241,7 @@ ggsave(paste0("Ch3_samplesize/Figures/tail_ratio", scenario, ".png"))
 
 ## MC Samples -----------------------------------------------
 
-nreps <- 1
+nreps <- 100
 gp.mles.reps <- data.frame(NULL)
 
 for(j in 1:nreps){
@@ -297,24 +299,33 @@ gp.mles.reps %>%
   ggplot(., aes(x = samp.size, y = gp.tail.ratio, color = threshold)) +
   geom_boxplot() +
   labs(y = "GP tail.ratio") +
-  theme_bw() +
-  theme(legend.position = "none") -> a
-a
+  theme_bw()
 
-# This is the conversion to a Lomax using the GP parameters.
-# Then calculate the tail using the lomax function
-# And getting the ratio
-# We get the same plot as above
+ggsave(paste0("Ch3_samplesize/Figures/GPtail_boxplt", scenario, ".png"))
 
+# Mean and Standard Error plots -------------
+
+head(gp.mles.reps)
 
 gp.mles.reps %>%
-  ggplot(., aes(x = samp.size, y = lm.tail.ratio, color = threshold)) +
-  geom_boxplo() +
-  labs(y = "est Lomax tail.ratio") +
-  theme_bw() -> b
-b
-
-plot_grid(a,b, rel_widths = c(0.8, 1))
-ggsave(paste0("Ch3_samplesize/Figures/tail_ratio", scenario, ".png"))
+  mutate(sqrd_diff = (gp.tail-tru.tail)^2) %>%
+  group_by(samp.size, threshold) %>%
+  summarise(mean.ratio = mean(gp.tail.ratio),
+            ste.gp.ratio = sd(gp.tail.ratio)/sqrt(length(gp.tail.ratio)),
+            mse = (1/length(gp.tail.ratio))*sum(sqrd_diff)) -> tail.ratio.means
 
 
+tail.ratio.means %>%
+  mutate(lo = mean.ratio - ste.gp.ratio,
+         hi = mean.ratio + ste.gp.ratio) %>%
+  ggplot(., aes(x = threshold,
+                y = mean.ratio,
+                #y = mse,
+                color = samp.size)) +
+  facet_wrap(~samp.size) +
+  geom_point() +
+  geom_errorbar(aes(ymin = lo, ymax = hi), width = 0) +
+  #geom_jitter(size = 2, width = 0.2, alpha = 0.8) +
+  theme_bw()
+
+ggsave(paste0("Ch3_samplesize/Figures/GPtail_mean", scenario, ".png"))
