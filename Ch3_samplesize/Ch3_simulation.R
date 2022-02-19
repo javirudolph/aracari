@@ -353,3 +353,39 @@ bottom <- plot_grid(a + scale_y_log10(name = "Log(mean.ratio)"), b + scale_y_log
 plot_grid(top, bottom, nrow =2)
 
 ggsave(paste0("Ch3_samplesize/Figures/GPtail_mean", scenario, ".png"))
+
+
+
+
+
+# UNBIASED ESTIMATOR ------------------------------------------------
+
+
+ith.n <- 1000
+ith.df <- data.frame(x = sample(simplsamps$data, ith.n))
+ith.evd <- fevd(x = ith.df$x, type = "GP", threshold = 0)
+ith.scale <- ith.evd$results$par[1]
+ith.shape <- ith.evd$results$par[2]
+
+
+# Using the same threshold values as above
+ith.theta <- pevd(thresh.vals, loc = 0, scale = ith.scale, shape= ith.shape, lower.tail = FALSE)
+
+# with those parameters, simulate B samples
+
+B <- 100
+
+jth.draw <- revd(n = ith.n, loc = 0, scale = ith.scale, shape = ith.shape)
+jth.fit <- fevd(x = jth.draw, type = "GP", threshold = 0)
+jth.scale <- jth.fit$results$par[1]
+jth.shape <- jth.fit$results$par[2]
+
+
+
+
+
+
+
+
+
+
