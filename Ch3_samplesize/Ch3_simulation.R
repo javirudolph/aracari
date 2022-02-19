@@ -202,10 +202,6 @@ fevd.mles %>%
 
 fevd.mles$tru.tail <- tru.cdfs$w.cdfs
 
-plot_grid(
-
-)
-
 fevd.mles %>%
   mutate(threshold = factor(threshold),
          samp.size = factor(samp.size),
@@ -213,7 +209,8 @@ fevd.mles %>%
   ggplot(., aes(x = samp.size, y = tail.ratio, color = threshold)) +
   geom_point() +
   labs(y = "GP tail.ratio") +
-  theme_bw() -> a
+  theme_bw() +
+  theme(legend.position = "none") -> a
 a
 
 # This is the conversion to a Lomax using the GP parameters.
@@ -226,13 +223,98 @@ fevd.mles %>%
   mutate(k = 1/shape,
          alpha = scale*k,
          lomax.tail = lomax.st(threshold, alpha, k),
-         tail.ratio = gp.tail/tru.tail,
+         tail.ratio = lomax.tail/tru.tail,
          threshold = factor(threshold),
          samp.size = factor(samp.size)) %>%
   ggplot(., aes(x = samp.size, y = tail.ratio, color = threshold)) +
   geom_point() +
-  labs(y = "Lomax tail.ratio") +
+  labs(y = "est Lomax tail.ratio") +
   theme_bw() -> b
 b
 
-plot_grid(a,b)
+plot_grid(a,b, rel_widths = c(0.8, 1))
+ggsave(paste0("Ch3_samplesize/Figures/tail_ratio", scenario, ".png"))
+
+
+
+## MC Samples -----------------------------------------------
+
+nreps <- 1
+gp.mles.reps <- data.frame(NULL)
+
+for(j in 1:nreps){
+
+  ith.mle.df <- data.frame(samp.size = rep(samp.sizes, length(thresh.vals)), threshold = thresh.vals,
+                           scale = 0, shape = 0, nllh = 0, gp.tail = 0, rep = 0)
+
+  for(i in 1:nrow(ith.mle.df)){
+    ith.n        <- ith.mle.df$samp.size[i]
+    ith.samples  <- data.frame(x = sample(simplsamps$data, ith.n))
+
+    # So, setting the threshold to 0 so we can compare to Lomax.
+
+    ith.fit      <- fevd(ith.samples$x, threshold = 0, type = "GP")
+
+    mles          <- summary(ith.fit)$par
+    nll.hat       <- summary(ith.fit)$nllh
+    BIC.mod       <- summary(ith.fit)$BIC
+
+    ith.mle.df$scale[i] <- mles[1]
+    ith.mle.df$shape[i] <- mles[2]
+    ith.mle.df$nllh[i]  <- nll.hat
+    ith.mle.df$rep[i] <- paste0("rep", j)
+
+    ith.thresh   <- ith.mle.df$threshold[i]
+    ith.mle.df$gp.tail[i] <- pextRemes(ith.fit, ith.thresh, lower.tail = FALSE)
+
+  }
+
+  gp.mles.reps <- rbind.data.frame(gp.mles.reps, ith.mle.df)
+
+}
+
+
+
+gp.mles.reps$tru.tail <- tru.cdfs$w.cdfs
+
+
+gp.mles.reps %>%
+  mutate(k = 1/shape,
+         alpha = scale*k,
+         lomax.tail = lomax.st(threshold, alpha, k),
+         lm.tail.ratio = lomax.tail/tru.tail,
+         gp.tail.ratio = gp.tail/tru.tail,
+         threshold = factor(threshold),
+         samp.size = factor(samp.size)) -> gp.mles.reps
+
+
+save(gp.mles.reps, file = paste0("Ch3_samplesize/simdata/GPmles", scenario, ".RData"))
+
+
+# Boxplots -------------------
+
+gp.mles.reps %>%
+  ggplot(., aes(x = samp.size, y = gp.tail.ratio, color = threshold)) +
+  geom_boxplot() +
+  labs(y = "GP tail.ratio") +
+  theme_bw() +
+  theme(legend.position = "none") -> a
+a
+
+# This is the conversion to a Lomax using the GP parameters.
+# Then calculate the tail using the lomax function
+# And getting the ratio
+# We get the same plot as above
+
+
+gp.mles.reps %>%
+  ggplot(., aes(x = samp.size, y = lm.tail.ratio, color = threshold)) +
+  geom_boxplo() +
+  labs(y = "est Lomax tail.ratio") +
+  theme_bw() -> b
+b
+
+plot_grid(a,b, rel_widths = c(0.8, 1))
+ggsave(paste0("Ch3_samplesize/Figures/tail_ratio", scenario, ".png"))
+
+
