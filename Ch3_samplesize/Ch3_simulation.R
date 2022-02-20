@@ -475,22 +475,22 @@ bayas_fx <- function(samplesize = samplesize, B=100){
 # Loop over sample sizes ------------------
 ###
 
-samp.sizes
+# samp.sizes
+#
+# B <- 10
+# allthebayas <- NULL
+#
+# for(i in 1:length(samp.sizes)){
+#   ith_bayas <- bayas_fx(samplesize = samp.sizes[i], B = B)
+#   ith_bayas$sampsize <- samp.sizes[i]
+#   allthebayas <- rbind.data.frame(allthebayas, ith_bayas)
+# }
 
-B <- 10
-allthebayas <- NULL
 
-for(i in 1:length(samp.sizes)){
-  ith_bayas <- bayas_fx(samplesize = samp.sizes[i], B = B)
-  ith_bayas$sampsize <- samp.sizes[i]
-  allthebayas <- rbind.data.frame(allthebayas, ith_bayas)
-}
-
-
-B <- 10
+B <- 1000
 mbaya <- NULL
 
-for(m in 1:2){
+for(m in 1:100){
 
 
   allthebayas <- NULL
@@ -502,15 +502,15 @@ for(m in 1:2){
   }
 
   allthebayas$run <- paste0("run_", m)
-  kbaya <- rbind.data.frame(kbaya, allthebayas)
+  mbaya <- rbind.data.frame(mbaya, allthebayas)
 
 }
 
 
 
-save(mbayas, file = paste0("Ch3_samplesize/simdata/Bias_df", scenario, ".RData"))
+save(mbaya, file = paste0("Ch3_samplesize/simdata/Bias_df", scenario, ".RData"))
 
-kbaya %>%
+mbaya %>%
   mutate(sampsize = factor(sampsize),
          thresh = factor(thresh)) %>%
   group_by(run, sampsize, thresh) %>%
@@ -523,7 +523,26 @@ summ_bias %>%
   geom_point() +
   #scale_y_log10(name = "Log(bias_hat") +
   #scale_y_sqrt(name = "sqrt(bias_hat") +
-  theme_bw()
+  theme_bw() +
+  theme(legend.position = "none") -> baya1
+
+summ_bias %>%
+  ggplot(., aes(x= thresh, y = bias_hat, color = sampsize)) +
+  geom_point() +
+  scale_y_log10(name = "Log") +
+  theme_bw() +
+  theme(legend.position = "none") -> baya2
+
+summ_bias %>%
+  ggplot(., aes(x= thresh, y = bias_hat, color = sampsize)) +
+  geom_point() +
+  scale_y_sqrt(name = "sqrt") +
+  theme_bw() -> baya3
+
+top_baya <- plot_grid(baya1, baya2, ncol = 2)
+plot_grid(top_baya, baya3, nrow = 2)
+
+ggsave(paste0("Ch3_samplesize/Figures/Bias_hat", scenario, ".png"))
 
 
 
