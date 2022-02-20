@@ -243,7 +243,7 @@ ggsave(paste0("Ch3_samplesize/Figures/tail_ratio", scenario, ".png"))
 
 ## MC Samples -----------------------------------------------
 
-nreps <- 100
+nreps <- 1000
 gp.mles.reps <- data.frame(NULL)
 
 for(j in 1:nreps){
