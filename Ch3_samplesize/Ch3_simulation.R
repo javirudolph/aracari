@@ -477,7 +477,7 @@ bayas_fx <- function(samplesize = samplesize, B=100){
 
 samp.sizes
 
-B <- 1000
+B <- 10
 allthebayas <- NULL
 
 for(i in 1:length(samp.sizes)){
@@ -486,12 +486,34 @@ for(i in 1:length(samp.sizes)){
   allthebayas <- rbind.data.frame(allthebayas, ith_bayas)
 }
 
-save(allthebayas, file = paste0("Ch3_samplesize/simdata/Bias", scenario, ".RData"))
 
-allthebayas %>%
+B <- 10
+mbaya <- NULL
+
+for(m in 1:2){
+
+
+  allthebayas <- NULL
+
+  for(i in 1:length(samp.sizes)){
+    ith_bayas <- bayas_fx(samplesize = samp.sizes[i], B = B)
+    ith_bayas$sampsize <- samp.sizes[i]
+    allthebayas <- rbind.data.frame(allthebayas, ith_bayas)
+  }
+
+  allthebayas$run <- paste0("run_", m)
+  kbaya <- rbind.data.frame(kbaya, allthebayas)
+
+}
+
+
+
+save(mbayas, file = paste0("Ch3_samplesize/simdata/Bias_df", scenario, ".RData"))
+
+kbaya %>%
   mutate(sampsize = factor(sampsize),
          thresh = factor(thresh)) %>%
-  group_by(sampsize, thresh) %>%
+  group_by(run, sampsize, thresh) %>%
   summarise(bias_hat = (1/B)*sum(kth_theta-tru_theta),
             unbiased1 = tru_theta - bias_hat,
             unbiased2 = (2*tru_theta) - mean(kth_theta)) -> summ_bias
