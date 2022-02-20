@@ -360,7 +360,7 @@ ggsave(paste0("Ch3_samplesize/Figures/GPtail_mean", scenario, ".png"))
 
 # UNBIASED ESTIMATOR ------------------------------------------------
 
-samp.sizes
+## Testing ----------------------------------------------------------
 
 ith.n <- 1000 # the sample size
 ith.df <- data.frame(x = sample(simplsamps$data, ith.n))
@@ -397,10 +397,6 @@ for(j in 1:B){
 # Using the new mles, estimate the thetas for each threshold
 # Calculate the bias and the unbiased estimator for each threshold
 
-bias_fx <- function(B, theta_i, tru.theta){
-  (1/B)*sum(theta_i - tru.theta)
-}
-
 bias_df <- NULL
 
 for(k in 1:5){
@@ -415,21 +411,97 @@ for(k in 1:5){
   bias_df <- rbind.data.frame(bias_df, est_theta)
 }
 
+# Ok, so this works. Make a function to do over sample sizes
+
+# Bayas FXs ----------------------------
+
+bias_fx <- function(B, theta_i, tru.theta){
+  (1/B)*sum(theta_i - tru.theta)
+}
+
+bayas_fx <- function(samplesize = samplesize, B=100){
+  ith.n <- samplesize # the sample size
+  ith.df <- data.frame(x = sample(simplsamps$data, ith.n))
+
+  # Estimate the shape and scale parameters
+  ith.evd <- fevd(x = ith.df$x, type = "GP", threshold = 0)
+  ith.scale <- ith.evd$results$par[1]
+  ith.shape <- ith.evd$results$par[2]
 
 
+  # Using the same threshold values as above
+  # These are the true thetas for the different thresholds
+  ith.thetas <- pevd(thresh.vals, loc = 0, scale = ith.scale, shape= ith.shape, lower.tail = FALSE)
 
 
+  # with those parameters, simulate B samples
+  # Then for each sample get the mles
+
+  jth_df <- data.frame(jscale = 0, jshape = 0)
+
+  for(j in 1:B){
 
 
-bias_df %>%
-  group_by(thresh) %>%
-  summarise(kth_bias = bias_fx(B, kth_theta, tru_theta),
-            mean_theta = mean(kth_theta)) %>%
-  mutate(tru_theta = ith.thetas) -> summ_bias
+    jth.draw <- revd(n = ith.n, loc = 0, scale = ith.scale, shape = ith.shape)
+    jth.fit <- fevd(x = jth.draw, type = "GP", threshold = 0)
+    jth.scale <- jth.fit$results$par[1]
+    jth.shape <- jth.fit$results$par[2]
+
+    jth_df[j,] <- c(jth.scale, jth.shape)
+
+  }
+
+  # Using the new mles, estimate the thetas for each threshold
+  # Calculate the bias and the unbiased estimator for each threshold
+
+  bias_df <- NULL
+
+  for(k in 1:5){
+    kth_thresh <- thresh.vals[k]
+
+    est_theta <- jth_df %>%
+      mutate(kth_theta = map_dbl(1:B, function(y) pevd(kth_thresh, loc = 0,
+                                                       scale = jscale[y], shape = jshape[y], lower.tail = FALSE)))
+    est_theta$thresh <- kth_thresh
+    est_theta$tru_theta <- ith.thetas[k]
+
+    bias_df <- rbind.data.frame(bias_df, est_theta)
+  }
+
+  return(bias_df)
+}
+
+###
+# Loop over sample sizes ------------------
+###
+
+samp.sizes
+
+B <- 1000
+allthebayas <- NULL
+
+for(i in 1:length(samp.sizes)){
+  ith_bayas <- bayas_fx(samplesize = samp.sizes[i], B = B)
+  ith_bayas$sampsize <- samp.sizes[i]
+  allthebayas <- rbind.data.frame(allthebayas, ith_bayas)
+}
+
+save(allthebayas, file = paste0("Ch3_samplesize/simdata/Bias", scenario, ".RData"))
+
+allthebayas %>%
+  mutate(sampsize = factor(sampsize),
+         thresh = factor(thresh)) %>%
+  group_by(sampsize, thresh) %>%
+  summarise(bias_hat = (1/B)*sum(kth_theta-tru_theta),
+            unbiased1 = tru_theta - bias_hat,
+            unbiased2 = (2*tru_theta) - mean(kth_theta)) -> summ_bias
 
 summ_bias %>%
-  mutate(unbiased = tru_theta - kth_bias,
-         ubsd = 2*tru_theta - mean_theta)
+  ggplot(., aes(x= thresh, y = bias_hat, color = sampsize)) +
+  geom_point() +
+  #scale_y_log10(name = "Log(bias_hat") +
+  #scale_y_sqrt(name = "sqrt(bias_hat") +
+  theme_bw()
 
 
 
