@@ -360,32 +360,76 @@ ggsave(paste0("Ch3_samplesize/Figures/GPtail_mean", scenario, ".png"))
 
 # UNBIASED ESTIMATOR ------------------------------------------------
 
+samp.sizes
 
-ith.n <- 1000
+ith.n <- 1000 # the sample size
 ith.df <- data.frame(x = sample(simplsamps$data, ith.n))
+
+# Estimate the shape and scale parameters
 ith.evd <- fevd(x = ith.df$x, type = "GP", threshold = 0)
 ith.scale <- ith.evd$results$par[1]
 ith.shape <- ith.evd$results$par[2]
 
 
 # Using the same threshold values as above
-ith.theta <- pevd(thresh.vals, loc = 0, scale = ith.scale, shape= ith.shape, lower.tail = FALSE)
+# These are the true thetas for the different thresholds
+ith.thetas <- pevd(thresh.vals, loc = 0, scale = ith.scale, shape= ith.shape, lower.tail = FALSE)
+
 
 # with those parameters, simulate B samples
+# Then for each sample get the mles
 
 B <- 100
+jth_df <- data.frame(jscale = 0, jshape = 0)
 
-jth.draw <- revd(n = ith.n, loc = 0, scale = ith.scale, shape = ith.shape)
-jth.fit <- fevd(x = jth.draw, type = "GP", threshold = 0)
-jth.scale <- jth.fit$results$par[1]
-jth.shape <- jth.fit$results$par[2]
+for(j in 1:B){
 
 
+  jth.draw <- revd(n = ith.n, loc = 0, scale = ith.scale, shape = ith.shape)
+  jth.fit <- fevd(x = jth.draw, type = "GP", threshold = 0)
+  jth.scale <- jth.fit$results$par[1]
+  jth.shape <- jth.fit$results$par[2]
+
+  jth_df[j,] <- c(jth.scale, jth.shape)
+
+}
+
+# Using the new mles, estimate the thetas for each threshold
+# Calculate the bias and the unbiased estimator for each threshold
+
+bias_fx <- function(B, theta_i, tru.theta){
+  (1/B)*sum(theta_i - tru.theta)
+}
+
+bias_df <- NULL
+
+for(k in 1:5){
+  kth_thresh <- thresh.vals[k]
+
+  est_theta <- jth_df %>%
+    mutate(kth_theta = map_dbl(1:B, function(y) pevd(kth_thresh, loc = 0,
+                                                 scale = jscale[y], shape = jshape[y], lower.tail = FALSE)))
+  est_theta$thresh <- kth_thresh
+  est_theta$tru_theta <- ith.thetas[k]
+
+  bias_df <- rbind.data.frame(bias_df, est_theta)
+}
 
 
 
 
 
+
+
+bias_df %>%
+  group_by(thresh) %>%
+  summarise(kth_bias = bias_fx(B, kth_theta, tru_theta),
+            mean_theta = mean(kth_theta)) %>%
+  mutate(tru_theta = ith.thetas) -> summ_bias
+
+summ_bias %>%
+  mutate(unbiased = tru_theta - kth_bias,
+         ubsd = 2*tru_theta - mean_theta)
 
 
 
