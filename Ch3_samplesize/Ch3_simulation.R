@@ -87,13 +87,17 @@ top_row
 # Using purrr to get samples instead of a for loop. More efficient.
 
 # We are getting 50k samples from the mixture
-samp.size <- 50000
+# samp.size <- 50000
+
+#test run on Feb21
+samp.size <- 5000
+
 
 # These category samples are based on the weights
 cat.samp.sizes <- samp.size*pis
 
 # Using purrr to pull values from each component of the mixture according to the weights
-purrrsampls <- tibble(gID = c(1:4), pars) %>%
+purrrsampls <- tibble(gID = c(1:length(cat.samp.sizes)), pars) %>%
   mutate(data = purrr::map(gID, function(y) rlnorm(cat.samp.sizes[y], pars$meanlog[y], pars$sdlog[y])))
 
 # Making it an easier to read data frame with only the group ID (mixture components) and the sampled data
@@ -143,7 +147,20 @@ ggsave(paste0("Ch3_samplesize/Figures/Figure1", scenario,".png"))
 ## Probability of tails
 ###
 
+# These threshold values are too high and unrealistic
 thresh.vals <- c(100, 250,500,750,1000)
+
+# Explore the quantiles
+quantile(simplsamps$data)
+mean(simplsamps$data)
+quantile(simplsamps$data, 0.9)
+max(simplsamps$data)
+seq(50, 500, length.out = 5)
+
+# This threshold is between the 75-100% quantiles.
+thresh.vals <- seq(50, 500, length.out = 5)
+
+
 
 weighted.cdfs <- NULL
 for(y in 1:4){
@@ -158,7 +175,7 @@ tibble(thresh.vals) %>%
          w.cdfs = round(w.cdfs, 5),
          samp.n = map_dbl(1:length(thresh.vals), function(y) length(which(simplsamps$data >= thresh.vals[y]))),
          samp.p = signif(samp.n/samp.size, 3)) -> tru.cdfs
-
+tru.cdfs
 
 
 ###
@@ -511,13 +528,16 @@ for(m in 1:100){
 
 save(mbaya, file = paste0("Ch3_samplesize/simdata/Bias_df", scenario, ".RData"))
 
+
+# Need to check these, multiple rows are the same, the fx summarise isn't working well.
 mbaya %>%
   mutate(sampsize = factor(sampsize),
          thresh = factor(thresh)) %>%
   group_by(run, sampsize, thresh) %>%
   summarise(bias_hat = (1/B)*sum(kth_theta-tru_theta),
             unbiased1 = tru_theta - bias_hat,
-            unbiased2 = (2*tru_theta) - mean(kth_theta)) -> summ_bias
+            unbiased2 = (2*tru_theta) - mean(kth_theta)) %>%
+  distinct() -> summ_bias
 
 summ_bias %>%
   ggplot(., aes(x= thresh, y = bias_hat, color = sampsize)) +
