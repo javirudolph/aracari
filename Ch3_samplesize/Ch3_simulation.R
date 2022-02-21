@@ -513,15 +513,25 @@ for(m in 1:nruns){
 
 save(mbaya, file = paste0("Ch3_samplesize/simdata/Bias_df", scenario, ".RData"))
 
+# Ok, so the TRUE TRUE tail is the one coming from the original simulation using the mixtures
+tru.cdfs
+
+tru.cdfs %>%
+  dplyr::select(thresh.vals, samp.p) %>%
+  rename(thresh = thresh.vals,
+         orig.data.tail = samp.p) %>%
+  right_join(., mbaya, by = "thresh") -> mbaya
 
 # Need to check these, multiple rows are the same, the fx summarise isn't working well.
 mbaya %>%
   mutate(sampsize = factor(sampsize),
          thresh = factor(thresh)) %>%
   group_by(run, sampsize, thresh) %>%
-  summarise(bias_hat = (1/B)*sum(kth_theta-tru_theta),
+  summarise(bias_hat2 = (1/B)*sum(kth_theta-tru_theta),
+            bias_hat = (1/B)*sum(kth_theta-orig.data.tail),
             unbiased1 = tru_theta - bias_hat,
-            unbiased2 = (2*tru_theta) - mean(kth_theta)) %>%
+            unbiased2 = (2*tru_theta) - mean(kth_theta),
+            unbiased3 = (2*orig.data.tail) - mean(kth_theta)) %>%
   distinct() -> summ_bias
 
 summ_bias %>%
