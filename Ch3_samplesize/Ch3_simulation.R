@@ -510,9 +510,6 @@ for(m in 1:nruns){
 }
 
 
-
-save(mbaya, file = paste0("Ch3_samplesize/simdata/Bias_df", scenario, ".RData"))
-
 # Ok, so the TRUE TRUE tail is the one coming from the original simulation using the mixtures
 tru.cdfs
 
@@ -521,6 +518,8 @@ tru.cdfs %>%
   rename(thresh = thresh.vals,
          orig.data.tail = samp.p) %>%
   right_join(., mbaya, by = "thresh") -> mbaya
+
+save(mbaya, file = paste0("Ch3_samplesize/simdata/Bias_df", scenario, ".RData"))
 
 # Need to check these, multiple rows are the same, the fx summarise isn't working well.
 mbaya %>%
