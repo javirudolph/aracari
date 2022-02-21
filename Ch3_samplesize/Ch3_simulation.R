@@ -188,7 +188,9 @@ library(extRemes)
 thresh.vals <- c(50, 75, 100, 150, 250, 500)
 
 samp.sizes <- c(80, 200, 500, 800, 1000, 1600)
-fevd.mles <- data.frame(samp.size = rep(samp.sizes, length(thresh.vals)), threshold = thresh.vals, scale = 0, shape = 0, nllh = 0)
+
+
+fevd.mles <- data.frame(expand.grid(threshold = thresh.vals, samp.size = samp.sizes))
 for(i in 1:nrow(fevd.mles)){
   ith.n        <- fevd.mles$samp.size[i]
   ith.samples  <- data.frame(x = sample(simplsamps$data, ith.n))
@@ -295,8 +297,8 @@ fevd.mles %>%
                             threshold = factor(threshold),
                             type = "est") %>%
                      dplyr::select(k, alpha, samp.size, threshold, type)) %>%
-  ggplot(., aes(x = alpha, y = k, color = threshold)) +
-  facet_wrap(~samp.size) +
+  ggplot(., aes(x = alpha, y = k, color = type)) +
+  #facet_wrap(~samp.size) +
   geom_point(size = 2) +
   labs(title = "Alpha/K comparison") +
   theme_bw()
