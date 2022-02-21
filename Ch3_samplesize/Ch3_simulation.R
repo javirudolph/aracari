@@ -189,6 +189,7 @@ samp.sizes <- c(80, 200, 500, 800, 1000, 1600)
 # fevd.mles <- data.frame(samp.size = rep(samp.sizes, length(thresh.vals)), threshold = thresh.vals, scale = 0, shape = 0, nllh = 0)
 
 fevd.mles <- data.frame(samp.size = samp.sizes)
+est.tails <- data.frame(samp.size = rep(samp.sizes, length(thresh.vals)), threshold = thresh.vals)
 
 for(i in 1:nrow(fevd.mles)){
   ith.n        <- fevd.mles$samp.size[i]
@@ -216,8 +217,16 @@ for(i in 1:nrow(fevd.mles)){
   fevd.mles$alpha[i] <- ith.alpha
   fevd.mles$ks[i] <- ith.k
 
-  # ith.thresh   <- fevd.mles$threshold[i]
-  # fevd.mles$gp.tail[i] <- pextRemes(ith.fit, ith.thresh, lower.tail = FALSE)
+  for(j in 1:nrow(est.tails)){
+    jth.thresh   <- est.tails$threshold[j]
+
+    # true tails
+    est.tails$over.t[j] <- length(which(ith.samples$x >= jth.thresh))
+    est.tails$tru.tail[j] <- length(which(ith.samples$x >= jth.thresh))/est.tails$samp.size[j]
+    est.tails$gp.tail[j] <- pextRemes(ith.fit, jth.thresh, lower.tail = FALSE)
+    est.tails$st.lomax[j] <- lomax.st(jth.thresh, alpha = ith.alpha, k = ith.k)
+  }
+
 }
 
 # Plot parameter space ---------------------------
