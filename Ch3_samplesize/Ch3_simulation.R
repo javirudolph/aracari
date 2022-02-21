@@ -2,19 +2,19 @@
 ## DATA GENERATION CH3 ------------------------------------
 ###
 
-# Libraries -----------------------------------------------
-#set.seed(20220201)
-
-library(aracari)
-library(dplyr)
-library(ggplot2)
-library(cowplot)
-library(tidyr)
-library(purrr)
-library(fitdistrplus)
-
-## Functions ----------------------------------------------------
-source("Ch3_samplesize/Ch3_functions.R")
+# # Libraries -----------------------------------------------
+# #set.seed(20220201)
+#
+# library(aracari)
+# library(dplyr)
+# library(ggplot2)
+# library(cowplot)
+# library(tidyr)
+# library(purrr)
+# library(fitdistrplus)
+#
+# ## Functions ----------------------------------------------------
+# source("Ch3_samplesize/Ch3_functions.R")
 
 # MIXTURE MODEL --------------------------------------------------
 ## Mixture components --------------------------------------
@@ -415,6 +415,7 @@ for(k in 1:5){
 
 # Bayas FXs ----------------------------
 
+# I think I need to add threshvalues to the arguments in the function.
 bias_fx <- function(B, theta_i, tru.theta){
   (1/B)*sum(theta_i - tru.theta)
 }
@@ -456,7 +457,7 @@ bayas_fx <- function(samplesize = samplesize, B=100){
 
   bias_df <- NULL
 
-  for(k in 1:5){
+  for(k in 1:length(thresh.vals)){
     kth_thresh <- thresh.vals[k]
 
     est_theta <- jth_df %>%
