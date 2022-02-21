@@ -203,7 +203,7 @@ for(i in 1:nrow(fevd.mles)){
   fevd.mles$nllh[i]  <- nll.hat
   ith.thresh   <- fevd.mles$threshold[i]
   ith.tail <- length(which(ith.samples$x >= ith.thresh))
-  fevd.mles$tru.tail[i] <- ith.tail
+  fevd.mles$tru.tail[i] <- ith.tail/ith.n
   fevd.mles$gp.tail[i] <- pextRemes(ith.fit, ith.thresh, lower.tail = FALSE)
 
   ith.lomax <- lomax.glm(formula = ~1, ith.samples, ith.samples$x)
@@ -304,46 +304,44 @@ gp.mles.reps <- data.frame(NULL)
 
 for(j in 1:nreps){
 
-  ith.mle.df <- data.frame(samp.size = rep(samp.sizes, length(thresh.vals)), threshold = thresh.vals,
-                           scale = 0, shape = 0, nllh = 0, gp.tail = 0, rep = 0)
-
-  for(i in 1:nrow(ith.mle.df)){
-    ith.n        <- ith.mle.df$samp.size[i]
+  ith.mles.df <- data.frame(expand.grid(threshold = thresh.vals, samp.size = samp.sizes))
+  for(i in 1:nrow(ith.mles.df)){
+    ith.n        <- ith.mles.df$samp.size[i]
     ith.samples  <- data.frame(x = sample(simplsamps$data, ith.n))
-
     # So, setting the threshold to 0 so we can compare to Lomax.
-
     ith.fit      <- fevd(ith.samples$x, threshold = 0, type = "GP")
-
     mles          <- summary(ith.fit)$par
     nll.hat       <- summary(ith.fit)$nllh
     BIC.mod       <- summary(ith.fit)$BIC
+    ith.mles.df$scale[i] <- mles[1]
+    ith.mles.df$shape[i] <- mles[2]
+    ith.mles.df$nllh[i]  <- nll.hat
+    ith.thresh   <- ith.mles.df$threshold[i]
+    ith.tail <- length(which(ith.samples$x >= ith.thresh))
+    ith.mles.df$tru.tail[i] <- ith.tail/ith.n
+    ith.mles.df$gp.tail[i] <- pextRemes(ith.fit, ith.thresh, lower.tail = FALSE)
 
-    ith.mle.df$scale[i] <- mles[1]
-    ith.mle.df$shape[i] <- mles[2]
-    ith.mle.df$nllh[i]  <- nll.hat
-    ith.mle.df$rep[i] <- paste0("rep", j)
-
-    ith.thresh   <- ith.mle.df$threshold[i]
-    ith.mle.df$gp.tail[i] <- pextRemes(ith.fit, ith.thresh, lower.tail = FALSE)
+    ith.lomax <- lomax.glm(formula = ~1, ith.samples, ith.samples$x)
+    ith.alpha <- ith.lomax$alphas.hat[1]
+    ith.k     <- ith.lomax$k.hat
+    ith.mles.df$alpha[i] <- ith.alpha
+    ith.mles.df$k[i] <- ith.k
+    ith.mles.df$lomax.tail[i] <- lomax.st(ith.thresh, alpha = ith.alpha, k = ith.k)
+    ith.mles.df$rep[i] <- paste0("rep", j)
 
   }
 
-  gp.mles.reps <- rbind.data.frame(gp.mles.reps, ith.mle.df)
+  gp.mles.reps <- rbind.data.frame(gp.mles.reps, ith.mles.df)
 
 }
 
-
-
-gp.mles.reps$tru.tail <- tru.cdfs$w.cdfs
+gp.mles.reps$mix.cdf.tail <- tru.cdfs$w.cdfs
+gp.mles.reps$mix.n.tail <- tru.cdfs$samp.p
 
 
 gp.mles.reps %>%
-  mutate(k = 1/shape,
-         alpha = scale*k,
-         lomax.tail = lomax.st(threshold, alpha, k),
-         lm.tail.ratio = lomax.tail/tru.tail,
-         gp.tail.ratio = gp.tail/tru.tail,
+  mutate(lomax.tail.ratio = lomax.tail/mix.n.tail,
+         gp.tail.ratio = gp.tail/mix.n.tail,
          threshold = factor(threshold),
          samp.size = factor(samp.size)) -> gp.mles.reps
 
@@ -360,6 +358,13 @@ gp.mles.reps %>%
   lims(y = c(-0.1, 5)) +
   theme_bw()
 
+# gp.mles.reps %>%
+#   ggplot(., aes(x = samp.size, y = lomax.tail.ratio, color = threshold)) +
+#   geom_boxplot() +
+#   labs(y = "GP tail.ratio") +
+#   lims(y = c(-0.1, 5)) +
+#   theme_bw()
+
 ggsave(paste0("Ch3_samplesize/Figures/GPtail_boxplt", scenario, ".png"))
 
 # Mean and Standard Error plots -------------
@@ -367,7 +372,8 @@ ggsave(paste0("Ch3_samplesize/Figures/GPtail_boxplt", scenario, ".png"))
 head(gp.mles.reps)
 
 gp.mles.reps %>%
-  mutate(sqrd_diff = (gp.tail-tru.tail)^2) %>%
+  filter(gp.tail != 0) %>%
+  mutate(sqrd_diff = (gp.tail-mix.n.tail)^2) %>%
   group_by(samp.size, threshold) %>%
   summarise(mean.ratio = mean(gp.tail.ratio),
             ste.gp.ratio = sd(gp.tail.ratio)/sqrt(length(gp.tail.ratio)),
@@ -378,11 +384,11 @@ tail.ratio.means %>%
   mutate(lo = mean.ratio - ste.gp.ratio,
          hi = mean.ratio + ste.gp.ratio) %>%
   ggplot(., aes(color = threshold,
-                y = mean.ratio,
-                # y = mse,
+                # y = mean.ratio,
+                y = mse,
                 x = samp.size)) +
   geom_jitter(size = 2, width = 0.2, alpha = 0.8) +
-  #scale_y_log10(name = "Log(mean.ratio)") +
+  scale_y_log10(name = "Log(mse)") +
   theme_bw() -> a
 a
 
@@ -391,26 +397,18 @@ tail.ratio.means %>%
   mutate(lo = mean.ratio - ste.gp.ratio,
          hi = mean.ratio + ste.gp.ratio) %>%
   ggplot(., aes(x = threshold,
-                y = mean.ratio,
-                # y = mse,
-                color = samp.size)) +
-  # facet_wrap(~samp.size) +
-  # geom_point() +
-  # geom_errorbar(aes(ymin = lo, ymax = hi), width = 0) +
-  geom_jitter(size = 2, width = 0.2, alpha = 0.8) +
-  #scale_y_log10(name = "Log(mean.ratio)") +
+                y = mean.ratio)) +
+  facet_wrap(~samp.size) +
+  geom_point() +
+  geom_errorbar(aes(ymin = lo, ymax = hi), width = 0) +
+  # scale_y_log10(name = "Log(mean.ratio)") +
   theme_bw() -> b
 b
 
-top <- plot_grid(a,b, ncol=2)
+plot_grid(a,b, nrow=2, rel_heights = c(1,1.5))
 
-bottom <- plot_grid(a + scale_y_log10(name = "Log(mean.ratio)"), b + scale_y_log10(name = "Log(mean.ratio)"))
-
-plot_grid(top, bottom, nrow =2)
 
 ggsave(paste0("Ch3_samplesize/Figures/GPtail_mean", scenario, ".png"))
-
-
 
 
 
