@@ -184,70 +184,138 @@ tru.cdfs
 
 library(extRemes)
 
+# new thresholds
+thresh.vals <- c(50, 75, 100, 150, 250, 500)
+
 samp.sizes <- c(80, 200, 500, 800, 1000, 1600)
-
-# fevd.mles <- data.frame(samp.size = rep(samp.sizes, length(thresh.vals)), threshold = thresh.vals, scale = 0, shape = 0, nllh = 0)
-
-fevd.mles <- data.frame(samp.size = samp.sizes)
-est.tails <- data.frame(samp.size = rep(samp.sizes, length(thresh.vals)), threshold = thresh.vals)
-
+fevd.mles <- data.frame(samp.size = rep(samp.sizes, length(thresh.vals)), threshold = thresh.vals, scale = 0, shape = 0, nllh = 0)
 for(i in 1:nrow(fevd.mles)){
   ith.n        <- fevd.mles$samp.size[i]
   ith.samples  <- data.frame(x = sample(simplsamps$data, ith.n))
-
   # So, setting the threshold to 0 so we can compare to Lomax.
-
   ith.fit      <- fevd(ith.samples$x, threshold = 0, type = "GP")
-
-  ## Lomax fit here
-  ith.lomax <- lomax.glm(formula = ~1, ith.samples, ith.samples$x)
-  ith.alpha <- ith.lomax$alphas.hat[1]
-  ith.k     <- ith.lomax$k.hat
-  ##
-
   mles          <- summary(ith.fit)$par
   nll.hat       <- summary(ith.fit)$nllh
   BIC.mod       <- summary(ith.fit)$BIC
-
   fevd.mles$scale[i] <- mles[1]
   fevd.mles$shape[i] <- mles[2]
   fevd.mles$nllh[i]  <- nll.hat
+  ith.thresh   <- fevd.mles$threshold[i]
+  ith.tail <- length(which(ith.samples$x >= ith.thresh))
+  fevd.mles$tru.tail[i] <- ith.tail
+  fevd.mles$gp.tail[i] <- pextRemes(ith.fit, ith.thresh, lower.tail = FALSE)
 
-  ## Lomax params
+  ith.lomax <- lomax.glm(formula = ~1, ith.samples, ith.samples$x)
+  ith.alpha <- ith.lomax$alphas.hat[1]
+  ith.k     <- ith.lomax$k.hat
   fevd.mles$alpha[i] <- ith.alpha
-  fevd.mles$ks[i] <- ith.k
-
-  for(j in 1:nrow(est.tails)){
-    jth.thresh   <- est.tails$threshold[j]
-
-    # true tails
-    est.tails$over.t[j] <- length(which(ith.samples$x >= jth.thresh))
-    est.tails$tru.tail[j] <- length(which(ith.samples$x >= jth.thresh))/est.tails$samp.size[j]
-    est.tails$gp.tail[j] <- pextRemes(ith.fit, jth.thresh, lower.tail = FALSE)
-    est.tails$st.lomax[j] <- lomax.st(jth.thresh, alpha = ith.alpha, k = ith.k)
-  }
+  fevd.mles$k[i] <- ith.k
+  fevd.mles$lomax.tail[i] <- lomax.st(ith.thresh, alpha = ith.alpha, k = ith.k)
 
 }
 
-# Plot parameter space ---------------------------
+#### Different approach ------------
+
+# samp.sizes <- c(80, 200, 500, 800, 1000, 1600)
+
+# fevd.mles <- data.frame(samp.size = samp.sizes)
+# est.tails <- data.frame(samp.size = rep(samp.sizes, length(thresh.vals)), threshold = thresh.vals)
+#
+# for(i in 1:nrow(fevd.mles)){
+#   ith.n        <- fevd.mles$samp.size[i]
+#   ith.samples  <- data.frame(x = sample(simplsamps$data, ith.n))
+#
+#   # So, setting the threshold to 0 so we can compare to Lomax.
+#
+#   ith.fit      <- fevd(ith.samples$x, threshold = 0, type = "GP")
+#
+#   ## Lomax fit here
+#   ith.lomax <- lomax.glm(formula = ~1, ith.samples, ith.samples$x)
+#   ith.alpha <- ith.lomax$alphas.hat[1]
+#   ith.k     <- ith.lomax$k.hat
+#   ##
+#
+#   mles          <- summary(ith.fit)$par
+#   nll.hat       <- summary(ith.fit)$nllh
+#   BIC.mod       <- summary(ith.fit)$BIC
+#
+#   fevd.mles$scale[i] <- mles[1]
+#   fevd.mles$shape[i] <- mles[2]
+#   fevd.mles$nllh[i]  <- nll.hat
+#
+#   ## Lomax params
+#   fevd.mles$alpha[i] <- ith.alpha
+#   fevd.mles$ks[i] <- ith.k
+#
+#   for(j in 1:nrow(est.tails)){
+#     jth.thresh   <- est.tails$threshold[j]
+#
+#     # true tails
+#     est.tails$over.t[j] <- length(which(ith.samples$x >= jth.thresh))
+#     est.tails$tru.tail[j] <- length(which(ith.samples$x >= jth.thresh))/est.tails$samp.size[j]
+#     est.tails$gp.tail[j] <- pextRemes(ith.fit, jth.thresh, lower.tail = FALSE)
+#     est.tails$st.lomax[j] <- lomax.st(jth.thresh, alpha = ith.alpha, k = ith.k)
+#   }
+#
+# }
+
+
+
+
+### Plot parameter space ---------------------------
+
 fevd.mles %>%
   mutate(samp.size = factor(samp.size),
          threshold = factor(threshold)) %>%
-  ggplot(., aes(x = shape, y = scale, color = threshold
-                #, shape = samp.size
-                )) +
+  ggplot(., aes(x = shape, y = scale, color = threshold)) +
   facet_wrap(~samp.size) +
-  geom_point() +
+  geom_point(size = 2) +
+  labs(title = "GP fits") +
   theme_bw()
+
+fevd.mles %>%
+  mutate(samp.size = factor(samp.size),
+         threshold = factor(threshold)) %>%
+  ggplot(., aes(x = alpha, y = k, color = threshold)) +
+  facet_wrap(~samp.size) +
+  geom_point(size = 2) +
+  labs(title = "Lomax fits") +
+  theme_bw()
+
+### Compare the fitted lomax with estimated parameters using the GP mles
+
+fevd.mles %>%
+  transmute(k = 1/shape,
+            alpha = scale*k,
+            samp.size = factor(samp.size),
+            threshold = factor(threshold),
+            type = "calc") %>%
+  rbind.data.frame(., fevd.mles %>%
+                     mutate(samp.size = factor(samp.size),
+                            threshold = factor(threshold),
+                            type = "est") %>%
+                     dplyr::select(k, alpha, samp.size, threshold, type)) %>%
+  ggplot(., aes(x = alpha, y = k, color = threshold)) +
+  facet_wrap(~samp.size) +
+  geom_point(size = 2) +
+  labs(title = "Alpha/K comparison") +
+  theme_bw()
+
+
+
+
+
+
+
 
 # Plot tail estimates -----------------------------
 
-fevd.mles$tru.tail <- tru.cdfs$w.cdfs
+fevd.mles$est.tail <- tru.cdfs$w.cdfs
 
 fevd.mles %>%
   mutate(threshold = factor(threshold),
          samp.size = factor(samp.size),
-         tail.ratio = gp.tail/tru.tail) %>%
+         tail.ratio = gp.tail/est.tail) %>%
   ggplot(., aes(x = samp.size, y = tail.ratio, color = threshold)) +
   geom_point() +
   labs(y = "GP tail.ratio") +
@@ -262,8 +330,8 @@ a
 
 
 fevd.mles %>%
-  mutate(k = 1/shape,
-         alpha = scale*k,
+  mutate(calc.k = 1/shape,
+         calc.alpha = scale*calc.k,
          lomax.tail = lomax.st(threshold, alpha, k),
          tail.ratio = lomax.tail/tru.tail,
          threshold = factor(threshold),
