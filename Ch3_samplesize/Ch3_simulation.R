@@ -186,7 +186,9 @@ library(extRemes)
 
 samp.sizes <- c(80, 200, 500, 800, 1000, 1600)
 
-fevd.mles <- data.frame(samp.size = rep(samp.sizes, length(thresh.vals)), threshold = thresh.vals, scale = 0, shape = 0, nllh = 0)
+# fevd.mles <- data.frame(samp.size = rep(samp.sizes, length(thresh.vals)), threshold = thresh.vals, scale = 0, shape = 0, nllh = 0)
+
+fevd.mles <- data.frame(samp.size = samp.sizes)
 
 for(i in 1:nrow(fevd.mles)){
   ith.n        <- fevd.mles$samp.size[i]
@@ -196,6 +198,12 @@ for(i in 1:nrow(fevd.mles)){
 
   ith.fit      <- fevd(ith.samples$x, threshold = 0, type = "GP")
 
+  ## Lomax fit here
+  ith.lomax <- lomax.glm(formula = ~1, ith.samples, ith.samples$x)
+  ith.alpha <- ith.lomax$alphas.hat[1]
+  ith.k     <- ith.lomax$k.hat
+  ##
+
   mles          <- summary(ith.fit)$par
   nll.hat       <- summary(ith.fit)$nllh
   BIC.mod       <- summary(ith.fit)$BIC
@@ -204,8 +212,12 @@ for(i in 1:nrow(fevd.mles)){
   fevd.mles$shape[i] <- mles[2]
   fevd.mles$nllh[i]  <- nll.hat
 
-  ith.thresh   <- fevd.mles$threshold[i]
-  fevd.mles$gp.tail[i] <- pextRemes(ith.fit, ith.thresh, lower.tail = FALSE)
+  ## Lomax params
+  fevd.mles$alpha[i] <- ith.alpha
+  fevd.mles$ks[i] <- ith.k
+
+  # ith.thresh   <- fevd.mles$threshold[i]
+  # fevd.mles$gp.tail[i] <- pextRemes(ith.fit, ith.thresh, lower.tail = FALSE)
 }
 
 # Plot parameter space ---------------------------
