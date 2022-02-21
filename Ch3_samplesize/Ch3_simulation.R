@@ -243,7 +243,7 @@ ggsave(paste0("Ch3_samplesize/Figures/", scenario,"param_space.png"))
 
 
 
-### Compare the fitted lomax with estimated parameters using the GP mles
+### Compare the fitted lomax with estimated parameters using the GP mles ----
 
 
 fevd.mles %>%
@@ -268,11 +268,12 @@ fevd.mles %>%
 # Plot tail estimates -----------------------------
 
 fevd.mles$mix.cdf.tail <- tru.cdfs$w.cdfs
+fevd.mles$mix.n.tail <- tru.cdfs$samp.p
 
 fevd.mles %>%
   mutate(threshold = factor(threshold),
          samp.size = factor(samp.size),
-         tail.ratio = gp.tail/est.tail) %>%
+         tail.ratio = gp.tail/mix.n.tail) %>%
   ggplot(., aes(x = samp.size, y = tail.ratio, color = threshold)) +
   geom_point() +
   labs(y = "GP tail.ratio") +
@@ -280,33 +281,25 @@ fevd.mles %>%
   theme(legend.position = "none") -> a
 a
 
-# This is the conversion to a Lomax using the GP parameters.
-# Then calculate the tail using the lomax function
-# And getting the ratio
-# We get the same plot as above
-
 
 fevd.mles %>%
-  mutate(calc.k = 1/shape,
-         calc.alpha = scale*calc.k,
-         lomax.tail = lomax.st(threshold, alpha, k),
-         tail.ratio = lomax.tail/tru.tail,
-         threshold = factor(threshold),
-         samp.size = factor(samp.size)) %>%
+  mutate(threshold = factor(threshold),
+         samp.size = factor(samp.size),
+         tail.ratio = lomax.tail/mix.n.tail) %>%
   ggplot(., aes(x = samp.size, y = tail.ratio, color = threshold)) +
   geom_point() +
-  labs(y = "est Lomax tail.ratio") +
+  labs(y = "Lomax tail.ratio") +
   theme_bw() -> b
 b
 
-plot_grid(a,b, rel_widths = c(0.8, 1))
+plot_grid(a,b, rel_widths = c(0.7, 1))
 ggsave(paste0("Ch3_samplesize/Figures/tail_ratio", scenario, ".png"))
 
 
 
 ## MC Samples -----------------------------------------------
 
-nreps <- 1000
+nreps <- 10
 gp.mles.reps <- data.frame(NULL)
 
 for(j in 1:nreps){
