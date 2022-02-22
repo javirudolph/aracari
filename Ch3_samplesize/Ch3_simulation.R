@@ -274,7 +274,7 @@ ggsave(paste0("Ch3_samplesize/Figures/tail_ratio", scenario, ".png"))
 ## MC Samples -----------------------------------------------
 
 #CHANGE nreps ================
-nreps <- 10
+nreps <- 1000
 
 gp.mles.reps <- data.frame(NULL)
 
@@ -488,8 +488,8 @@ bayas_fx <- function(samplesize = 100, B=10, thresh.vals = thresh.vals, data.vec
 # }
 
 mbaya <- NULL
-nruns <- 5
-B <- 10
+nruns <- 100
+B <- 1000
 
 for(m in 1:nruns){
 
