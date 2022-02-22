@@ -336,8 +336,8 @@ gp.mles.reps %>%
   # geom_point()
   labs(y = "GP - i/theta") +
   #lims(y = c(-0.1, 5)) +
-  theme_bw()->a
-a
+  theme_bw()->box1
+box1
 #
 #
 # gp.mles.reps %>%
@@ -524,7 +524,8 @@ mbaya %>%
          thresh = factor(thresh),
          theta.diff = jth_theta-ith.theta.hats) %>%
   group_by(run, sampsize, thresh) %>%
-  summarise(theta_hat = mean(ith.theta.hats),
+  summarise(theta = mean(theta),
+            theta_hat = mean(ith.theta.hats),
             bias_hat = (1/B)*sum(theta.diff),
             theta_bar = (2*theta_hat) - mean(jth_theta)) -> summ_bias
 
@@ -554,5 +555,27 @@ plot_grid(top_baya, baya3, nrow = 2)
 
 ggsave(paste0("Ch3_samplesize/Figures/Bias_hat", scenario, ".png"))
 
+# True theta vs theta bar
+
+summ_bias %>%
+  ggplot(., aes(x = theta, y = theta_bar, color = thresh)) +
+  geom_point() +
+  theme_bw() -> a
+
+summ_bias %>%
+  ggplot(., aes(x = theta, y = theta_bar, color = sampsize)) +
+  geom_point() +
+  theme_bw() -> b
+
+summ_bias %>%
+  ggplot(., aes(x = sampsize, y = theta_bar/theta, color = thresh)) +
+  geom_boxplot() +
+  theme_bw() -> c
+
+toprow <- plot_grid(a, b, nrow = 1)
+
+plot_grid(toprow, c, nrow=2)
+
+ggsave(paste0("Ch3_samplesize/Figures/theta_bar", scenario, ".png"))
 
 
