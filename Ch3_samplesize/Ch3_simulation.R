@@ -283,7 +283,7 @@ for(j in 1:nreps){
   ith.mles.df <- data.frame(expand.grid(threshold = thresh.vals, samp.size = samp.sizes))
   for(i in 1:nrow(ith.mles.df)){
     ith.n        <- ith.mles.df$samp.size[i]
-    ith.samples  <- data.frame(x = sample(simplsamps$data, ith.n))
+    ith.samples  <- data.frame(x = sample(simplsamps$x.samps, ith.n))
     # So, setting the threshold to 0 so we can compare to Lomax.
     ith.fit      <- fevd(ith.samples$x, threshold = 0, type = "GP")
     mles          <- summary(ith.fit)$par
@@ -294,7 +294,7 @@ for(j in 1:nreps){
     ith.mles.df$nllh[i]  <- nll.hat
     ith.thresh   <- ith.mles.df$threshold[i]
     ith.tail <- length(which(ith.samples$x >= ith.thresh))
-    ith.mles.df$tru.tail[i] <- ith.tail/ith.n
+    ith.mles.df$samps.tail[i] <- ith.tail/ith.n
     ith.mles.df$gp.tail[i] <- pextRemes(ith.fit, ith.thresh, lower.tail = FALSE)
 
     ith.lomax <- lomax.glm(formula = ~1, ith.samples, ith.samples$x)
@@ -303,6 +303,12 @@ for(j in 1:nreps){
     ith.mles.df$alpha[i] <- ith.alpha
     ith.mles.df$k[i] <- ith.k
     ith.mles.df$lomax.tail[i] <- lomax.st(ith.thresh, alpha = ith.alpha, k = ith.k)
+
+    fevd.mles$calc.k[i] <- 1/mles[2]
+    fevd.mles$calc.alpha[i] <- mles[1]/mles[2]
+    fevd.mles$calc.tail[i] <- lomax.st(ith.thresh, alpha = mles[1]/mles[2], k = 1/mles[2])
+
+
     ith.mles.df$rep[i] <- paste0("rep", j)
 
   }
@@ -311,60 +317,72 @@ for(j in 1:nreps){
 
 }
 
-gp.mles.reps$mix.cdf.tail <- tru.cdfs$w.cdfs
-gp.mles.reps$mix.n.tail <- tru.cdfs$samp.p
-
-
-gp.mles.reps %>%
-  mutate(lomax.tail.ratio = lomax.tail/mix.n.tail,
-         gp.tail.ratio = gp.tail/mix.n.tail,
-         threshold = factor(threshold),
-         samp.size = factor(samp.size)) -> gp.mles.reps
+gp.mles.reps$w.cdfs <- tru.cdfs$w.cdfs
+gp.mles.reps$theta <- tru.cdfs$theta
 
 
 save(gp.mles.reps, file = paste0("Ch3_samplesize/simdata/GPmles", scenario, ".RData"))
 
 
-# Boxplots -------------------
+# Ratio Boxplots -------------------
 
 gp.mles.reps %>%
+  mutate(lomax.tail.ratio = lomax.tail/theta,
+         gp.tail.ratio = gp.tail/theta,
+         threshold = factor(threshold),
+         samp.size = factor(samp.size)) %>%
   ggplot(., aes(x = samp.size, y = gp.tail.ratio, color = threshold)) +
   geom_boxplot() +
-  labs(y = "GP tail.ratio") +
-  lims(y = c(-0.1, 5)) +
-  theme_bw()
-
+  # geom_point()
+  labs(y = "GP - i/theta") +
+  #lims(y = c(-0.1, 5)) +
+  theme_bw()->a
+a
+#
+#
 # gp.mles.reps %>%
-#   ggplot(., aes(x = samp.size, y = lomax.tail.ratio, color = threshold)) +
+#   mutate(gp.tail.ratio = gp.tail/samps.tail,
+#          threshold = factor(threshold),
+#          samp.size = factor(samp.size)) %>%
+#   ggplot(., aes(x = samp.size, y = gp.tail.ratio, color = threshold)) +
 #   geom_boxplot() +
-#   labs(y = "GP tail.ratio") +
-#   lims(y = c(-0.1, 5)) +
-#   theme_bw()
+#   labs(y = "GP - i/samps.tail") +
+#   #lims(y = c(-0.1, 5)) +
+#   theme_bw()->b
+# b
+#
+# c <- get_legend(b)
+#
+# plot_grid(a + theme(legend.position = "none"),
+#           b + theme(legend.position = "none"),
+#           c, rel_widths = c(1,1,0.2), ncol = 3)
 
-ggsave(paste0("Ch3_samplesize/Figures/GPtail_boxplt", scenario, ".png"))
+
+ggsave(paste0("Ch3_samplesize/Figures/GPtail_boxplt", scenario, ".png"), width = 10, height = 4)
 
 # Mean and Standard Error plots -------------
 
 head(gp.mles.reps)
 
 gp.mles.reps %>%
-  filter(gp.tail != 0) %>%
-  mutate(sqrd_diff = (gp.tail-mix.n.tail)^2) %>%
+  mutate(gp.tail.ratio = gp.tail/theta,
+         threshold = factor(threshold),
+         samp.size = factor(samp.size)) %>%
+  #filter(gp.tail != 0) %>%
+  mutate(sqrd_diff = (gp.tail-theta)^2) %>%
   group_by(samp.size, threshold) %>%
   summarise(mean.ratio = mean(gp.tail.ratio),
             ste.gp.ratio = sd(gp.tail.ratio)/sqrt(length(gp.tail.ratio)),
             mse = (1/length(gp.tail.ratio))*sum(sqrd_diff)) -> tail.ratio.means
-
+tail.ratio.means
 
 tail.ratio.means %>%
-  mutate(lo = mean.ratio - ste.gp.ratio,
-         hi = mean.ratio + ste.gp.ratio) %>%
   ggplot(., aes(color = threshold,
-                # y = mean.ratio,
                 y = mse,
                 x = samp.size)) +
   geom_jitter(size = 2, width = 0.2, alpha = 0.8) +
   scale_y_log10(name = "Log(mse)") +
+  labs(subtitle = "Is MSE smaller or is it driven by zeroes?") +
   theme_bw() -> a
 a
 
@@ -397,7 +415,7 @@ bias_fx <- function(B, theta_i, tru.theta){
   (1/B)*sum(theta_i - tru.theta)
 }
 
-bayas_fx <- function(samplesize = 100, B=10, thresh.vals = thresh.vals, data.vec = simplsamps$data){
+bayas_fx <- function(samplesize = 100, B=10, thresh.vals = thresh.vals, data.vec = simplsamps$x.samps){
   ith.n <- samplesize # the sample size
   ith.df <- data.frame(x = sample(data.vec, ith.n))
 
@@ -411,7 +429,7 @@ bayas_fx <- function(samplesize = 100, B=10, thresh.vals = thresh.vals, data.vec
 
   # Using the same threshold values as above
   # These are the true thetas for the different thresholds
-  ith.thetas <- pevd(thresh.vals, loc = 0, scale = ith.scale, shape= ith.shape, lower.tail = FALSE)
+  ith.theta.hats <- pevd(thresh.vals, loc = 0, scale = ith.scale, shape= ith.shape, lower.tail = FALSE)
 
 
   # with those parameters, simulate B samples
@@ -439,14 +457,16 @@ bayas_fx <- function(samplesize = 100, B=10, thresh.vals = thresh.vals, data.vec
   for(k in 1:length(thresh.vals)){
     kth_thresh <- thresh.vals[k]
 
-    est_theta <- jth_df %>%
-      mutate(kth_theta = map_dbl(1:B, function(y) pevd(kth_thresh, loc = 0,
+    k.frame <- jth_df %>%
+      mutate(jth_theta = map_dbl(1:B, function(y) pevd(kth_thresh, loc = 0,
                                                        scale = jscale[y], shape = jshape[y], lower.tail = FALSE)))
-    est_theta$thresh <- kth_thresh
-    est_theta$theta_i <- ith.thetas[k]
-    est_theta$tailp_i <- ith.tail[k]
+    k.frame$thresh <- kth_thresh
+    k.frame$ith.theta.hats <- ith.theta.hats[k]
+    k.frame$ith.tail <- ith.tail[k]
+    k.frame$ith.shape <- ith.shape
+    k.frame$ith.scale <- ith.scale
 
-    bias_df <- rbind.data.frame(bias_df, est_theta)
+    bias_df <- rbind.data.frame(bias_df, k.frame)
   }
 
   return(bias_df)
@@ -477,7 +497,7 @@ for(m in 1:nruns){
 
   for(i in 1:length(samp.sizes)){
     ith_bayas <- bayas_fx(samplesize = samp.sizes[i],
-                          B = B, thresh.vals = thresh.vals, data.vec = simplsamps$data)
+                          B = B, thresh.vals = thresh.vals, data.vec = simplsamps$x.samps)
     ith_bayas$sampsize <- samp.sizes[i]
     allthebayas <- rbind.data.frame(allthebayas, ith_bayas)
   }
@@ -492,9 +512,8 @@ for(m in 1:nruns){
 tru.cdfs
 
 tru.cdfs %>%
-  dplyr::select(thresh.vals, samp.p) %>%
-  rename(thresh = thresh.vals,
-         data.tail = samp.p) %>%
+  dplyr::select(thresh.vals, theta) %>%
+  rename(thresh = thresh.vals) %>%
   right_join(., mbaya, by = "thresh") -> mbaya
 
 save(mbaya, file = paste0("Ch3_samplesize/simdata/Bias_df", scenario, ".RData"))
@@ -502,13 +521,12 @@ save(mbaya, file = paste0("Ch3_samplesize/simdata/Bias_df", scenario, ".RData"))
 # Need to check these, multiple rows are the same, the fx summarise isn't working well.
 mbaya %>%
   mutate(sampsize = factor(sampsize),
-         thresh = factor(thresh)) %>%
+         thresh = factor(thresh),
+         theta.diff = jth_theta-ith.theta.hats) %>%
   group_by(run, sampsize, thresh) %>%
-  summarise(theta_hat = data.tail,
-            bias_hat = (1/B)*sum(kth_theta-theta_hat),
-            theta_bar = theta_hat - bias_hat,
-            theta_bar2 = (2*theta_hat) - mean(kth_theta)) %>%
-  distinct() -> summ_bias
+  summarise(theta_hat = mean(ith.theta.hats),
+            bias_hat = (1/B)*sum(theta.diff),
+            theta_bar = (2*theta_hat) - mean(jth_theta)) -> summ_bias
 
 summ_bias %>%
   ggplot(., aes(x= thresh, y = bias_hat, color = sampsize)) +
