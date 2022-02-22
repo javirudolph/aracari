@@ -87,34 +87,31 @@ top_row
 # Using purrr to get samples instead of a for loop. More efficient.
 
 # We are getting 50k samples from the mixture
-# samp.size <- 50000
-
-#test run on Feb21
-samp.size <- 5000
+samp.n <- 50000
 
 
 # These category samples are based on the weights
-cat.samp.sizes <- samp.size*pis
+cat.samp.sizes <- samp.n*pis
 
 # Using purrr to pull values from each component of the mixture according to the weights
 purrrsampls <- tibble(gID = c(1:length(cat.samp.sizes)), pars) %>%
-  mutate(data = purrr::map(gID, function(y) rlnorm(cat.samp.sizes[y], pars$meanlog[y], pars$sdlog[y])))
+  mutate(x.samps = purrr::map(gID, function(y) rlnorm(cat.samp.sizes[y], pars$meanlog[y], pars$sdlog[y])))
 
 # Making it an easier to read data frame with only the group ID (mixture components) and the sampled data
 purrrsampls %>%
-  dplyr::select(., gID, data) %>%
-  unnest(cols = c(data)) -> simplsamps
+  dplyr::select(., gID, x.samps) %>%
+  unnest(cols = c(x.samps)) -> simplsamps
 
 save(simplsamps, file = paste0("Ch3_samplesize/simdata/mixturesamples", scenario, ".RData"))
 
 # Extract the tail (the highest values) to visualize later in the histogram since they are too few to show in the bins
-data.tail <- data.frame(values = simplsamps$data, y = 100) %>% arrange(desc(values)) %>% filter(values >=100)
+data.tail <- data.frame(values = simplsamps$x.samps, y = 100) %>% arrange(desc(values)) %>% filter(values >=100)
 
 ## Visualization and save -----------------------------------------------------
 
 # Histogram plus the points in the tail.
 simplsamps %>%
-  ggplot(., aes(x = data)) +
+  ggplot(., aes(x = x.samps)) +
   geom_histogram(bins = 100) +
   geom_point(data = data.tail[1:50,], aes(x = values, y = y), color = "black", alpha = 0.5) +
   labs(y = "Frequency", x = "Distance") +
@@ -124,7 +121,7 @@ simplsamps %>%
 # Density curve for the mixture based on the 50k samples.
 
 simplsamps %>%
-  ggplot(., aes(x = data)) +
+  ggplot(., aes(x = x.samps)) +
   geom_density() +
   labs(y = "Density", x = "Distance") +
   lims(x = c(0, 150), y = c(0,0.05)) +
@@ -147,21 +144,15 @@ ggsave(paste0("Ch3_samplesize/Figures/Figure1", scenario,".png"))
 ## Probability of tails
 ###
 
-# These threshold values are too high and unrealistic
-thresh.vals <- c(100, 250,500,750,1000)
-
 # Explore the quantiles
-quantile(simplsamps$data)
-mean(simplsamps$data)
-quantile(simplsamps$data, 0.9)
-max(simplsamps$data)
-seq(50, 500, length.out = 5)
+quantile(simplsamps$x.samps, 0.9)
+summary(simplsamps$x.samps)
 
 # This threshold is between the 75-100% quantiles.
 # thresh.vals <- seq(50, 500, length.out = 5)
 
 # new thresholds
-thresh.vals <- c(50, 75, 100, 150, 250, 500)
+thresh.vals <- c(50, 75, 100, 150, 250, 500, 1000)
 
 
 weighted.cdfs <- NULL
@@ -175,8 +166,9 @@ w.cdfs <- colSums(weighted.cdfs)
 tibble(thresh.vals) %>%
   mutate(w.cdfs = w.cdfs,
          w.cdfs = round(w.cdfs, 5),
-         samp.n = map_dbl(1:length(thresh.vals), function(y) length(which(simplsamps$data >= thresh.vals[y]))),
-         theta = samp.n/samp.size) -> tru.cdfs
+         n.overthresh = map_dbl(1:length(thresh.vals),
+                                 function(y) length(which(simplsamps$x.samps >= thresh.vals[y]))),
+         theta = n.overthresh/samp.n) -> tru.cdfs
 tru.cdfs
 
 
@@ -192,7 +184,7 @@ samp.sizes <- c(80, 200, 500, 800, 1000, 1600)
 fevd.mles <- data.frame(expand.grid(threshold = thresh.vals, samp.size = samp.sizes))
 for(i in 1:nrow(fevd.mles)){
   ith.n        <- fevd.mles$samp.size[i]
-  ith.samples  <- data.frame(x = sample(simplsamps$data, ith.n))
+  ith.samples  <- data.frame(x = sample(simplsamps$x.samps, ith.n))
   # So, setting the threshold to 0 so we can compare to Lomax.
   ith.fit      <- fevd(ith.samples$x, threshold = 0, type = "GP")
   mles          <- summary(ith.fit)$par
@@ -249,13 +241,13 @@ ggsave(paste0("Ch3_samplesize/Figures/Param_space", scenario,".png"))
 
 # Plot tail estimates -----------------------------
 
-fevd.mles$mix.cdf.tail <- tru.cdfs$w.cdfs
-fevd.mles$mix.n.tail <- tru.cdfs$samp.p
+fevd.mles$w.cdfs <- tru.cdfs$w.cdfs
+fevd.mles$theta <- tru.cdfs$theta
 
 fevd.mles %>%
   mutate(threshold = factor(threshold),
          samp.size = factor(samp.size),
-         tail.ratio = gp.tail/mix.n.tail) %>%
+         tail.ratio = gp.tail/theta) %>%
   ggplot(., aes(x = samp.size, y = tail.ratio, color = threshold)) +
   geom_point() +
   labs(y = "GP tail.ratio") +
@@ -267,7 +259,7 @@ a
 fevd.mles %>%
   mutate(threshold = factor(threshold),
          samp.size = factor(samp.size),
-         tail.ratio = lomax.tail/mix.n.tail) %>%
+         tail.ratio = lomax.tail/theta) %>%
   ggplot(., aes(x = samp.size, y = tail.ratio, color = threshold)) +
   geom_point() +
   labs(y = "Lomax tail.ratio") +
@@ -281,7 +273,9 @@ ggsave(paste0("Ch3_samplesize/Figures/tail_ratio", scenario, ".png"))
 
 ## MC Samples -----------------------------------------------
 
+#CHANGE nreps ================
 nreps <- 10
+
 gp.mles.reps <- data.frame(NULL)
 
 for(j in 1:nreps){
