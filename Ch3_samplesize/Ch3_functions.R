@@ -152,6 +152,19 @@ lomax.glm <- function(formula=~1, my.dataf, response){
 }
 
 
+# NEW debug FEB22
+
+nllike.simp <- function(guess=c(1.5,1.5), Y=Y){
+
+  parms         <- exp(guess)
+  alpha         <- parms[1]
+  k             <- parms[2]
+  n             <- length(Y)
+  lnft.yis     <- lomax.pdf(x=Y, alpha=alpha,k=k,log.scale=TRUE)
+  lnL           <- sum(lnft.yis)
+  nll           <- -lnL
+  return(nll)
+}
 
 
 

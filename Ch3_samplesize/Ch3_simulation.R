@@ -198,6 +198,12 @@ for(i in 1:nrow(fevd.mles)){
   fevd.mles$samps.tail[i] <- ith.tail/ith.n
   fevd.mles$gp.tail[i] <- pextRemes(ith.fit, ith.thresh, lower.tail = FALSE)
 
+  # log.guess <- log(c(1.5,1.5))
+  # ith.lomax <- optim(par=log.guess, fn=nllike.simp, method="BFGS", Y=ith.samples$x)
+  # mles.lomax <- exp(ith.lomax$par)
+  # ith.alpha <- mles.lomax[1]
+  # ith.kk <- mles.lomax[2]
+
   ith.lomax <- lomax.glm(formula = ~1, ith.samples, ith.samples$x)
   ith.alpha <- ith.lomax$alphas.hat[1]
   ith.k     <- ith.lomax$k.hat
@@ -473,7 +479,7 @@ bayas_fx <- function(samplesize = 100, B=10, thresh.vals = thresh.vals, data.vec
 }
 
 ###
-# Loop over sample sizes ------------------
+# MBAYAS Loop ------------------
 ###
 
 # samp.sizes
