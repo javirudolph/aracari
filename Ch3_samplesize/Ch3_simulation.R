@@ -176,7 +176,7 @@ tibble(thresh.vals) %>%
   mutate(w.cdfs = w.cdfs,
          w.cdfs = round(w.cdfs, 5),
          samp.n = map_dbl(1:length(thresh.vals), function(y) length(which(simplsamps$data >= thresh.vals[y]))),
-         samp.p = samp.n/samp.size) -> tru.cdfs
+         theta = samp.n/samp.size) -> tru.cdfs
 tru.cdfs
 
 
@@ -203,7 +203,7 @@ for(i in 1:nrow(fevd.mles)){
   fevd.mles$nllh[i]  <- nll.hat
   ith.thresh   <- fevd.mles$threshold[i]
   ith.tail <- length(which(ith.samples$x >= ith.thresh))
-  fevd.mles$tru.tail[i] <- ith.tail/ith.n
+  fevd.mles$samps.tail[i] <- ith.tail/ith.n
   fevd.mles$gp.tail[i] <- pextRemes(ith.fit, ith.thresh, lower.tail = FALSE)
 
   ith.lomax <- lomax.glm(formula = ~1, ith.samples, ith.samples$x)
@@ -213,6 +213,9 @@ for(i in 1:nrow(fevd.mles)){
   fevd.mles$k[i] <- ith.k
   fevd.mles$lomax.tail[i] <- lomax.st(ith.thresh, alpha = ith.alpha, k = ith.k)
 
+  fevd.mles$calc.k[i] <- 1/mles[2]
+  fevd.mles$calc.alpha[i] <- mles[1]/mles[2]
+  fevd.mles$calc.tail[i] <- lomax.st(ith.thresh, alpha = mles[1]/mles[2], k = 1/mles[2])
 }
 
 ### Plot parameter space ---------------------------
@@ -225,6 +228,7 @@ fevd.mles %>%
   geom_point(size = 2) +
   labs(title = "GP fits") +
   theme_bw() -> gp.param.space
+gp.param.space
 
 fevd.mles %>%
   mutate(samp.size = factor(samp.size),
@@ -234,35 +238,13 @@ fevd.mles %>%
   geom_point(size = 2) +
   labs(title = "Lomax fits") +
   theme_bw() -> lomax.param.space
+lomax.param.space
 
 param.space.legend <- get_legend(lomax.param.space)
 
 plot_grid(gp.param.space + theme(legend.position = "none"), lomax.param.space + theme(legend.position = "none"), param.space.legend, rel_widths = c(1,1,0.2), ncol = 3)
 
-ggsave(paste0("Ch3_samplesize/Figures/", scenario,"param_space.png"))
-
-
-
-### Compare the fitted lomax with estimated parameters using the GP mles ----
-
-
-fevd.mles %>%
-  transmute(k = 1/shape,
-            alpha = scale*k,
-            samp.size = factor(samp.size),
-            threshold = factor(threshold),
-            type = "calc") %>%
-  rbind.data.frame(., fevd.mles %>%
-                     mutate(samp.size = factor(samp.size),
-                            threshold = factor(threshold),
-                            type = "est") %>%
-                     dplyr::select(k, alpha, samp.size, threshold, type))
-
-fevd.mles %>%
-  mutate(calc.k = 1/shape,
-         calc.alpha = scale*calc.k,
-         samp.size = factor(samp.size),
-         threshold = factor(threshold)) -> fevd.mles
+ggsave(paste0("Ch3_samplesize/Figures/Param_space", scenario,".png"))
 
 
 # Plot tail estimates -----------------------------
@@ -467,8 +449,8 @@ bayas_fx <- function(samplesize = 100, B=10, thresh.vals = thresh.vals, data.vec
       mutate(kth_theta = map_dbl(1:B, function(y) pevd(kth_thresh, loc = 0,
                                                        scale = jscale[y], shape = jshape[y], lower.tail = FALSE)))
     est_theta$thresh <- kth_thresh
-    est_theta$tru_theta <- ith.thetas[k]
-    est_theta$tru_tail <- ith.tail[k]
+    est_theta$theta_i <- ith.thetas[k]
+    est_theta$tailp_i <- ith.tail[k]
 
     bias_df <- rbind.data.frame(bias_df, est_theta)
   }
@@ -493,6 +475,8 @@ bayas_fx <- function(samplesize = 100, B=10, thresh.vals = thresh.vals, data.vec
 
 mbaya <- NULL
 nruns <- 5
+B <- 10
+
 for(m in 1:nruns){
 
   allthebayas <- NULL
@@ -516,7 +500,7 @@ tru.cdfs
 tru.cdfs %>%
   dplyr::select(thresh.vals, samp.p) %>%
   rename(thresh = thresh.vals,
-         orig.data.tail = samp.p) %>%
+         data.tail = samp.p) %>%
   right_join(., mbaya, by = "thresh") -> mbaya
 
 save(mbaya, file = paste0("Ch3_samplesize/simdata/Bias_df", scenario, ".RData"))
@@ -526,11 +510,10 @@ mbaya %>%
   mutate(sampsize = factor(sampsize),
          thresh = factor(thresh)) %>%
   group_by(run, sampsize, thresh) %>%
-  summarise(bias_hat2 = (1/B)*sum(kth_theta-tru_theta),
-            bias_hat = (1/B)*sum(kth_theta-orig.data.tail),
-            unbiased1 = tru_theta - bias_hat,
-            unbiased2 = (2*tru_theta) - mean(kth_theta),
-            unbiased3 = (2*orig.data.tail) - mean(kth_theta)) %>%
+  summarise(theta_hat = data.tail,
+            bias_hat = (1/B)*sum(kth_theta-theta_hat),
+            theta_bar = theta_hat - bias_hat,
+            theta_bar2 = (2*theta_hat) - mean(kth_theta)) %>%
   distinct() -> summ_bias
 
 summ_bias %>%
