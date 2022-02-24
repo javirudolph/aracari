@@ -14,7 +14,30 @@ library(tidyr)
 library(purrr)
 library(fitdistrplus)
 
-source("Ch3_samplesize/Ch3_functions.R")
+# Lnorm parms functions --------------------------------------
+
+desired_mean_sd <- function(mu_x, sd_x){
+
+  sigsq <- sd_x^2
+
+  mu <- log(mu_x^2/(sqrt(mu_x^2+sigsq)))
+  sigma_sq <- log(1+(sigsq/mu_x^2))
+  sigma <- sqrt(sigma_sq)
+
+  return(data.frame(meanlog = mu, sigma_sq = sigma_sq, sdlog = sigma))
+}
+
+# Now, for a Lnorm(meanlog, sdlog), get mean and var
+
+lnorm_mean_var <- function(mean_log, sd_log){
+
+  lnorm_mean <- exp(mean_log + ((sd_log^2)/2))
+  lnorm_var  <- (exp(sd_log^2)-1)*exp(2*mean_log+sd_log^2)
+  lnorm_sd   <- sqrt(lnorm_var)
+
+  return(data.frame(lnorm_mean, lnorm_var, lnorm_sd))
+}
+
 
 # ORIGINAL SCENARIO --------------------------------------
 scenario <- "_orig0223"
@@ -68,42 +91,39 @@ top_row
 # Using purrr to get samples instead of a for loop. More efficient.
 
 # We are getting 50k samples from the mixture
-samp.n <- 50000
-
-# These category samples are based on the weights
-cat.samp.sizes <- samp.n*pis
-
+tru_n <- 50000
+w_samp_sizes <- pis*tru_n
 # Using purrr to pull values from each component of the mixture according to the weights
 # This instead of using a for loop
-purrrsampls <- tibble(gID = c(1:length(cat.samp.sizes)), pars) %>%
-  mutate(x.samps = purrr::map(gID, function(y) rlnorm(cat.samp.sizes[y], pars$meanlog[y], pars$sdlog[y])))
+purrrsampls <- tibble(gID = c(1:length(w_samp_sizes)), pars) %>%
+  mutate(x_samps = purrr::map(gID, function(y) rlnorm(w_samp_sizes[y], pars$meanlog[y], pars$sdlog[y])))
 
 # Making it an easier to read data frame with only the group ID (mixture components) and the sampled data
 purrrsampls %>%
-  dplyr::select(., gID, x.samps) %>%
-  unnest(cols = c(x.samps)) -> simplsamps
+  dplyr::select(., gID, x_samps) %>%
+  unnest(cols = c(x_samps)) -> tru_df
 
-save(simplsamps, file = paste0("Ch3_samplesize/simdata/mixturesamples", scenario, ".RData"))
+save(tru_df, file = paste0("Ch3_samplesize/simdata/mixturesamples", scenario, ".RData"))
 
 
 # This is the data that we consider our "truth"
 
 # Extract the tail (the highest values) to visualize later in the histogram since they are too few to show in the bins
-data.tail <- data.frame(values = simplsamps$x.samps, y = 100) %>% arrange(desc(values)) %>% filter(values >=100)
+tru_tail <- data.frame(values = tru_df$x_samps, y = 100) %>% arrange(desc(values)) %>% filter(values >=100)
 
 # Histogram plus the points in the tail.
-simplsamps %>%
-  ggplot(., aes(x = x.samps)) +
+tru_df %>%
+  ggplot(., aes(x = x_samps)) +
   geom_histogram(bins = 100) +
-  geom_point(data = data.tail[1:50,], aes(x = values, y = y), color = "black", alpha = 0.5) +
+  geom_point(data = tru_tail[1:50,], aes(x = values, y = y), color = "black", alpha = 0.5) +
   labs(y = "Frequency", x = "Distance") +
   #lims(x = c(0, 150)) +
   theme_minimal() -> truth_hist
 truth_hist
 
 # Density curve for the mixture based on the 50k samples.
-simplsamps %>%
-  ggplot(., aes(x = x.samps)) +
+tru_df %>%
+  ggplot(., aes(x = x_samps)) +
   geom_density() +
   labs(y = "Density", x = "Distance") +
   lims(x = c(0, 150), y = c(0,0.05)) +
@@ -124,12 +144,179 @@ ggsave(paste0("Ch3_samplesize/Figures/Figure1", scenario,".png"))
 
 ## Thresholds ----------------
 
-thresh.vals <- c(50, 75, 100, 150, 250, 500, 1000)
-tibble(thresh.vals) %>%
-  mutate(n.overthresh = map_dbl(1:length(thresh.vals),
-                                function(y) length(which(simplsamps$x.samps >= thresh.vals[y]))),
-         theta_t = n.overthresh/samp.n) -> theta_ts
-theta_ts
+thresh_tests <- c(50, 75, 100, 150, 250, 500, 1000)
+tibble(thresh_tests) %>%
+  mutate(n_overthresh = map_dbl(1:length(thresh_tests),
+                                function(y) length(which(tru_df$x_samps >= thresh_tests[y]))),
+         theta = n_overthresh/tru_n) -> thetas
+thetas
+
+
+
+# Lomax functions ---------------------------------
+lomax.pdf <- function(x,alpha,k, log.scale=FALSE){
+
+  if(log.scale==FALSE){out <- (k/(alpha+x))*(alpha/(alpha+x))^k
+  }else{
+    out <- log(k) + k*log(alpha) - (k+1)*log(alpha+x)
+  }
+
+  return(out)
+}
+
+
+lomax.cdf <- function(x,alpha,k){
+
+  return(1-(alpha/(alpha+x))^k)
+
+}
+
+lomax.St <- function(x,alpha,k, log.scale=FALSE){
+
+  if(log.scale==FALSE){out <- (alpha/(alpha+x))^k
+  }else{
+    out <- k*log(alpha) - k*log(alpha+x)
+  }
+
+  return(out)
+
+}
+
+# Simple negative log-likelihood
+nllike.simp <- function(guess=c(1.5,1.5), Y=Y){
+
+  parms         <- exp(guess)
+  alpha         <- parms[1]
+  k             <- parms[2]
+  n             <- length(Y)
+  lnft.yis     <- lomax.pdf(x=Y, alpha=alpha,k=k,log.scale=TRUE)
+  lnL           <- sum(lnft.yis)
+  nll           <- -lnL
+  return(nll)
+}
+
+
+ft.nllike2 <- function(guess, designmat=designmat,Y=Y){
+
+  # For the glm idea to work we want ln(E[Lomax]) = ln(alpha/(k-1)) = XB
+  # That is the proper link function.  Then,
+  # ln alpha = XB + ln(k-1), or
+  # alpha = exp(XB + ln(k-1)) and it follows that
+  # k = exp(ln(k-1)) +1.  To avoid problems with potential log(negative number)
+  # we optimize 'k-1', not 'k'
+
+  nbetasp1      <- length(guess)
+  lnkm1         <- guess[1]
+  Xbeta         <- designmat%*%guess[2:nbetasp1]
+  ln.alphas     <- Xbeta + lnkm1
+  alphas        <- exp(ln.alphas)
+  k             <- exp(lnkm1)+1
+  n             <- length(Y)
+
+  #sumlogapy     <- sum(log(alphas+Y))
+  #k.hat         <- n/(sumlogapy - sum(Xbeta))
+  lnft.yis     <- lomax.pdf(x=Y, alpha=alphas,k=k,log.scale=TRUE)
+  lnL           <- sum(lnft.yis)
+  nll           <- -lnL
+
+  return(nll)
+}
+
+lomax.glm <- function(formula=~1, my.dataf, response){
+
+  Y           <- response
+  n           <- length(Y)
+  designmat   <- model.matrix(formula, data=my.dataf)
+  nbetas      <- ncol(designmat)
+  init.betas  <- c(4,rep(5,nbetas))
+
+  opt.out <- optim(par=init.betas, fn=ft.nllike2, method = "Nelder-Mead",
+                   designmat=designmat, Y=Y)
+
+  mles          <- opt.out$par
+  nll.hat       <- opt.out$value
+  BIC.mod       <- 2*nll.hat + (nbetas+1)*log(length(Y))
+  Xbeta.hat     <- designmat%*%mles[-1]
+  lnkm1.hat     <- mles[1]
+  k.hat         <- exp(lnkm1.hat)+1
+  alphas.hat    <- exp(Xbeta.hat +lnkm1.hat)
+
+  out.list <- list(opt.out = opt.out, designmat=designmat,Y=Y, mles=mles, nll.hat=nll.hat, BIC.mod = BIC.mod,
+                   alphas.hat=alphas.hat, k.hat=k.hat,data=my.dataf)
+
+  return(out.list)
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Fit Lomax -----------------------------------------
+
+
+samp.size.tests <- c(80, 200, 500, 800, 1000, 1600)
+
+
+mles_df <- data.frame()
+
+
+
+mles.mat <- matrix(0,nrow=B,ncol=2)
+colnames(mles.mat) <- c("alpha.hat", "k.hat")
+log.St.vec.hat <- rep(0,B)
+sims.mat <- matrix(0, nrow=samp.size,ncol=B)
+
+mles.mat2 <- mles.mat
+log.St.vec.hat2 <- log.St.vec.hat
+
+log.guess <- log(c(1.5,1.5))
+
+for(i in 1:B){
+
+  # Method of estimation 1
+  x.star <- rlomax(n=samp.size, alpha=true.alpha, k=true.k)
+  opt.out <- optim(par=log.guess, fn=nllike.simp, method="BFGS", Y=x.star)
+  mles.star <- exp(opt.out$par)
+  mles.mat[i,] <- mles.star
+  alpha.star <- mles.star[1]
+  k.star <- mles.star[2]
+  log.St.star <- lomax.St(x=test.thres,alpha=alpha.star,k=k.star,log.scale=TRUE)
+  log.St.vec.hat[i] <- log.St.star
+
+  # Method of estimation 2
+  df.star <- data.frame(Y=x.star)
+  glm.out <- lomax.glm(formula=~1, my.dataf=df.star, response=df.star$Y)
+  alpha.2 <- glm.out$alphas.hat[1]
+  k.2     <- glm.out$k.hat
+  log.st.star2 <- lomax.St(x=test.thres,alpha=alpha.2,k=k.2,log.scale=TRUE)
+
+  mles.mat2[i,] <- c(alpha.2,k.2)
+  log.St.vec.hat2[i] <- log.st.star2
+
+
+}
+
+
+
+
+
+
+
 
 
 
