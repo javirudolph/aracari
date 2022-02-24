@@ -249,7 +249,7 @@ lomax.glm <- function(formula=~1, my.dataf, response){
 }
 
 
-# Fit Lomax -----------------------------------------
+# Estimate tails once -----------------------------------------
 library(extRemes)
 
 samp_n_tests <- c(80, 200, 500, 800, 1000, 1600)
@@ -271,6 +271,9 @@ for(i in 1:nrow(mles_df)){
   k_star <- mles_star[2]
   mles_df$alpha_star[i] <-alpha_star
   mles_df$k_star[i] <- k_star
+  # Estimate the tail
+  log_St_star <- lomax.St(x = ith_thresh,alpha = alpha_star,k = k_star,log.scale=TRUE)
+  mles_df$log_St_hat[i] <- log_St_star
 
   # Check with GP fit
   ith_evd <- fevd(ith_samps$x_star, threshold = 0, type = "GP")
@@ -279,9 +282,7 @@ for(i in 1:nrow(mles_df)){
   mles_df$shape[i] <- evd_mles[2]
   mles_df$gp_tail[i] <- devd(ith_thresh, scale = evd_mles[1], shape = evd_mles[2])
 
-  # Estimate the tail
-  log_St_star <- lomax.St(x = ith_thresh,alpha = alpha_star,k = k_star,log.scale=TRUE)
-  mles_df$log_St_hat[i] <- log_St_star
+  # Add lomax tail to df
   mles_df$lomax_tail[i] <- exp(log_St_star)
 
 
@@ -294,7 +295,30 @@ for(i in 1:nrow(mles_df)){
 
 }
 
+mles_df %>%
+  right_join(., thetas[, c(1,3)]) -> mles_df
 
+# VIZ tail estimates across methods for different sample sizes and thresholds
+
+# Q: What is the effect of sample size on the Lomax estimate of the tail?
+
+mles_df %>%
+  pivot_longer(., cols = c(gp_tail, lomax_tail, lomax_glm_tail), names_to = "tail_method") %>%
+  ggplot(., aes(x = tail_method, y = log(value)-log(theta))) +
+  facet_grid(samp_n_tests~thresh_tests) +
+  geom_point() +
+  geom_hline(aes(yintercept = 1), color = "red") +
+  theme_bw()
+
+
+mles_df %>%
+  pivot_longer(., cols = c(gp_tail, lomax_tail, lomax_glm_tail), names_to = "tail_method") %>%
+  ggplot(., aes(x = thresh_tests, color = tail_method, y = log(value)-log(theta))) +
+  #facet_grid(samp_n_tests~thresh_tests) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_point() +
+  geom_hline(aes(yintercept = 1), color = "red") +
+  theme_bw()
 
 
 
