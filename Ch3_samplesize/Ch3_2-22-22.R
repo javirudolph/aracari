@@ -101,18 +101,18 @@ purrrsampls <- tibble(gID = c(1:length(w_samp_sizes)), pars) %>%
 # Making it an easier to read data frame with only the group ID (mixture components) and the sampled data
 purrrsampls %>%
   dplyr::select(., gID, x_samps) %>%
-  unnest(cols = c(x_samps)) -> tru_df
+  unnest(cols = c(x_samps)) -> truth_df
 
-save(tru_df, file = paste0("Ch3_samplesize/simdata/mixturesamples", scenario, ".RData"))
+save(truth_df, file = paste0("Ch3_samplesize/simdata/mixturesamples", scenario, ".RData"))
 
 
 # This is the data that we consider our "truth"
 
 # Extract the tail (the highest values) to visualize later in the histogram since they are too few to show in the bins
-tru_tail <- data.frame(values = tru_df$x_samps, y = 100) %>% arrange(desc(values)) %>% filter(values >=100)
+tru_tail <- data.frame(values = truth_df$x_samps, y = 100) %>% arrange(desc(values)) %>% filter(values >=100)
 
 # Histogram plus the points in the tail.
-tru_df %>%
+truth_df %>%
   ggplot(., aes(x = x_samps)) +
   geom_histogram(bins = 100) +
   geom_point(data = tru_tail[1:50,], aes(x = values, y = y), color = "black", alpha = 0.5) +
@@ -122,7 +122,7 @@ tru_df %>%
 truth_hist
 
 # Density curve for the mixture based on the 50k samples.
-tru_df %>%
+truth_df %>%
   ggplot(., aes(x = x_samps)) +
   geom_density() +
   labs(y = "Density", x = "Distance") +
@@ -147,7 +147,7 @@ ggsave(paste0("Ch3_samplesize/Figures/Figure1", scenario,".png"))
 thresh_tests <- c(50, 75, 100, 150, 250, 500, 1000)
 tibble(thresh_tests) %>%
   mutate(n_overthresh = map_dbl(1:length(thresh_tests),
-                                function(y) length(which(tru_df$x_samps >= thresh_tests[y]))),
+                                function(y) length(which(truth_df$x_samps >= thresh_tests[y]))),
          theta = n_overthresh/tru_n) -> thetas
 thetas
 
@@ -249,67 +249,51 @@ lomax.glm <- function(formula=~1, my.dataf, response){
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # Fit Lomax -----------------------------------------
+library(extRemes)
+
+samp_n_tests <- c(80, 200, 500, 800, 1000, 1600)
 
 
-samp.size.tests <- c(80, 200, 500, 800, 1000, 1600)
+mles_df <- data.frame(expand.grid(thresh_tests = thresh_tests, samp_n_tests = samp_n_tests))
+
+for(i in 1:nrow(mles_df)){
+  ith_n <- mles_df$samp_n_tests[i]
+  ith_thresh <- mles_df$thresh_tests[i]
+  ith_samps <- data.frame(x_star = sample(truth_df$x_samps, ith_n))
+  ith_tail <- length(which(ith_samps$x_star >= ith_thresh))
+  mles_df$tail_p[i] <- ith_tail/ith_n
+
+  # Fit Lomax
+  optim_out <- optim(par=log(c(1.5, 1.5)), fn=nllike.simp, method="BFGS", Y=ith_samps$x_star)
+  mles_star <- exp(optim_out$par)
+  alpha_star <- mles_star[1]
+  k_star <- mles_star[2]
+  mles_df$alpha_star[i] <-alpha_star
+  mles_df$k_star[i] <- k_star
+
+  # Check with GP fit
+  ith_evd <- fevd(ith_samps$x_star, threshold = 0, type = "GP")
+  evd_mles <- summary(ith_evd)$par
+  mles_df$scale[i] <- evd_mles[1]
+  mles_df$shape[i] <- evd_mles[2]
+  mles_df$gp_tail[i] <- devd(ith_thresh, scale = evd_mles[1], shape = evd_mles[2])
+
+  # Estimate the tail
+  log_St_star <- lomax.St(x = ith_thresh,alpha = alpha_star,k = k_star,log.scale=TRUE)
+  mles_df$log_St_hat[i] <- log_St_star
+  mles_df$lomax_tail[i] <- exp(log_St_star)
 
 
-mles_df <- data.frame()
-
-
-
-mles.mat <- matrix(0,nrow=B,ncol=2)
-colnames(mles.mat) <- c("alpha.hat", "k.hat")
-log.St.vec.hat <- rep(0,B)
-sims.mat <- matrix(0, nrow=samp.size,ncol=B)
-
-mles.mat2 <- mles.mat
-log.St.vec.hat2 <- log.St.vec.hat
-
-log.guess <- log(c(1.5,1.5))
-
-for(i in 1:B){
-
-  # Method of estimation 1
-  x.star <- rlomax(n=samp.size, alpha=true.alpha, k=true.k)
-  opt.out <- optim(par=log.guess, fn=nllike.simp, method="BFGS", Y=x.star)
-  mles.star <- exp(opt.out$par)
-  mles.mat[i,] <- mles.star
-  alpha.star <- mles.star[1]
-  k.star <- mles.star[2]
-  log.St.star <- lomax.St(x=test.thres,alpha=alpha.star,k=k.star,log.scale=TRUE)
-  log.St.vec.hat[i] <- log.St.star
-
-  # Method of estimation 2
-  df.star <- data.frame(Y=x.star)
-  glm.out <- lomax.glm(formula=~1, my.dataf=df.star, response=df.star$Y)
-  alpha.2 <- glm.out$alphas.hat[1]
-  k.2     <- glm.out$k.hat
-  log.st.star2 <- lomax.St(x=test.thres,alpha=alpha.2,k=k.2,log.scale=TRUE)
-
-  mles.mat2[i,] <- c(alpha.2,k.2)
-  log.St.vec.hat2[i] <- log.st.star2
-
+  # Check with Lomax GLM
+  glm_out <- lomax.glm(formula=~1, my.dataf=ith_samps, response=ith_samps$x_star)
+  alpha.2 <- glm_out$alphas.hat[1]
+  k.2     <- glm_out$k.hat
+  log.st.star2 <- lomax.St(x=ith_thresh,alpha=alpha.2,k=k.2,log.scale=TRUE)
+  mles_df$lomax_glm_tail[i] <- exp(log.st.star2)
 
 }
+
 
 
 
