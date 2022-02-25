@@ -844,24 +844,18 @@ for(i in 1:nrow(mles_df)){
   mles_df$GP_theta_hat[i] <- GP_theta_hat
 
   # Updated to use function instead of loop
-  bth_df <- nonparam_boot()
+  bth_df <- nonparam_boot(B=10)
 
 
   ith_bias <- bth_df %>%
-    mutate(bias_alpha = alpha_star - alpha_hat,
-           bias_k = k_star - k_hat,
-           bias_scale = scale_star - scale_hat,
-           bias_shape = shape_star - shape_hat,
-           bias_theta_lomax = log_St_star - log_St_hat,
-           bias_theta_gp = GP_theta_star - GP_theta_hat) %>%
-    summarise(across(starts_with("bias"), ~ mean(.x, na.rm = TRUE))) %>%
+    summarise(across(c(2:7), ~ mean(.x, na.rm = TRUE))) %>%
     mutate(log_St_hat = log_St_hat ,
            GP_theta_hat = GP_theta_hat,
-           theta_bar_lomax = log_St_hat - bias_theta_lomax,
-           theta_bar_GP = GP_theta_hat - bias_theta_gp,
+           theta_bar_lomax = 2*log_St_hat - log_St_star,
+           theta_bar_GP = 2*GP_theta_hat - GP_theta_star,
            samp_n_tests = ith_n,
            thresh_tests = ith_thresh,
-           samp_tail = ith_tail)
+           samp_tail = ith_tail/ith_n)
 
 
   bias_df <- rbind.data.frame(bias_df, ith_bias)
@@ -871,7 +865,30 @@ for(i in 1:nrow(mles_df)){
 bias_df %>%
   right_join(., thetas[, c(1,3)]) -> bias_df
 
-# Can we see these and the bias correction?
+
+
+## Bias plots ------------
+
+# GP
+bias_df %>%
+  ggplot(., aes(x = thresh_tests)) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_point(aes(y = theta, color = "Theta"), size = 3, alpha = 0.6) +
+  geom_point(aes(y = GP_theta_hat, color = "Est"), size = 1) +
+  geom_point(aes(y = theta_bar_GP, color = "Corrected"), size = 1, shape = 8) +
+  labs(x = "Thresholds", y = "Values of Theta", title = "GP") +
+  theme_bw()
+
+#Lomax
+bias_df %>%
+  ggplot(., aes(x = thresh_tests)) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_point(aes(y = log(theta), color = "Theta"), size = 3, alpha = 0.6) +
+  geom_point(aes(y = log_St_hat, color = "Est"), size = 1) +
+  geom_point(aes(y = theta_bar_lomax, color = "Corrected"), size = 1, shape = 8) +
+  labs(x = "Thresholds", y = "Values of Theta", title = "Lomax") +
+  theme_bw()
+
 
 bias_df %>%
   ggplot(., aes(x = thresh_tests)) +
@@ -879,8 +896,7 @@ bias_df %>%
   geom_point(aes(y = log_St_hat - log(theta), color = "Lomax_est"), size = 3, alpha = 0.8) +
   geom_point(aes(y = theta_bar_lomax - log(theta), color = "Lomax_corrected"), size = 3, alpha = 0.8) +
   geom_hline(aes(yintercept=  0), color = mypal[1]) +
-  # scale_color_gradient(low = mypal[2], high = mypal[3]) +
-  labs(x = "Threshold Value", y = "Lomax estimate") +
+  labs(x = "Threshold Value", y = "Thetaratio", title = "Lomax") +
   scale_x_continuous(breaks = thresh_tests) +
   theme_bw() +
   theme(legend.position = "bottom") -> bias_corrected_lomax
@@ -891,7 +907,6 @@ bias_df %>%
   geom_point(aes(y = GP_theta_hat/theta, color = "GP_est"), size = 3, alpha = 0.8) +
   geom_point(aes(y = theta_bar_GP/theta, color = "GP_corrected"), size = 3, alpha = 0.8) +
   geom_hline(aes(yintercept=  1), color = mypal[1]) +
-  # scale_color_gradient(low = mypal[2], high = mypal[3]) +
   labs(x = "Threshold Value", y = "GP estimate") +
   scale_x_continuous(breaks = thresh_tests) +
   theme_bw() +
@@ -899,3 +914,13 @@ bias_df %>%
 
 plot_grid(bias_corrected_lomax, bias_corrected_GP, nrow = 2)
 ggsave(paste0("Ch3_samplesize/", dir_scenario,"/Figure11.png"), width = 8, height = 8)
+
+
+
+
+
+
+
+
+
+## Bias boxplots
