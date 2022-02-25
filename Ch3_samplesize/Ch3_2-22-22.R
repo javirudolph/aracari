@@ -41,7 +41,7 @@ lnorm_mean_var <- function(mean_log, sd_log){
 
 
 # ORIGINAL SCENARIO --------------------------------------
-scenario <- "_orig0225"
+scenario <- "orig0225"
 desired_means <- c(28, 32, 40, 50)
 desired_sds <- c(49.7, 39.9, 33.3, 31.1)
 pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
@@ -104,7 +104,7 @@ purrrsampls %>%
   dplyr::select(., gID, x_samps) %>%
   unnest(cols = c(x_samps)) -> truth_df
 
-save(truth_df, file = paste0("Ch3_samplesize/simdata/mixturesamples", scenario, ".RData"))
+save(truth_df, file = paste0("Ch3_samplesize/simdata/", scenario, "/mixturesamples.RData"))
 
 
 # This is the data that we consider our "truth"
@@ -140,7 +140,7 @@ bottom_row <- plot_grid(truth_hist, truth_density)
 
 plot_grid(top_row, bottom_row,nrow = 2)
 
-ggsave(paste0("Ch3_samplesize/Figures/Figure1", scenario,".png"), width = 6, height = 5)
+ggsave(paste0("Ch3_samplesize/Figures/", scenario,"/Figure1.png"), width = 6, height = 5)
 
 
 ## Thresholds ----------------
@@ -347,7 +347,7 @@ mles_df %>%
   theme_bw() -> p3
 
 plot_grid(p1, p2, p3, nrow = 3)
-ggsave(paste0("Ch3_samplesize/Figures/Figure2", scenario,".png"), width = 8, height = 8)
+ggsave(paste0("Ch3_samplesize/Figures/", scenario,"/Figure2.png"), width = 8, height = 8)
 
 
 
@@ -389,7 +389,7 @@ mles_df %>%
 pleg <- get_legend(p3)
 
 plot_grid(p1, p2, p3 + theme(legend.position = "none"), pleg, nrow = 4, rel_heights = c(1,1,1, 0.3))
-ggsave(paste0("Ch3_samplesize/Figures/Figure3", scenario,".png"), width = 8, height = 8)
+ggsave(paste0("Ch3_samplesize/Figures/", scenario,"/Figure3.png"), width = 8, height = 8)
 
 
 # Make some boxplots ----------------------------------------------------
@@ -502,7 +502,7 @@ nreps_mles_df %>%
 pleg <- get_legend(p3)
 
 plot_grid(p1, p2, p3 + theme(legend.position = "none"), pleg, nrow = 4, rel_heights = c(1,1,1, 0.3))
-ggsave(paste0("Ch3_samplesize/Figures/Figure4", scenario,".png"), width = 8, height = 8)
+ggsave(paste0("Ch3_samplesize/Figures/", scenario,"/Figure4.png"), width = 8, height = 8)
 
 ## jitter ratio -------------------------------------
 nreps_mles_df %>%
@@ -545,7 +545,7 @@ nreps_mles_df %>%
 pleg <- get_legend(p3)
 
 plot_grid(p1, p2, p3 + theme(legend.position = "none"), pleg, nrow = 4, rel_heights = c(1,1,1, 0.3))
-ggsave(paste0("Ch3_samplesize/Figures/Figure5", scenario,".png"), width = 8, height = 8)
+ggsave(paste0("Ch3_samplesize/Figures/", scenario,"/Figure5.png"), width = 8, height = 8)
 
 ## jitter raw values -----------------
 nreps_mles_df %>%
@@ -588,7 +588,7 @@ nreps_mles_df %>%
 pleg <- get_legend(p3)
 
 plot_grid(p1, p2, p3 + theme(legend.position = "none"), pleg, nrow = 4, rel_heights = c(1,1,1, 0.3))
-ggsave(paste0("Ch3_samplesize/Figures/Figure6", scenario,".png"), width = 8, height = 8)
+ggsave(paste0("Ch3_samplesize/Figures/", scenario,"/Figure6.png"), width = 8, height = 8)
 
 ## ISSUE ----------------------------
 
