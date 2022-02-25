@@ -325,6 +325,10 @@ mles_df %>%
   scale_x_log10() +
   theme_bw()
 
+# Ok. What's going on is a good result. The likelihood in the simple form is subject to
+# numerical issues. Which get fixed with a glm approach.
+# The glm is a reparameterization through the mean.
+
 
 # Q: If we focus ONLY on the simple Lomax
 # - How close to the truth is the estimate of the tai?
@@ -400,11 +404,6 @@ pleg <- get_legend(p3)
 
 plot_grid(p1, p2, p3 + theme(legend.position = "none"), pleg, nrow = 4, rel_heights = c(1,1,1, 0.3))
 ggsave(paste0("Ch3_samplesize/Figures/Figure3", scenario,".png"), width = 8, height = 8)
-
-### conclusion ------------------------------------------
-
-# So, the GP tends to go way off
-# The less biased if you will is the regular lomax and we see clearly that sample size matters.
 
 
 # Make some boxplots ----------------------------------------------------
@@ -592,9 +591,13 @@ plot_grid(p1, p2, p3 + theme(legend.position = "none"), pleg, nrow = 4, rel_heig
 ggsave(paste0("Ch3_samplesize/Figures/Figure6", scenario,".png"), width = 8, height = 8)
 
 
+# Conclusion ------------------------------------------
 
-
-
+# The numerical optimization issues with the simple Lomax get fixed with glm
+# The glm uses a reparameterization with the mean.
+# Look into the reparameterization with the beta binomial through the mean
+# The GP does a good job, but parameter space includes negatives so transformation
+# Back to a Lomax doesn't work then
 
 
 
