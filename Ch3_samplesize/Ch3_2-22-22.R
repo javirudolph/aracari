@@ -139,12 +139,12 @@ bottom_row <- plot_grid(truth_hist, truth_density)
 
 plot_grid(top_row, bottom_row,nrow = 2)
 
-ggsave(paste0("Ch3_samplesize/Figures/Figure1", scenario,".png"))
+ggsave(paste0("Ch3_samplesize/Figures/Figure1", scenario,".png"), width = 6, height = 5)
 
 
 ## Thresholds ----------------
 
-thresh_tests <- c(50, 75, 100, 150, 250, 500, 1000)
+thresh_tests <- c(50, 75, 100, 150, 250, 500, 750, 1000)
 tibble(thresh_tests) %>%
   mutate(n_overthresh = map_dbl(1:length(thresh_tests),
                                 function(y) length(which(truth_df$x_samps >= thresh_tests[y]))),
@@ -280,54 +280,196 @@ for(i in 1:nrow(mles_df)){
   evd_mles <- summary(ith_evd)$par
   mles_df$scale[i] <- evd_mles[1]
   mles_df$shape[i] <- evd_mles[2]
-  mles_df$gp_tail[i] <- devd(ith_thresh, scale = evd_mles[1], shape = evd_mles[2])
-
-  # Add lomax tail to df
-  mles_df$lomax_tail[i] <- exp(log_St_star)
-
+  mles_df$log_GP[i] <- log(pextRemes(ith_evd, ith_thresh, lower.tail = FALSE))
 
   # Check with Lomax GLM
   glm_out <- lomax.glm(formula=~1, my.dataf=ith_samps, response=ith_samps$x_star)
   alpha.2 <- glm_out$alphas.hat[1]
   k.2     <- glm_out$k.hat
   log.st.star2 <- lomax.St(x=ith_thresh,alpha=alpha.2,k=k.2,log.scale=TRUE)
-  mles_df$lomax_glm_tail[i] <- exp(log.st.star2)
+  mles_df$log_St_hat2[i] <- log.st.star2
 
 }
 
 mles_df %>%
   right_join(., thetas[, c(1,3)]) -> mles_df
 
-# VIZ tail estimates across methods for different sample sizes and thresholds
+### VIZ ---------------------------------------------
 
-# Q: What is the effect of sample size on the Lomax estimate of the tail?
+# Q: If we focus ONLY on the simple Lomax
+# - How close to the truth is the estimate of the tai?
 
 mles_df %>%
-  pivot_longer(., cols = c(gp_tail, lomax_tail, lomax_glm_tail), names_to = "tail_method") %>%
-  ggplot(., aes(x = tail_method, y = log(value)-log(theta))) +
-  facet_grid(samp_n_tests~thresh_tests) +
+  ggplot(., aes(x = thresh_tests, y = log_St_hat - log(theta))) +
   geom_point() +
-  geom_hline(aes(yintercept = 1), color = "red") +
-  theme_bw()
+  geom_hline(aes(yintercept=  0), color = "red") +
+  labs(x = "Threshold Value", y = "Log St - Log theta") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() -> p1
+p1
+# As the threshold increases, the variation in the estimation of the threshold increases
+# Makes sense. It's harder to get precise estimates for very rare events
 
+# Q: How does it look like for all three methods?
+mles_df %>%
+  ggplot(., aes(x = thresh_tests, y = log_St_hat2 - log(theta))) +
+  geom_point() +
+  geom_hline(aes(yintercept=  0), color = "red") +
+  labs(x = "Threshold Value", y = "Log St.glm - Log theta") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() -> p2
+mles_df %>%
+  ggplot(., aes(x = thresh_tests, y = log_GP - log(theta))) +
+  geom_point() +
+  geom_hline(aes(yintercept=  0), color = "red") +
+  labs(x = "Threshold Value", y = "Log GP - Log theta") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() -> p3
+
+plot_grid(p1, p2, p3, nrow = 3)
+ggsave(paste0("Ch3_samplesize/Figures/Figure2", scenario,".png"), width = 8, height = 8)
+
+
+
+# Q: How does this change with sample size?
+# I would expect that by increasing the sample size, we get closer to the true estimator
+
+mypal <- c("#95190C", "#610345", "#E3B505")
 
 mles_df %>%
-  pivot_longer(., cols = c(gp_tail, lomax_tail, lomax_glm_tail), names_to = "tail_method") %>%
-  ggplot(., aes(x = thresh_tests, color = tail_method, y = log(value)-log(theta))) +
-  #facet_grid(samp_n_tests~thresh_tests) +
+  ggplot(., aes(x = thresh_tests, y = log_St_hat - log(theta))) +
+  geom_point(size = 3.5, alpha = 0.7, aes(color = samp_n_tests)) +
+  geom_hline(aes(yintercept=  0), color = mypal[1]) +
+  scale_color_gradient(low = mypal[2], high = mypal[3]) +
+  labs(x = "Threshold Value", y = "Log St - Log theta") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "none") -> p1
+p1
+mles_df %>%
+  ggplot(., aes(x = thresh_tests, y = log_St_hat2 - log(theta))) +
+  geom_point(size = 3.5, alpha = 0.7, aes(color = samp_n_tests)) +
+  geom_hline(aes(yintercept=  0), color = mypal[1]) +
+  scale_color_gradient(low = mypal[2], high = mypal[3]) +
+  labs(x = "Threshold Value", y = "Log St.glm - Log theta") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "none") -> p2
+mles_df %>%
+  ggplot(., aes(x = thresh_tests, y = log_GP - log(theta))) +
+  geom_point(size = 3.5, alpha = 0.7, aes(color = samp_n_tests)) +
+  geom_hline(aes(yintercept=  0), color = mypal[1]) +
+  scale_color_gradient(low = mypal[2], high = mypal[3]) +
+  labs(x = "Threshold Value", y = "Log GP - Log theta") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  guides(color = guide_colorbar(barheight = 0.5, barwidth = 15, title = "Sample \n Size")) -> p3
+
+pleg <- get_legend(p3)
+
+plot_grid(p1, p2, p3 + theme(legend.position = "none"), pleg, nrow = 4, rel_heights = c(1,1,1, 0.3))
+ggsave(paste0("Ch3_samplesize/Figures/Figure3", scenario,".png"), width = 8, height = 8)
+
+### conclusion ------------------------------------------
+
+# So, the GP tends to go way off
+# The less biased if you will is the regular lomax and we see clearly that sample size matters.
+
+
+# Make some boxplots ----------------------------------------------------
+
+bxplt_data_fx <- function(nreps){
+  out <- data.frame()
+
+  for(j in 1:nreps){
+    samp_n_tests <- c(80, 200, 500, 800, 1000, 1600)
+    mles_df <- data.frame(expand.grid(thresh_tests = thresh_tests, samp_n_tests = samp_n_tests))
+    mles_df$nrep <- j
+
+    for(i in 1:nrow(mles_df)){
+      ith_n <- mles_df$samp_n_tests[i]
+      ith_thresh <- mles_df$thresh_tests[i]
+      ith_samps <- data.frame(x_star = sample(truth_df$x_samps, ith_n))
+      ith_tail <- length(which(ith_samps$x_star >= ith_thresh))
+      mles_df$tail_p[i] <- ith_tail/ith_n
+
+      # Fit Lomax
+      optim_out <- optim(par=log(c(1.5, 1.5)), fn=nllike.simp, method="BFGS", Y=ith_samps$x_star)
+      mles_star <- exp(optim_out$par)
+      alpha_star <- mles_star[1]
+      k_star <- mles_star[2]
+      mles_df$alpha_star[i] <- alpha_star
+      mles_df$k_star[i] <- k_star
+      # Estimate the tail
+      log_St_star <- lomax.St(x = ith_thresh,alpha = alpha_star,k = k_star,log.scale=TRUE)
+      mles_df$log_St_hat[i] <- log_St_star
+
+      # Check with GP fit
+      ith_evd <- fevd(ith_samps$x_star, threshold = 0, type = "GP")
+      evd_mles <- summary(ith_evd)$par
+      mles_df$scale[i] <- evd_mles[1]
+      mles_df$shape[i] <- evd_mles[2]
+      mles_df$log_GP[i] <- log(pextRemes(ith_evd, ith_thresh, lower.tail = FALSE))
+
+      # Check with Lomax GLM
+      glm_out <- lomax.glm(formula=~1, my.dataf=ith_samps, response=ith_samps$x_star)
+      alpha.2 <- glm_out$alphas.hat[1]
+      k.2     <- glm_out$k.hat
+      log.st.star2 <- lomax.St(x=ith_thresh,alpha=alpha.2,k=k.2,log.scale=TRUE)
+      mles_df$log_St_hat2[i] <- log.st.star2
+
+    }
+
+    mles_df %>%
+      right_join(., thetas[, c(1,3)]) -> mles_df
+    out <- rbind.data.frame(out, mles_df)
+  }
+
+  return(out)
+
+}
+
+nreps_mles_df <- bxplt_data_fx(10)
+
+nreps_mles_df %>%
+  #mutate(thresh_tests = factor(thresh_tests)) %>%
+  ggplot(., aes(y = log_St_hat - log(theta), group = thresh_tests, color = samp_n_tests)) +
   facet_wrap(~samp_n_tests, nrow = 1) +
-  geom_point() +
-  geom_hline(aes(yintercept = 1), color = "red") +
-  theme_bw()
+  geom_boxplot() +
+  geom_hline(aes(yintercept=  0), color = mypal[1]) +
+  scale_color_gradient(low = mypal[2], high = mypal[3]) +
+  labs(x = "Threshold Value", y = "Log St - Log theta") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "none") -> p1
 
+nreps_mles_df %>%
+  #mutate(thresh_tests = factor(thresh_tests)) %>%
+  ggplot(., aes(y = log_St_hat2 - log(theta), group = thresh_tests, color = samp_n_tests)) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_boxplot() +
+  geom_hline(aes(yintercept=  0), color = mypal[1]) +
+  scale_color_gradient(low = mypal[2], high = mypal[3]) +
+  labs(x = "Threshold Value", y = "Log St.glm - Log theta") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "none") -> p2
 
+nreps_mles_df %>%
+  #mutate(thresh_tests = factor(thresh_tests)) %>%
+  ggplot(., aes(y = log_GP - log(theta), group = thresh_tests, color = samp_n_tests)) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_boxplot() +
+  geom_hline(aes(yintercept=  0), color = mypal[1]) +
+  scale_color_gradient(low = mypal[2], high = mypal[3]) +
+  labs(x = "Threshold Value", y = "Log GP - Log theta") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "none") -> p3
 
-
-
-
-
-
-
+plot_grid(p1, p2, p3, nrow = 3)
+ggsave(paste0("Ch3_samplesize/Figures/Figure4", scenario,".png"), width = 8, height = 8)
 
 
 
