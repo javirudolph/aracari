@@ -143,7 +143,8 @@ ggsave(paste0("Ch3_samplesize/Figures/Figure1", scenario,".png"), width = 6, hei
 
 
 ## Thresholds ----------------
-# Thresholds based on quantiles
+# Thresholds based on quantiles: because when we have a sample, we still don't know the truth
+# But we can know the quantiles of our sample.
 # summary(truth_df$x_samps)
 thresh_tests <- round(quantile(truth_df$x_samps, c(0.5, 0.75, 0.9, 0.99, 0.999, 0.9999), names = FALSE))
 
@@ -261,6 +262,7 @@ samp_n_tests <- c(80, 200, 500, 800, 1000, 1600)
 mles_df <- data.frame(expand.grid(thresh_tests = thresh_tests, samp_n_tests = samp_n_tests))
 
 for(i in 1:nrow(mles_df)){
+  i<-19
   ith_n <- mles_df$samp_n_tests[i]
   ith_thresh <- mles_df$thresh_tests[i]
   ith_samps <- data.frame(x_star = sample(truth_df$x_samps, ith_n))
@@ -277,6 +279,7 @@ for(i in 1:nrow(mles_df)){
   # Estimate the tail
   log_St_star <- lomax.St(x = ith_thresh,alpha = alpha_star,k = k_star,log.scale=TRUE)
   mles_df$log_St_hat[i] <- log_St_star
+  mles_df$log_St_hat_fix[i] <- log(lomax.St(x = ith_thresh,alpha = optim_out$par[1],k = optim_out$par[2]))
 
   # Check with GP fit
   ith_evd <- fevd(ith_samps$x_star, threshold = 0, type = "GP")
