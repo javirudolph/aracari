@@ -526,7 +526,7 @@ nreps_mles_df %>%
   geom_jitter(aes(x = thresh_tests)) +
   geom_hline(aes(yintercept=  0), color = mypal[1]) +
   scale_color_gradient(low = mypal[2], high = mypal[3]) +
-  labs(x = "Threshold Value", y = "Log St - Log theta") +
+  labs(x = "Threshold Value", y = "Log St") +
   scale_x_continuous(breaks = thresh_tests) +
   theme_bw() +
   theme(legend.position = "none") -> p1
@@ -538,7 +538,7 @@ nreps_mles_df %>%
   geom_jitter(aes(x = thresh_tests)) +
   geom_hline(aes(yintercept=  0), color = mypal[1]) +
   scale_color_gradient(low = mypal[2], high = mypal[3]) +
-  labs(x = "Threshold Value", y = "Log St.glm - Log theta") +
+  labs(x = "Threshold Value", y = "Log St.glm") +
   scale_x_continuous(breaks = thresh_tests) +
   theme_bw() +
   theme(legend.position = "none") -> p2
@@ -550,7 +550,7 @@ nreps_mles_df %>%
   geom_jitter(aes(x = thresh_tests)) +
   geom_hline(aes(yintercept=  0), color = mypal[1]) +
   scale_color_gradient(low = mypal[2], high = mypal[3]) +
-  labs(x = "Threshold Value", y = "Log GP - Log theta") +
+  labs(x = "Threshold Value", y = "Log GP") +
   scale_x_continuous(breaks = thresh_tests) +
   theme_bw() +
   theme(legend.position = "bottom") +
