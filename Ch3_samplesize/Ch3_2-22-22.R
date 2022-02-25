@@ -653,10 +653,101 @@ ggsave(paste0("Ch3_samplesize/", dir_scenario,"/Figure8.png"), width = 8, height
 # BIAS -----------------------------------------
 
 # Well, now let's just focus on the Lomax glm and GP functions
+# And I think because of the -infinity, treat them differently
+# For the lomax glm work with
+
+## Bias boxplots ----------------------------
+nreps_mles_df %>%
+  mutate(glm_ratio = log_St_hat2 - log(theta)) %>%
+  ggplot(., aes(y = glm_ratio, group = thresh_tests, color = samp_n_tests)) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_boxplot() +
+  geom_hline(aes(yintercept=  0), color = mypal[1]) +
+  scale_color_gradient(low = mypal[2], high = mypal[3]) +
+  labs(x = "Threshold Value", y = "Log St.glm - Log theta") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "none") -> p2
+
+nreps_mles_df %>%
+  #mutate(thresh_tests = factor(thresh_tests)) %>%
+  ggplot(., aes(y = log_GP - log(theta), group = thresh_tests, color = samp_n_tests)) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_boxplot() +
+  geom_hline(aes(yintercept=  0), color = mypal[1]) +
+  scale_color_gradient(low = mypal[2], high = mypal[3]) +
+  labs(x = "Threshold Value", y = "Log GP - Log theta") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  guides(color = guide_colorbar(barheight = 0.5, barwidth = 15, title = "Sample \n Size"))  -> p3
+
+pleg <- get_legend(p3)
 
 
+nreps_mles_df %>%
+  mutate(GP_Est = ifelse(is.infinite(log_GP) == TRUE, 0, exp(log_GP)),
+         GP_ratio = GP_Est/theta) %>%
+  ggplot(., aes(y = GP_ratio, group = thresh_tests, color = samp_n_tests)) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_boxplot() +
+  geom_hline(aes(yintercept=  1), color = mypal[1]) +
+  scale_color_gradient(low = mypal[2], high = mypal[3]) +
+  labs(x = "Threshold Value", y = "GP_Est/theta") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  guides(color = guide_colorbar(barheight = 0.5, barwidth = 15, title = "Sample \n Size")) +
+  theme(legend.position = "none")-> p4
 
 
+plot_grid(p2, p3 + theme(legend.position = "none"), p4, pleg,
+          nrow = 4, rel_heights = c(1,1,1, 0.3))
+
+# Ok, we see bias, which gets worse with increasing thresholds.
+# Increasing the sample size doesn't really fix this bias
+
+ggsave(paste0("Ch3_samplesize/", dir_scenario,"/Figure9.png"), width = 8, height = 8)
 
 
+## Average bias plots ----------------------------------------
 
+nreps_mles_df %>%
+  mutate(glm_ratio = log_St_hat2 - log(theta),
+         GP_diff = log_GP - log(theta),
+         GP_Est = ifelse(is.infinite(log_GP) == TRUE, 0, exp(log_GP)),
+         GP_ratio = GP_Est/theta) %>%
+  group_by(thresh_tests, samp_n_tests) %>%
+  summarize(av_glm_ratio = mean(glm_ratio),
+            av_GP_diff = mean(GP_diff),
+            av_GP_ratio = mean(GP_ratio)) -> average_bias
+
+average_bias %>%
+  ggplot(., aes(y = av_glm_ratio, x = thresh_tests, color = samp_n_tests)) +
+  # facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_point(size = 3, alpha = 0.8) +
+  geom_hline(aes(yintercept=  0), color = mypal[1]) +
+  scale_color_gradient(low = mypal[2], high = mypal[3]) +
+  labs(x = "Threshold Value", y = "Average Bias GLM - Log scale") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "none") -> p1
+p1
+
+average_bias %>%
+  ggplot(., aes(y = av_GP_ratio, x = thresh_tests, color = samp_n_tests)) +
+  # facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_point(size = 3, alpha = 0.8) +
+  geom_hline(aes(yintercept=  1), color = mypal[1]) +
+  scale_color_gradient(low = mypal[2], high = mypal[3]) +
+  labs(x = "Threshold Value", y = "Average Bias GP") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() -> p2
+p2
+
+p3 <- get_legend(p2 + theme(legend.position = "bottom") +
+                              guides(color = guide_colorbar(barheight = 0.5, barwidth = 15, title = "Sample \n Size")))
+
+plot_grid(p1, p2 + theme(legend.position = "none"), p3, nrow = 3, rel_heights = c(1,1,0.2))
+
+ggsave(paste0("Ch3_samplesize/", dir_scenario,"/Figure10.png"), width = 8, height = 8)
