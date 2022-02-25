@@ -656,7 +656,7 @@ ggsave(paste0("Ch3_samplesize/", dir_scenario,"/Figure8.png"), width = 8, height
 # And I think because of the -infinity, treat them differently
 # For the lomax glm work with
 
-## Bias boxplots ----------------------------
+## Boxplots ----------------------------
 nreps_mles_df %>%
   mutate(glm_ratio = log_St_hat2 - log(theta)) %>%
   ggplot(., aes(y = glm_ratio, group = thresh_tests, color = samp_n_tests)) +
@@ -710,7 +710,7 @@ plot_grid(p2, p3 + theme(legend.position = "none"), p4, pleg,
 ggsave(paste0("Ch3_samplesize/", dir_scenario,"/Figure9.png"), width = 8, height = 8)
 
 
-## Average bias plots ----------------------------------------
+## Average plots ----------------------------------------
 
 nreps_mles_df %>%
   mutate(glm_ratio = log_St_hat2 - log(theta),
@@ -728,7 +728,7 @@ average_bias %>%
   geom_point(size = 3, alpha = 0.8) +
   geom_hline(aes(yintercept=  0), color = mypal[1]) +
   scale_color_gradient(low = mypal[2], high = mypal[3]) +
-  labs(x = "Threshold Value", y = "Average Bias GLM - Log scale") +
+  labs(x = "Threshold Value", y = "Average GLM - Log scale") +
   scale_x_continuous(breaks = thresh_tests) +
   theme_bw() +
   theme(legend.position = "none") -> p1
@@ -740,7 +740,7 @@ average_bias %>%
   geom_point(size = 3, alpha = 0.8) +
   geom_hline(aes(yintercept=  1), color = mypal[1]) +
   scale_color_gradient(low = mypal[2], high = mypal[3]) +
-  labs(x = "Threshold Value", y = "Average Bias GP") +
+  labs(x = "Threshold Value", y = "Average GP") +
   scale_x_continuous(breaks = thresh_tests) +
   theme_bw() -> p2
 p2
@@ -751,3 +751,114 @@ p3 <- get_legend(p2 + theme(legend.position = "bottom") +
 plot_grid(p1, p2 + theme(legend.position = "none"), p3, nrow = 3, rel_heights = c(1,1,0.2))
 
 ggsave(paste0("Ch3_samplesize/", dir_scenario,"/Figure10.png"), width = 8, height = 8)
+
+### conclusion -----------------------------
+# So, we use the log scale for the glm lomax, again because of numerical issues
+# And use the regular scale for the GP because of numerical issues, to avoid neg inf
+# We see that there is bias in the estimates of the tail
+# For increasing threshold values of the tail, the more biased the estimate
+# And increasing sample size doesn't correct that because we see these estimator being
+# off under all sample sizes, and way off for higher threshold values.
+
+## Bias estimation ------------------------------
+# So, the definition of bias is E[theta_hat - theta]
+# And, we can do a bootstrap to estimate the bias in these cases
+
+
+### Bootstrap ---------------
+
+# Parametric first
+
+samp_n_tests <- c(80, 200, 500, 800, 1000, 1600)
+thresh_tests
+
+mles_df <- data.frame(expand.grid(thresh_tests = thresh_tests, samp_n_tests = samp_n_tests))
+bias_df <- data.frame()
+
+for(i in 1:nrow(mles_df)){
+  i<-1
+  # Get the sample
+  ith_n <- mles_df$samp_n_tests[i]
+  ith_thresh <- mles_df$thresh_tests[i]
+  ith_samps <- data.frame(x_star = sample(truth_df$x_samps, ith_n))
+  ith_tail <- length(which(ith_samps$x_star >= ith_thresh))
+  mles_df$tail_p[i] <- ith_tail/ith_n
+
+
+  # Check with Lomax GLM
+  glm_out <- lomax.glm(formula=~1, my.dataf=ith_samps, response=ith_samps$x_star)
+  alpha_hat <- glm_out$alphas.hat[1]
+  k_hat    <- glm_out$k.hat
+  mles_df$alpha_glm[i] <-alpha_hat
+  mles_df$k_glm[i] <- k_hat
+
+  # Check with GP fit
+  ith_evd <- fevd(ith_samps$x_star, threshold = 0, type = "GP")
+  scale_hat <- summary(ith_evd)$par[1]
+  shape_hat <- summary(ith_evd)$par[2]
+  mles_df$scale_hat[i] <- scale_hat
+  mles_df$shape_hat[i] <- shape_hat
+
+  # Estimate the tail
+
+  # Lomax glm
+  log_St_hat <- lomax.St(x=ith_thresh,alpha=alpha_hat,k=k_hat,log.scale=TRUE)
+  mles_df$log_St_hat[i] <- log_St_hat
+
+  # GP tail
+  GP_theta_hat <- pextRemes(ith_evd, ith_thresh, lower.tail = FALSE)
+  mles_df$GP_theta_hat[i] <- GP_theta_hat
+
+  # Now to the bootstrap
+  # For each bootstrap I want parameter estimates
+  # It's a nonparametric bootstrap so we sample with replacement from the ith_samps
+  B <- 5
+  bth_df <- data.frame(n_B = 1:B)
+
+
+  for(b in 1:B){
+    bth_samps <- NULL
+    bth_samps <- data.frame(x_star = sample(ith_samps$x_star, ith_n, replace = TRUE))
+
+    bth_glm <- lomax.glm(formula=~1, my.dataf=bth_samps, response=bth_samps$x_star)
+    bth_alpha_hat <- bth_glm$alphas.hat[1]
+    bth_k_hat    <- bth_glm$k.hat
+    bth_df$alpha_star[b] <- bth_alpha_hat
+    bth_df$k_star[b] <- bth_k_hat
+
+    # Check with GP fit
+    bth_evd <- fevd(bth_samps$x_star, threshold = 0, type = "GP")
+    bth_gp_scale <- summary(bth_evd)$par[1]
+    bth_gp_shape <- summary(bth_evd)$par[2]
+    bth_df$scale_star[b] <- bth_gp_scale
+    bth_df$shape_star[b] <- bth_gp_shape
+
+    # Estimate the tail
+
+    # Lomax glm
+    bth_log_St_hat <- lomax.St(x=ith_thresh,alpha=bth_alpha_hat,k=bth_k_hat,log.scale=TRUE)
+    bth_df$log_St_star[b] <- bth_log_St_hat
+
+    # GP tail
+    bth_df$GP_theta_star[b] <- pextRemes(bth_evd, ith_thresh, lower.tail = FALSE)
+
+  }
+
+  ith_bias <- bth_df %>%
+    mutate(bias_alpha = alpha_star - alpha_hat,
+           bias_k = k_star - k_hat,
+           bias_scale = scale_star - scale_hat,
+           bias_shape = shape_star - shape_hat,
+           bias_theta_lomax = log_St_star - log_St_hat,
+           bias_theta_gp = GP_theta_star - GP_theta_hat) %>%
+    summarise(across(starts_with("bias"), ~ mean(.x, na.rm = TRUE))) %>%
+    mutate(lomax_theta_bar = log_St_hat - bias_theta_lomax,
+           GP_theta_bar = GP_theta_hat - bias_theta_gp)
+
+
+  bias_df <- rbind.data.frame(bias_df, ith_bias)
+
+}
+
+mles_df %>%
+  right_join(., thetas[, c(1,3)]) -> mles_df
