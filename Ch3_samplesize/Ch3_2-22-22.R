@@ -275,25 +275,37 @@ for(i in 1:nrow(mles_df)){
   k_star <- mles_star[2]
   mles_df$alpha_star[i] <-alpha_star
   mles_df$k_star[i] <- k_star
-  # Estimate the tail
-  log_St_star <- lomax.St(x = ith_thresh,alpha = alpha_star,k = k_star,log.scale=TRUE)
-  mles_df$log_St_hat[i] <- log_St_star
-
-  # Check with GP fit
-  ith_evd <- fevd(ith_samps$x_star, threshold = 0, type = "GP")
-  evd_mles <- summary(ith_evd)$par
-  mles_df$scale[i] <- evd_mles[1]
-  mles_df$shape[i] <- evd_mles[2]
-  mles_df$log_GP[i] <- log(pextRemes(ith_evd, ith_thresh, lower.tail = FALSE))
 
   # Check with Lomax GLM
   glm_out <- lomax.glm(formula=~1, my.dataf=ith_samps, response=ith_samps$x_star)
   alpha.2 <- glm_out$alphas.hat[1]
   k.2     <- glm_out$k.hat
-  mles_df$alpha2[i] <-alpha.2
-  mles_df$k2[i] <- k.2
+  mles_df$alpha_glm[i] <-alpha.2
+  mles_df$k_glm[i] <- k.2
+
+  # Check with GP fit
+  ith_evd <- fevd(ith_samps$x_star, threshold = 0, type = "GP")
+  gp_scale <- summary(ith_evd)$par[1]
+  gp_shape <- summary(ith_evd)$par[2]
+  mles_df$alpha_GP[i] <- gp_scale*gp_shape
+  mles_df$k_GP[i] <- 1/gp_shape
+  mles_df$scale[i] <- gp_scale
+  mles_df$shape[i] <- gp_shape
+
+
+
+  # Estimate the tail
+  #Lomax simple
+  log_St_star <- lomax.St(x = ith_thresh,alpha = alpha_star,k = k_star,log.scale=TRUE)
+  mles_df$log_St_hat[i] <- log_St_star
+
+  # Lomax glm
   log.st.star2 <- lomax.St(x=ith_thresh,alpha=alpha.2,k=k.2,log.scale=TRUE)
   mles_df$log_St_hat2[i] <- log.st.star2
+
+  # GP tail
+  mles_df$log_GP[i] <- log(pextRemes(ith_evd, ith_thresh, lower.tail = FALSE))
+
 
 }
 
