@@ -594,14 +594,38 @@ ggsave(paste0("Ch3_samplesize/Figures/Figure6", scenario,".png"), width = 8, hei
 
 # This is an issue with parameter space, the estimation.
 
-nreps_mles_df %>%
-  ggplot() +
-  geom_point(aes(x = alpha_star, y = k_star), color = "red", size = 3) +
-  geom_point(aes(x = alpha_glm, y = k_glm), color = "blue", size = 3) +
-  geom_point(aes(x = alpha_GP, y = k_GP), color = "green", size = 3) +
+ggplot(data = nreps_mles_df) +
+  geom_point(aes(x = alpha_star, y = k_star, color = "Simple Lomax"), size = 3, alpha = 0.5) +
+  geom_point(aes(x = alpha_glm, y = k_glm, color = "Lomax GLM"), size = 3, alpha = 0.5) +
+  geom_point(aes(x = alpha_GP, y = k_GP, color = "GP estimate of Lomax"), size = 3, alpha = 0.5) +
   scale_y_log10() +
   scale_x_log10() +
-  theme_bw()
+  scale_color_discrete(name = "Model") +
+  labs(x = "Log(Alpha_Star)", y = "Log(K_Star") +
+  theme_bw() -> all_param_space
+all_param_space
+ggsave(paste0("Ch3_samplesize/Figures/Figure7", scenario,".png"), width = 8, height = 8)
+
+sample_sizes <- samp_n_tests
+PS <- list()
+for(i in 1:length(sample_sizes)){
+    ggplot(data = nreps_mles_df %>% filter(., samp_n_tests == sample_sizes[i])) +
+      geom_point(aes(x = alpha_star, y = k_star, color = "Simple Lomax"), size = 3, alpha = 0.5) +
+      geom_point(aes(x = alpha_glm, y = k_glm, color = "Lomax GLM"), size = 3, alpha = 0.5) +
+      geom_point(aes(x = alpha_GP, y = k_GP, color = "GP estimate of Lomax"), size = 3, alpha = 0.5) +
+      scale_y_log10() +
+      scale_x_log10() +
+      scale_color_discrete(name = "Model") +
+      labs(x = "Log(Alpha_Star)", y = "Log(K_Star", title = paste("SampSize = ", sample_sizes[i])) +
+      theme_bw() -> a
+    PS[[i]] <- a + theme(legend.position = "none")
+}
+
+
+PS[[length(sample_sizes) + 1]] <- get_legend(a + theme(legend.position = "bottom"))
+
+PS1 <- plot_grid(PS[[1]], PS[[2]], PS[[3]], PS[[4]], PS[[5]], PS[[6]], nrow = 2)
+plot_grid(PS1, PS[[7]], nrow = 2, rel_heights = c(1, 0.1))
 
 # Ok. What's going on is a good result. The likelihood in the simple form is subject to
 # numerical issues. Which get fixed with a glm approach.
