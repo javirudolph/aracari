@@ -13,6 +13,7 @@ library(cowplot)
 library(tidyr)
 library(purrr)
 library(fitdistrplus)
+library(extRemes)
 
 # Lnorm parms functions --------------------------------------
 
@@ -40,7 +41,7 @@ lnorm_mean_var <- function(mean_log, sd_log){
 
 
 # ORIGINAL SCENARIO --------------------------------------
-scenario <- "_orig0223"
+scenario <- "_orig0225"
 desired_means <- c(28, 32, 40, 50)
 desired_sds <- c(49.7, 39.9, 33.3, 31.1)
 pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
@@ -146,9 +147,9 @@ ggsave(paste0("Ch3_samplesize/Figures/Figure1", scenario,".png"), width = 6, hei
 # Thresholds based on quantiles: because when we have a sample, we still don't know the truth
 # But we can know the quantiles of our sample.
 # summary(truth_df$x_samps)
-thresh_tests <- round(quantile(truth_df$x_samps, c(0.5, 0.75, 0.9, 0.99, 0.999, 0.9999), names = FALSE))
+# thresh_tests <- round(quantile(truth_df$x_samps, c(0.5, 0.75, 0.9, 0.99, 0.999, 0.9999), names = FALSE))
 
-# thresh_tests <- c(50, 75, 100, 150, 250, 500, 750, 1000)
+thresh_tests <- c(50, 100, 150, 250, 500, 750, 1000)
 tibble(thresh_tests) %>%
   mutate(n_overthresh = map_dbl(1:length(thresh_tests),
                                 function(y) length(which(truth_df$x_samps >= thresh_tests[y]))),
@@ -254,7 +255,7 @@ lomax.glm <- function(formula=~1, my.dataf, response){
 
 
 # Estimate tails once -----------------------------------------
-library(extRemes)
+
 
 samp_n_tests <- c(80, 200, 500, 800, 1000, 1600)
 
@@ -313,21 +314,6 @@ mles_df %>%
   right_join(., thetas[, c(1,3)]) -> mles_df
 
 ### VIZ ---------------------------------------------
-
-### ISSUE with parameter space
-
-mles_df %>%
-  ggplot() +
-  geom_point(aes(x = alpha_star, y = k_star), color = "red", size = 3) +
-  geom_point(aes(x = alpha_glm, y = k_glm), color = "blue", size = 3) +
-  geom_point(aes(x = alpha_GP, y = k_GP), color = "green", size = 3) +
-  scale_y_log10() +
-  scale_x_log10() +
-  theme_bw()
-
-# Ok. What's going on is a good result. The likelihood in the simple form is subject to
-# numerical issues. Which get fixed with a glm approach.
-# The glm is a reparameterization through the mean.
 
 
 # Q: If we focus ONLY on the simple Lomax
@@ -428,25 +414,39 @@ bxplt_data_fx <- function(nreps){
       mles_star <- exp(optim_out$par)
       alpha_star <- mles_star[1]
       k_star <- mles_star[2]
-      mles_df$alpha_star[i] <- alpha_star
+      mles_df$alpha_star[i] <-alpha_star
       mles_df$k_star[i] <- k_star
-      # Estimate the tail
-      log_St_star <- lomax.St(x = ith_thresh,alpha = alpha_star,k = k_star,log.scale=TRUE)
-      mles_df$log_St_hat[i] <- log_St_star
-
-      # Check with GP fit
-      ith_evd <- fevd(ith_samps$x_star, threshold = 0, type = "GP")
-      evd_mles <- summary(ith_evd)$par
-      mles_df$scale[i] <- evd_mles[1]
-      mles_df$shape[i] <- evd_mles[2]
-      mles_df$log_GP[i] <- log(pextRemes(ith_evd, ith_thresh, lower.tail = FALSE))
 
       # Check with Lomax GLM
       glm_out <- lomax.glm(formula=~1, my.dataf=ith_samps, response=ith_samps$x_star)
       alpha.2 <- glm_out$alphas.hat[1]
       k.2     <- glm_out$k.hat
+      mles_df$alpha_glm[i] <-alpha.2
+      mles_df$k_glm[i] <- k.2
+
+      # Check with GP fit
+      ith_evd <- fevd(ith_samps$x_star, threshold = 0, type = "GP")
+      gp_scale <- summary(ith_evd)$par[1]
+      gp_shape <- summary(ith_evd)$par[2]
+      mles_df$alpha_GP[i] <- gp_scale*gp_shape
+      mles_df$k_GP[i] <- 1/gp_shape
+      mles_df$scale[i] <- gp_scale
+      mles_df$shape[i] <- gp_shape
+
+
+
+      # Estimate the tail
+      #Lomax simple
+      log_St_star <- lomax.St(x = ith_thresh,alpha = alpha_star,k = k_star,log.scale=TRUE)
+      mles_df$log_St_hat[i] <- log_St_star
+
+      # Lomax glm
       log.st.star2 <- lomax.St(x=ith_thresh,alpha=alpha.2,k=k.2,log.scale=TRUE)
       mles_df$log_St_hat2[i] <- log.st.star2
+
+      # GP tail
+      mles_df$log_GP[i] <- log(pextRemes(ith_evd, ith_thresh, lower.tail = FALSE))
+
 
     }
 
@@ -590,6 +590,22 @@ pleg <- get_legend(p3)
 plot_grid(p1, p2, p3 + theme(legend.position = "none"), pleg, nrow = 4, rel_heights = c(1,1,1, 0.3))
 ggsave(paste0("Ch3_samplesize/Figures/Figure6", scenario,".png"), width = 8, height = 8)
 
+## ISSUE ----------------------------
+
+# This is an issue with parameter space, the estimation.
+
+nreps_mles_df %>%
+  ggplot() +
+  geom_point(aes(x = alpha_star, y = k_star), color = "red", size = 3) +
+  geom_point(aes(x = alpha_glm, y = k_glm), color = "blue", size = 3) +
+  geom_point(aes(x = alpha_GP, y = k_GP), color = "green", size = 3) +
+  scale_y_log10() +
+  scale_x_log10() +
+  theme_bw()
+
+# Ok. What's going on is a good result. The likelihood in the simple form is subject to
+# numerical issues. Which get fixed with a glm approach.
+# The glm is a reparameterization through the mean.
 
 # Conclusion ------------------------------------------
 
@@ -597,7 +613,15 @@ ggsave(paste0("Ch3_samplesize/Figures/Figure6", scenario,".png"), width = 8, hei
 # The glm uses a reparameterization with the mean.
 # Look into the reparameterization with the beta binomial through the mean
 # The GP does a good job, but parameter space includes negatives so transformation
-# Back to a Lomax doesn't work then
+# back to a Lomax doesn't work then
+
+# Also, the estimators are biased, and the bigger the threshold, the worse it gets.
+
+
+
+# BIAS -----------------------------------------
+
+# Well, now let's just focus on the Lomax glm and GP functions
 
 
 
