@@ -916,6 +916,7 @@ thresh_tests
 
 combo_tests <- data.frame(expand.grid(thresh_tests = thresh_tests, samp_n_tests = samp_n_tests))
 bias_df <- data.frame()
+B <- 100
 
 for(j in 1:30){
   for(i in 1:nrow(combo_tests)){
@@ -929,29 +930,35 @@ for(j in 1:30){
     alpha_hat <- glm_out$alphas.hat[1]
     k_hat    <- glm_out$k.hat
 
-    # Check with GP fit
-    ith_evd <- fevd(ith_samps$x_star, threshold = 0, type = "GP")
-    scale_hat <- summary(ith_evd)$par[1]
-    shape_hat <- summary(ith_evd)$par[2]
-
     # Estimate tail
     log_St_hat <- lomax.St(x=ith_thresh,alpha=alpha_hat,k=k_hat,log.scale=TRUE)
-    GP_theta_hat <- pextRemes(ith_evd, ith_thresh, lower.tail = FALSE)
 
-    # Updated to use function instead of loop
-    bth_df <- nonparam_boot(B=10)
+    #bootstrapping
+      bth_df <- data.frame(n_B = 1:B)
+
+      for(b in 1:B){
+        # Sample with replacement from the given sample
+        bth_samps <- data.frame(x_star = sample(ith_samps$x_star, ith_n, replace = TRUE))
+
+        # Estimate params using glm Lomax
+        bth_glm <- lomax.glm(formula=~1, my.dataf=bth_samps, response=bth_samps$x_star)
+        bth_alpha_hat <- bth_glm$alphas.hat[1]
+        bth_k_hat    <- bth_glm$k.hat
+
+        # Estimate the tail
+        # Lomax glm
+        bth_log_St_hat <- lomax.St(x=ith_thresh,alpha=bth_alpha_hat,k=bth_k_hat,log.scale=TRUE)
+        bth_df$log_St_star[b] <- bth_log_St_hat
+        }
 
 
     ith_bias <- bth_df %>%
-      summarise(across(c(2:7), ~ mean(.x, na.rm = TRUE))) %>%
+      summarise(across(c(-1), ~ mean(.x, na.rm = TRUE))) %>%
       mutate(log_St_hat = log_St_hat ,
-             GP_theta_hat = GP_theta_hat,
              theta_bar_lomax = 2*log_St_hat - log_St_star,
-             theta_bar_GP = 2*GP_theta_hat - GP_theta_star,
              samp_n_tests = ith_n,
              thresh_tests = ith_thresh,
              run = paste0("run", j))
-
 
     bias_df <- rbind.data.frame(bias_df, ith_bias)
 
