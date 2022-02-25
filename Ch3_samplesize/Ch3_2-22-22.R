@@ -108,7 +108,7 @@ purrrsampls %>%
   dplyr::select(., gID, x_samps) %>%
   unnest(cols = c(x_samps)) -> truth_df
 
-save(truth_df, file = paste0("Ch3_samplesize/simdata/", scenario, "/mixturesamples.RData"))
+save(truth_df, file = paste0("Ch3_samplesize/", dir_scenario, "/mixturesamples.RData"))
 
 
 # This is the data that we consider our "truth"
@@ -144,7 +144,7 @@ bottom_row <- plot_grid(truth_hist, truth_density)
 
 plot_grid(top_row, bottom_row,nrow = 2)
 
-ggsave(paste0("Ch3_samplesize/Figures/", scenario,"/Figure1.png"), width = 6, height = 5)
+ggsave(paste0("Ch3_samplesize/", dir_scenario, "/Figure1.png"), width = 6, height = 5)
 
 
 ## Thresholds ----------------
@@ -351,7 +351,7 @@ mles_df %>%
   theme_bw() -> p3
 
 plot_grid(p1, p2, p3, nrow = 3)
-ggsave(paste0("Ch3_samplesize/Figures/", scenario,"/Figure2.png"), width = 8, height = 8)
+ggsave(paste0("Ch3_samplesize/", dir_scenario, "/Figure2.png"), width = 8, height = 8)
 
 
 
@@ -393,7 +393,7 @@ mles_df %>%
 pleg <- get_legend(p3)
 
 plot_grid(p1, p2, p3 + theme(legend.position = "none"), pleg, nrow = 4, rel_heights = c(1,1,1, 0.3))
-ggsave(paste0("Ch3_samplesize/Figures/", scenario,"/Figure3.png"), width = 8, height = 8)
+ggsave(paste0("Ch3_samplesize/", dir_scenario, "/Figure3.png"), width = 8, height = 8)
 
 
 # Make some boxplots ----------------------------------------------------
@@ -465,6 +465,8 @@ bxplt_data_fx <- function(nreps){
 
 nreps_mles_df <- bxplt_data_fx(30)
 
+save(nreps_mles_df, file = paste0("Ch3_samplesize/", dir_scenario, "/nreps_mles_df.RData"))
+
 ## bxplt ratio ----------------------------
 nreps_mles_df %>%
   #mutate(thresh_tests = factor(thresh_tests)) %>%
@@ -506,7 +508,7 @@ nreps_mles_df %>%
 pleg <- get_legend(p3)
 
 plot_grid(p1, p2, p3 + theme(legend.position = "none"), pleg, nrow = 4, rel_heights = c(1,1,1, 0.3))
-ggsave(paste0("Ch3_samplesize/Figures/", scenario,"/Figure4.png"), width = 8, height = 8)
+ggsave(paste0("Ch3_samplesize/", dir_scenario, "/Figure4.png"), width = 8, height = 8)
 
 ## jitter ratio -------------------------------------
 nreps_mles_df %>%
@@ -549,7 +551,7 @@ nreps_mles_df %>%
 pleg <- get_legend(p3)
 
 plot_grid(p1, p2, p3 + theme(legend.position = "none"), pleg, nrow = 4, rel_heights = c(1,1,1, 0.3))
-ggsave(paste0("Ch3_samplesize/Figures/", scenario,"/Figure5.png"), width = 8, height = 8)
+ggsave(paste0("Ch3_samplesize/", dir_scenario, "/Figure5.png"), width = 8, height = 8)
 
 ## jitter raw values -----------------
 nreps_mles_df %>%
@@ -592,7 +594,7 @@ nreps_mles_df %>%
 pleg <- get_legend(p3)
 
 plot_grid(p1, p2, p3 + theme(legend.position = "none"), pleg, nrow = 4, rel_heights = c(1,1,1, 0.3))
-ggsave(paste0("Ch3_samplesize/Figures/", scenario,"/Figure6.png"), width = 8, height = 8)
+ggsave(paste0("Ch3_samplesize/", dir_scenario, "/Figure6.png"), width = 8, height = 8)
 
 ## ISSUE ----------------------------
 
@@ -608,7 +610,7 @@ ggplot(data = nreps_mles_df) +
   labs(x = "Log(Alpha_Star)", y = "Log(K_Star") +
   theme_bw() -> all_param_space
 all_param_space
-ggsave(paste0("Ch3_samplesize/Figures/Figure7", scenario,".png"), width = 8, height = 8)
+ggsave(paste0("Ch3_samplesize/", dir_scenario,"/Figure7.png"), width = 8, height = 8)
 
 sample_sizes <- samp_n_tests
 PS <- list()
@@ -630,6 +632,7 @@ PS[[length(sample_sizes) + 1]] <- get_legend(a + theme(legend.position = "bottom
 
 PS1 <- plot_grid(PS[[1]], PS[[2]], PS[[3]], PS[[4]], PS[[5]], PS[[6]], nrow = 2)
 plot_grid(PS1, PS[[7]], nrow = 2, rel_heights = c(1, 0.1))
+ggsave(paste0("Ch3_samplesize/", dir_scenario,"/Figure8.png"), width = 8, height = 8)
 
 # Ok. What's going on is a good result. The likelihood in the simple form is subject to
 # numerical issues. Which get fixed with a glm approach.
