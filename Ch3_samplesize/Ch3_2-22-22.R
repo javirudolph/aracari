@@ -769,6 +769,41 @@ ggsave(paste0("Ch3_samplesize/", dir_scenario,"/Figure10.png"), width = 8, heigh
 
 #### Nonparametric ---------
 
+nonparam_boot <- function(B=5, star_data_vec=ith_samps$x_star, samp_size=ith_n, threshold_test=ith_thresh){
+
+  bth_df <- data.frame(n_B = 1:B)
+  ith_n <- samp_size
+  ith_thresh = threshold_test
+
+  for(b in 1:B){
+    bth_samps <- data.frame(x_star = sample(star_data_vec, ith_n, replace = TRUE))
+
+    bth_glm <- lomax.glm(formula=~1, my.dataf=bth_samps, response=bth_samps$x_star)
+    bth_alpha_hat <- bth_glm$alphas.hat[1]
+    bth_k_hat    <- bth_glm$k.hat
+    bth_df$alpha_star[b] <- bth_alpha_hat
+    bth_df$k_star[b] <- bth_k_hat
+
+    # Check with GP fit
+    bth_evd <- fevd(bth_samps$x_star, threshold = 0, type = "GP")
+    bth_gp_scale <- summary(bth_evd)$par[1]
+    bth_gp_shape <- summary(bth_evd)$par[2]
+    bth_df$scale_star[b] <- bth_gp_scale
+    bth_df$shape_star[b] <- bth_gp_shape
+
+    # Estimate the tail
+    # Lomax glm
+    bth_log_St_hat <- lomax.St(x=ith_thresh,alpha=bth_alpha_hat,k=bth_k_hat,log.scale=TRUE)
+    bth_df$log_St_star[b] <- bth_log_St_hat
+
+    # GP tail
+    bth_df$GP_theta_star[b] <- pextRemes(bth_evd, ith_thresh, lower.tail = FALSE)
+
+  }
+  return(bth_df)
+
+}
+
 samp_n_tests <- c(80, 200, 500, 800, 1000, 1600)
 thresh_tests
 
@@ -807,6 +842,8 @@ for(i in 1:nrow(mles_df)){
   # GP tail
   GP_theta_hat <- pextRemes(ith_evd, ith_thresh, lower.tail = FALSE)
   mles_df$GP_theta_hat[i] <- GP_theta_hat
+
+  bth_df <- nonparam_boot()
 
   # Now to the bootstrap
   # For each bootstrap I want parameter estimates
