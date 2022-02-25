@@ -767,7 +767,7 @@ ggsave(paste0("Ch3_samplesize/", dir_scenario,"/Figure10.png"), width = 8, heigh
 
 ### Bootstrap ---------------
 
-# Parametric first
+#### Nonparametric ---------
 
 samp_n_tests <- c(80, 200, 500, 800, 1000, 1600)
 thresh_tests
@@ -776,7 +776,6 @@ mles_df <- data.frame(expand.grid(thresh_tests = thresh_tests, samp_n_tests = sa
 bias_df <- data.frame()
 
 for(i in 1:nrow(mles_df)){
-  i<-1
   # Get the sample
   ith_n <- mles_df$samp_n_tests[i]
   ith_thresh <- mles_df$thresh_tests[i]
@@ -812,7 +811,7 @@ for(i in 1:nrow(mles_df)){
   # Now to the bootstrap
   # For each bootstrap I want parameter estimates
   # It's a nonparametric bootstrap so we sample with replacement from the ith_samps
-  B <- 5
+  B <- 100
   bth_df <- data.frame(n_B = 1:B)
 
 
@@ -852,13 +851,47 @@ for(i in 1:nrow(mles_df)){
            bias_theta_lomax = log_St_star - log_St_hat,
            bias_theta_gp = GP_theta_star - GP_theta_hat) %>%
     summarise(across(starts_with("bias"), ~ mean(.x, na.rm = TRUE))) %>%
-    mutate(lomax_theta_bar = log_St_hat - bias_theta_lomax,
-           GP_theta_bar = GP_theta_hat - bias_theta_gp)
+    mutate(log_St_hat = log_St_hat ,
+           GP_theta_hat = GP_theta_hat,
+           theta_bar_lomax = log_St_hat - bias_theta_lomax,
+           theta_bar_GP = GP_theta_hat - bias_theta_gp,
+           samp_n_tests = ith_n,
+           thresh_tests = ith_thresh,
+           samp_tail = ith_tail)
 
 
   bias_df <- rbind.data.frame(bias_df, ith_bias)
 
 }
 
-mles_df %>%
-  right_join(., thetas[, c(1,3)]) -> mles_df
+bias_df %>%
+  right_join(., thetas[, c(1,3)]) -> bias_df
+
+# Can we see these and the bias correction?
+
+bias_df %>%
+  ggplot(., aes(x = thresh_tests)) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_point(aes(y = log_St_hat - log(theta), color = "Lomax_est"), size = 3, alpha = 0.8) +
+  geom_point(aes(y = theta_bar_lomax - log(theta), color = "Lomax_corrected"), size = 3, alpha = 0.8) +
+  geom_hline(aes(yintercept=  0), color = mypal[1]) +
+  # scale_color_gradient(low = mypal[2], high = mypal[3]) +
+  labs(x = "Threshold Value", y = "Lomax estimate") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "bottom") -> bias_corrected_lomax
+
+bias_df %>%
+  ggplot(., aes(x = thresh_tests)) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_point(aes(y = GP_theta_hat/theta, color = "GP_est"), size = 3, alpha = 0.8) +
+  geom_point(aes(y = theta_bar_GP/theta, color = "GP_corrected"), size = 3, alpha = 0.8) +
+  geom_hline(aes(yintercept=  1), color = mypal[1]) +
+  # scale_color_gradient(low = mypal[2], high = mypal[3]) +
+  labs(x = "Threshold Value", y = "GP estimate") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "bottom") -> bias_corrected_GP
+
+plot_grid(bias_corrected_lomax, bias_corrected_GP, nrow = 2)
+ggsave(paste0("Ch3_samplesize/", dir_scenario,"/Figure11.png"), width = 8, height = 8)
