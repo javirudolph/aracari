@@ -262,7 +262,6 @@ samp_n_tests <- c(80, 200, 500, 800, 1000, 1600)
 mles_df <- data.frame(expand.grid(thresh_tests = thresh_tests, samp_n_tests = samp_n_tests))
 
 for(i in 1:nrow(mles_df)){
-  i<-19
   ith_n <- mles_df$samp_n_tests[i]
   ith_thresh <- mles_df$thresh_tests[i]
   ith_samps <- data.frame(x_star = sample(truth_df$x_samps, ith_n))
@@ -279,7 +278,6 @@ for(i in 1:nrow(mles_df)){
   # Estimate the tail
   log_St_star <- lomax.St(x = ith_thresh,alpha = alpha_star,k = k_star,log.scale=TRUE)
   mles_df$log_St_hat[i] <- log_St_star
-  mles_df$log_St_hat_fix[i] <- log(lomax.St(x = ith_thresh,alpha = optim_out$par[1],k = optim_out$par[2]))
 
   # Check with GP fit
   ith_evd <- fevd(ith_samps$x_star, threshold = 0, type = "GP")
@@ -292,6 +290,8 @@ for(i in 1:nrow(mles_df)){
   glm_out <- lomax.glm(formula=~1, my.dataf=ith_samps, response=ith_samps$x_star)
   alpha.2 <- glm_out$alphas.hat[1]
   k.2     <- glm_out$k.hat
+  mles_df$alpha2[i] <-alpha.2
+  mles_df$k2[i] <- k.2
   log.st.star2 <- lomax.St(x=ith_thresh,alpha=alpha.2,k=k.2,log.scale=TRUE)
   mles_df$log_St_hat2[i] <- log.st.star2
 
