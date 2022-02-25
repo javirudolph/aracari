@@ -143,8 +143,11 @@ ggsave(paste0("Ch3_samplesize/Figures/Figure1", scenario,".png"), width = 6, hei
 
 
 ## Thresholds ----------------
+# Thresholds based on quantiles
+# summary(truth_df$x_samps)
+thresh_tests <- round(quantile(truth_df$x_samps, c(0.5, 0.75, 0.9, 0.99, 0.999, 0.9999), names = FALSE))
 
-thresh_tests <- c(50, 75, 100, 150, 250, 500, 750, 1000)
+# thresh_tests <- c(50, 75, 100, 150, 250, 500, 750, 1000)
 tibble(thresh_tests) %>%
   mutate(n_overthresh = map_dbl(1:length(thresh_tests),
                                 function(y) length(which(truth_df$x_samps >= thresh_tests[y]))),
