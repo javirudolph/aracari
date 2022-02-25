@@ -4,7 +4,7 @@
 
 
 # Libraries -----------------------------------------------
-set.seed(20220201)
+# set.seed(20220201)
 
 library(aracari)
 library(dplyr)
@@ -301,7 +301,7 @@ mles_df %>%
 
 mles_df %>%
   ggplot(., aes(x = thresh_tests, y = log_St_hat - log(theta))) +
-  geom_point() +
+  geom_point(size = 2) +
   geom_hline(aes(yintercept=  0), color = "red") +
   labs(x = "Threshold Value", y = "Log St - Log theta") +
   scale_x_continuous(breaks = thresh_tests) +
@@ -313,14 +313,14 @@ p1
 # Q: How does it look like for all three methods?
 mles_df %>%
   ggplot(., aes(x = thresh_tests, y = log_St_hat2 - log(theta))) +
-  geom_point() +
+  geom_point(size = 2) +
   geom_hline(aes(yintercept=  0), color = "red") +
   labs(x = "Threshold Value", y = "Log St.glm - Log theta") +
   scale_x_continuous(breaks = thresh_tests) +
   theme_bw() -> p2
 mles_df %>%
   ggplot(., aes(x = thresh_tests, y = log_GP - log(theta))) +
-  geom_point() +
+  geom_point(size = 2) +
   geom_hline(aes(yintercept=  0), color = "red") +
   labs(x = "Threshold Value", y = "Log GP - Log theta") +
   scale_x_continuous(breaks = thresh_tests) +
@@ -338,7 +338,7 @@ mypal <- c("#95190C", "#610345", "#E3B505")
 
 mles_df %>%
   ggplot(., aes(x = thresh_tests, y = log_St_hat - log(theta))) +
-  geom_point(size = 3.5, alpha = 0.7, aes(color = samp_n_tests)) +
+  geom_point(size = 3, alpha = 0.7, aes(color = samp_n_tests)) +
   geom_hline(aes(yintercept=  0), color = mypal[1]) +
   scale_color_gradient(low = mypal[2], high = mypal[3]) +
   labs(x = "Threshold Value", y = "Log St - Log theta") +
@@ -348,7 +348,7 @@ mles_df %>%
 p1
 mles_df %>%
   ggplot(., aes(x = thresh_tests, y = log_St_hat2 - log(theta))) +
-  geom_point(size = 3.5, alpha = 0.7, aes(color = samp_n_tests)) +
+  geom_point(size = 3, alpha = 0.7, aes(color = samp_n_tests)) +
   geom_hline(aes(yintercept=  0), color = mypal[1]) +
   scale_color_gradient(low = mypal[2], high = mypal[3]) +
   labs(x = "Threshold Value", y = "Log St.glm - Log theta") +
@@ -357,7 +357,7 @@ mles_df %>%
   theme(legend.position = "none") -> p2
 mles_df %>%
   ggplot(., aes(x = thresh_tests, y = log_GP - log(theta))) +
-  geom_point(size = 3.5, alpha = 0.7, aes(color = samp_n_tests)) +
+  geom_point(size = 3, alpha = 0.7, aes(color = samp_n_tests)) +
   geom_hline(aes(yintercept=  0), color = mypal[1]) +
   scale_color_gradient(low = mypal[2], high = mypal[3]) +
   labs(x = "Threshold Value", y = "Log GP - Log theta") +
@@ -430,8 +430,9 @@ bxplt_data_fx <- function(nreps){
 
 }
 
-nreps_mles_df <- bxplt_data_fx(10)
+nreps_mles_df <- bxplt_data_fx(30)
 
+## bxplt ratio ----------------------------
 nreps_mles_df %>%
   #mutate(thresh_tests = factor(thresh_tests)) %>%
   ggplot(., aes(y = log_St_hat - log(theta), group = thresh_tests, color = samp_n_tests)) +
@@ -466,11 +467,99 @@ nreps_mles_df %>%
   labs(x = "Threshold Value", y = "Log GP - Log theta") +
   scale_x_continuous(breaks = thresh_tests) +
   theme_bw() +
-  theme(legend.position = "none") -> p3
+  theme(legend.position = "bottom") +
+  guides(color = guide_colorbar(barheight = 0.5, barwidth = 15, title = "Sample \n Size"))  -> p3
 
-plot_grid(p1, p2, p3, nrow = 3)
+pleg <- get_legend(p3)
+
+plot_grid(p1, p2, p3 + theme(legend.position = "none"), pleg, nrow = 4, rel_heights = c(1,1,1, 0.3))
 ggsave(paste0("Ch3_samplesize/Figures/Figure4", scenario,".png"), width = 8, height = 8)
 
+## jitter ratio -------------------------------------
+nreps_mles_df %>%
+  #mutate(thresh_tests = factor(thresh_tests)) %>%
+  ggplot(., aes(y = log_St_hat - log(theta), color = samp_n_tests)) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_jitter(aes(x = thresh_tests)) +
+  geom_hline(aes(yintercept=  0), color = mypal[1]) +
+  scale_color_gradient(low = mypal[2], high = mypal[3]) +
+  labs(x = "Threshold Value", y = "Log St - Log theta") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "none") -> p1
+
+nreps_mles_df %>%
+  #mutate(thresh_tests = factor(thresh_tests)) %>%
+  ggplot(., aes(y = log_St_hat2 - log(theta), group = thresh_tests, color = samp_n_tests)) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_jitter(aes(x = thresh_tests)) +
+  geom_hline(aes(yintercept=  0), color = mypal[1]) +
+  scale_color_gradient(low = mypal[2], high = mypal[3]) +
+  labs(x = "Threshold Value", y = "Log St.glm - Log theta") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "none") -> p2
+
+nreps_mles_df %>%
+  #mutate(thresh_tests = factor(thresh_tests)) %>%
+  ggplot(., aes(y = log_GP - log(theta), color = samp_n_tests)) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_jitter(aes(x = thresh_tests)) +
+  geom_hline(aes(yintercept=  0), color = mypal[1]) +
+  scale_color_gradient(low = mypal[2], high = mypal[3]) +
+  labs(x = "Threshold Value", y = "Log GP - Log theta") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  guides(color = guide_colorbar(barheight = 0.5, barwidth = 15, title = "Sample \n Size"))  -> p3
+
+pleg <- get_legend(p3)
+
+plot_grid(p1, p2, p3 + theme(legend.position = "none"), pleg, nrow = 4, rel_heights = c(1,1,1, 0.3))
+ggsave(paste0("Ch3_samplesize/Figures/Figure5", scenario,".png"), width = 8, height = 8)
+
+## jitter raw values -----------------
+nreps_mles_df %>%
+  #mutate(thresh_tests = factor(thresh_tests)) %>%
+  ggplot(., aes(y = log_St_hat, color = samp_n_tests)) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_jitter(aes(x = thresh_tests)) +
+  geom_hline(aes(yintercept=  0), color = mypal[1]) +
+  scale_color_gradient(low = mypal[2], high = mypal[3]) +
+  labs(x = "Threshold Value", y = "Log St - Log theta") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "none") -> p1
+
+nreps_mles_df %>%
+  #mutate(thresh_tests = factor(thresh_tests)) %>%
+  ggplot(., aes(y = log_St_hat2, group = thresh_tests, color = samp_n_tests)) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_jitter(aes(x = thresh_tests)) +
+  geom_hline(aes(yintercept=  0), color = mypal[1]) +
+  scale_color_gradient(low = mypal[2], high = mypal[3]) +
+  labs(x = "Threshold Value", y = "Log St.glm - Log theta") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "none") -> p2
+
+nreps_mles_df %>%
+  #mutate(thresh_tests = factor(thresh_tests)) %>%
+  ggplot(., aes(y = log_GP, color = samp_n_tests)) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_jitter(aes(x = thresh_tests)) +
+  geom_hline(aes(yintercept=  0), color = mypal[1]) +
+  scale_color_gradient(low = mypal[2], high = mypal[3]) +
+  labs(x = "Threshold Value", y = "Log GP - Log theta") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  guides(color = guide_colorbar(barheight = 0.5, barwidth = 15, title = "Sample \n Size"))  -> p3
+
+pleg <- get_legend(p3)
+
+plot_grid(p1, p2, p3 + theme(legend.position = "none"), pleg, nrow = 4, rel_heights = c(1,1,1, 0.3))
+ggsave(paste0("Ch3_samplesize/Figures/Figure6", scenario,".png"), width = 8, height = 8)
 
 
 
