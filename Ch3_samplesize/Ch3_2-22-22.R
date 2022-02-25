@@ -41,7 +41,11 @@ lnorm_mean_var <- function(mean_log, sd_log){
 
 
 # ORIGINAL SCENARIO --------------------------------------
-scenario <- "orig0225"
+dir_scenario <- "orig_feb25_tests"
+
+if(dir.exists(paste0("Ch3_samplesize/", dir_scenario)) == FALSE){
+  dir.create(paste0("Ch3_samplesize/", dir_scenario))}
+
 desired_means <- c(28, 32, 40, 50)
 desired_sds <- c(49.7, 39.9, 33.3, 31.1)
 pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
