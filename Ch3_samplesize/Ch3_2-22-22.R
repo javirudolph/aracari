@@ -843,42 +843,9 @@ for(i in 1:nrow(mles_df)){
   GP_theta_hat <- pextRemes(ith_evd, ith_thresh, lower.tail = FALSE)
   mles_df$GP_theta_hat[i] <- GP_theta_hat
 
+  # Updated to use function instead of loop
   bth_df <- nonparam_boot()
 
-  # Now to the bootstrap
-  # For each bootstrap I want parameter estimates
-  # It's a nonparametric bootstrap so we sample with replacement from the ith_samps
-  B <- 100
-  bth_df <- data.frame(n_B = 1:B)
-
-
-  for(b in 1:B){
-    bth_samps <- NULL
-    bth_samps <- data.frame(x_star = sample(ith_samps$x_star, ith_n, replace = TRUE))
-
-    bth_glm <- lomax.glm(formula=~1, my.dataf=bth_samps, response=bth_samps$x_star)
-    bth_alpha_hat <- bth_glm$alphas.hat[1]
-    bth_k_hat    <- bth_glm$k.hat
-    bth_df$alpha_star[b] <- bth_alpha_hat
-    bth_df$k_star[b] <- bth_k_hat
-
-    # Check with GP fit
-    bth_evd <- fevd(bth_samps$x_star, threshold = 0, type = "GP")
-    bth_gp_scale <- summary(bth_evd)$par[1]
-    bth_gp_shape <- summary(bth_evd)$par[2]
-    bth_df$scale_star[b] <- bth_gp_scale
-    bth_df$shape_star[b] <- bth_gp_shape
-
-    # Estimate the tail
-
-    # Lomax glm
-    bth_log_St_hat <- lomax.St(x=ith_thresh,alpha=bth_alpha_hat,k=bth_k_hat,log.scale=TRUE)
-    bth_df$log_St_star[b] <- bth_log_St_hat
-
-    # GP tail
-    bth_df$GP_theta_star[b] <- pextRemes(bth_evd, ith_thresh, lower.tail = FALSE)
-
-  }
 
   ith_bias <- bth_df %>%
     mutate(bias_alpha = alpha_star - alpha_hat,
