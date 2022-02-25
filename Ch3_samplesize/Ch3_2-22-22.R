@@ -773,23 +773,22 @@ nonparam_boot <- function(B=5, star_data_vec=ith_samps$x_star, samp_size=ith_n, 
 
   bth_df <- data.frame(n_B = 1:B)
   ith_n <- samp_size
-  ith_thresh = threshold_test
+  ith_thresh <- threshold_test
 
   for(b in 1:B){
+    # Sample with replacement from the given sample
     bth_samps <- data.frame(x_star = sample(star_data_vec, ith_n, replace = TRUE))
 
+    # Estimate params using glm Lomax
     bth_glm <- lomax.glm(formula=~1, my.dataf=bth_samps, response=bth_samps$x_star)
     bth_alpha_hat <- bth_glm$alphas.hat[1]
     bth_k_hat    <- bth_glm$k.hat
-    bth_df$alpha_star[b] <- bth_alpha_hat
-    bth_df$k_star[b] <- bth_k_hat
 
-    # Check with GP fit
+    # Estimate params using Generalized Pareto
     bth_evd <- fevd(bth_samps$x_star, threshold = 0, type = "GP")
     bth_gp_scale <- summary(bth_evd)$par[1]
     bth_gp_shape <- summary(bth_evd)$par[2]
-    bth_df$scale_star[b] <- bth_gp_scale
-    bth_df$shape_star[b] <- bth_gp_shape
+
 
     # Estimate the tail
     # Lomax glm
@@ -807,41 +806,28 @@ nonparam_boot <- function(B=5, star_data_vec=ith_samps$x_star, samp_size=ith_n, 
 samp_n_tests <- c(80, 200, 500, 800, 1000, 1600)
 thresh_tests
 
-mles_df <- data.frame(expand.grid(thresh_tests = thresh_tests, samp_n_tests = samp_n_tests))
+combo_tests <- data.frame(expand.grid(thresh_tests = thresh_tests, samp_n_tests = samp_n_tests))
 bias_df <- data.frame()
 
-for(i in 1:nrow(mles_df)){
+for(i in 1:nrow(combo_tests)){
   # Get the sample
-  ith_n <- mles_df$samp_n_tests[i]
-  ith_thresh <- mles_df$thresh_tests[i]
+  ith_n <- combo_tests$samp_n_tests[i]
+  ith_thresh <- combo_tests$thresh_tests[i]
   ith_samps <- data.frame(x_star = sample(truth_df$x_samps, ith_n))
-  ith_tail <- length(which(ith_samps$x_star >= ith_thresh))
-  mles_df$tail_p[i] <- ith_tail/ith_n
-
 
   # Check with Lomax GLM
   glm_out <- lomax.glm(formula=~1, my.dataf=ith_samps, response=ith_samps$x_star)
   alpha_hat <- glm_out$alphas.hat[1]
   k_hat    <- glm_out$k.hat
-  mles_df$alpha_glm[i] <-alpha_hat
-  mles_df$k_glm[i] <- k_hat
 
   # Check with GP fit
   ith_evd <- fevd(ith_samps$x_star, threshold = 0, type = "GP")
   scale_hat <- summary(ith_evd)$par[1]
   shape_hat <- summary(ith_evd)$par[2]
-  mles_df$scale_hat[i] <- scale_hat
-  mles_df$shape_hat[i] <- shape_hat
 
-  # Estimate the tail
-
-  # Lomax glm
+  # Estimate tail
   log_St_hat <- lomax.St(x=ith_thresh,alpha=alpha_hat,k=k_hat,log.scale=TRUE)
-  mles_df$log_St_hat[i] <- log_St_hat
-
-  # GP tail
   GP_theta_hat <- pextRemes(ith_evd, ith_thresh, lower.tail = FALSE)
-  mles_df$GP_theta_hat[i] <- GP_theta_hat
 
   # Updated to use function instead of loop
   bth_df <- nonparam_boot(B=10)
@@ -923,4 +909,81 @@ ggsave(paste0("Ch3_samplesize/", dir_scenario,"/Figure11.png"), width = 8, heigh
 
 
 
-## Bias boxplots
+## Bias boxplots ----------------------------
+
+samp_n_tests <- c(80, 200, 500, 800, 1000, 1600)
+thresh_tests
+
+combo_tests <- data.frame(expand.grid(thresh_tests = thresh_tests, samp_n_tests = samp_n_tests))
+bias_df <- data.frame()
+
+for(j in 1:30){
+  for(i in 1:nrow(combo_tests)){
+    # Get the sample
+    ith_n <- combo_tests$samp_n_tests[i]
+    ith_thresh <- combo_tests$thresh_tests[i]
+    ith_samps <- data.frame(x_star = sample(truth_df$x_samps, ith_n))
+
+    # Check with Lomax GLM
+    glm_out <- lomax.glm(formula=~1, my.dataf=ith_samps, response=ith_samps$x_star)
+    alpha_hat <- glm_out$alphas.hat[1]
+    k_hat    <- glm_out$k.hat
+
+    # Check with GP fit
+    ith_evd <- fevd(ith_samps$x_star, threshold = 0, type = "GP")
+    scale_hat <- summary(ith_evd)$par[1]
+    shape_hat <- summary(ith_evd)$par[2]
+
+    # Estimate tail
+    log_St_hat <- lomax.St(x=ith_thresh,alpha=alpha_hat,k=k_hat,log.scale=TRUE)
+    GP_theta_hat <- pextRemes(ith_evd, ith_thresh, lower.tail = FALSE)
+
+    # Updated to use function instead of loop
+    bth_df <- nonparam_boot(B=10)
+
+
+    ith_bias <- bth_df %>%
+      summarise(across(c(2:7), ~ mean(.x, na.rm = TRUE))) %>%
+      mutate(log_St_hat = log_St_hat ,
+             GP_theta_hat = GP_theta_hat,
+             theta_bar_lomax = 2*log_St_hat - log_St_star,
+             theta_bar_GP = 2*GP_theta_hat - GP_theta_star,
+             samp_n_tests = ith_n,
+             thresh_tests = ith_thresh,
+             run = paste0("run", j))
+
+
+    bias_df <- rbind.data.frame(bias_df, ith_bias)
+
+  }
+}
+
+bias_df %>%
+  right_join(., thetas[, c(1,3)]) -> bias_df
+
+save(bias_df, file = "Ch3_samplesize/", dir_scenario, "/bias_reps.RData")
+
+nreps_mles_df %>%
+  mutate(glm_ratio = log_St_hat2 - log(theta)) %>%
+  ggplot(., aes(y = glm_ratio, group = thresh_tests, color = samp_n_tests)) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_boxplot() +
+  geom_hline(aes(yintercept=  0), color = mypal[1]) +
+  scale_color_gradient(low = mypal[2], high = mypal[3]) +
+  labs(x = "Threshold Value", y = "Log St.glm - Log theta") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "none")
+
+nreps_mles_df %>%
+  mutate(glm_ratio = log_St_hat2 - log(theta)) %>%
+  ggplot(., aes(y = glm_ratio, group = thresh_tests, color = samp_n_tests)) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_boxplot() +
+  geom_hline(aes(yintercept=  0), color = mypal[1]) +
+  scale_color_gradient(low = mypal[2], high = mypal[3]) +
+  labs(x = "Threshold Value", y = "Log St.glm - Log theta") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "none")
+
