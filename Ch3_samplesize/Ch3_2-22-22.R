@@ -314,6 +314,18 @@ mles_df %>%
 
 ### VIZ ---------------------------------------------
 
+### ISSUE with parameter space
+
+mles_df %>%
+  ggplot() +
+  geom_point(aes(x = alpha_star, y = k_star), color = "red", size = 3) +
+  geom_point(aes(x = alpha_glm, y = k_glm), color = "blue", size = 3) +
+  geom_point(aes(x = alpha_GP, y = k_GP), color = "green", size = 3) +
+  scale_y_log10() +
+  scale_x_log10() +
+  theme_bw()
+
+
 # Q: If we focus ONLY on the simple Lomax
 # - How close to the truth is the estimate of the tai?
 
