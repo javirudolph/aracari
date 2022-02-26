@@ -1115,3 +1115,32 @@ for(j in 1:3){
 bias_df %>%
   right_join(., thetas[, c(1,3)]) -> bias_df
 
+bias_df %>%
+  mutate(glm_ratio = theta_bar_lomax - log(theta)) %>%
+  ggplot(., aes(y = glm_ratio, group = thresh_tests, color = samp_n_tests)) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_hline(aes(yintercept=  0), color = mypal[1]) +
+  scale_color_gradient(low = mypal[2], high = mypal[3]) +
+  labs(x = "Threshold Value", y = "Log theta_bar - Log theta", title = "Corrected") +
+  scale_x_continuous(breaks = thresh_tests) +
+  scale_y_continuous(limits = c(-10, 10)) +
+  theme_bw() +
+  theme(legend.position = "none") -> p2
+p2
+
+nreps_mles_df %>%
+  mutate(glm_ratio = log_St_hat2 - log(theta)) %>%
+  ggplot(., aes(y = glm_ratio, group = thresh_tests, color = samp_n_tests)) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_hline(aes(yintercept=  0), color = mypal[1]) +
+  scale_color_gradient(low = mypal[2], high = mypal[3]) +
+  labs(x = "Threshold Value", y = "Log St.glm - Log theta", title = "Orig") +
+  scale_x_continuous(breaks = thresh_tests) +
+  scale_y_continuous(limits = c(-10, 10)) +
+  theme_bw() +
+  theme(legend.position = "none") -> p1
+p1
+
+plot_grid(p1, p2, nrow = 2)
