@@ -163,6 +163,28 @@ thetas
 
 
 # Lomax functions ---------------------------------
+rlomax <- function(n=1000, alpha=2,k=4, plot.it=FALSE){
+
+  hier.sims <- rep(0,n)
+  for(i in 1:n){
+
+    lam.rand <- rgamma(n=1, shape=k, rate=alpha)
+    x        <- rexp(n=1,rate=lam.rand)
+    hier.sims[i] <- x
+  }
+
+  if(plot.it==TRUE){
+    range.sims <- range(hier.sims)
+    ys <- seq(log(range.sims[1]), log(range.sims[2]), by=0.1)
+    f.x <- function(x,alpha,k){((alpha/(x+alpha))^k)*(k/(x+alpha))}
+    f.y <- f.x(x=exp(ys), alpha=alpha,k=k)*exp(ys)
+    hist(log(hier.sims), freq=FALSE, xlab="log(x)", ylim=c(0,0.4),
+         main= paste0(n," samples (in log scale) from the Lomax distribution"))
+    points(ys,f.y, type="l", lwd=2, col="red")
+  }
+  return(hier.sims)
+}
+
 lomax.pdf <- function(x,alpha,k, log.scale=FALSE){
 
   if(log.scale==FALSE){out <- (k/(alpha+x))*(alpha/(alpha+x))^k
@@ -511,6 +533,7 @@ plot_grid(p1, p2, p3 + theme(legend.position = "none"), pleg, nrow = 4, rel_heig
 ggsave(paste0("Ch3_samplesize/", dir_scenario, "/Figure4.png"), width = 8, height = 8)
 
 ## jitter ratio -------------------------------------
+# So, the boxplot can hide important trends, so we explore the values themselves
 nreps_mles_df %>%
   #mutate(thresh_tests = factor(thresh_tests)) %>%
   ggplot(., aes(y = log_St_hat - log(theta), color = samp_n_tests)) +
@@ -554,6 +577,7 @@ plot_grid(p1, p2, p3 + theme(legend.position = "none"), pleg, nrow = 4, rel_heig
 ggsave(paste0("Ch3_samplesize/", dir_scenario, "/Figure5.png"), width = 8, height = 8)
 
 ## jitter raw values -----------------
+# We see some strange trends, so we explore what happens when we consider the raw values and not the ratio
 nreps_mles_df %>%
   #mutate(thresh_tests = factor(thresh_tests)) %>%
   ggplot(., aes(y = log_St_hat, color = samp_n_tests)) +
@@ -599,6 +623,9 @@ ggsave(paste0("Ch3_samplesize/", dir_scenario, "/Figure6.png"), width = 8, heigh
 ## ISSUE ----------------------------
 
 # This is an issue with parameter space, the estimation.
+# Ok, so the survival function for the simple lomax starts to just give zero after a certain
+# Range of sample sizes.
+# Why?
 
 ggplot(data = nreps_mles_df) +
   geom_point(aes(x = alpha_star, y = k_star, color = "Simple Lomax"), size = 3, alpha = 0.5) +
@@ -706,6 +733,7 @@ plot_grid(p2, p3 + theme(legend.position = "none"), p4, pleg,
 
 # Ok, we see bias, which gets worse with increasing thresholds.
 # Increasing the sample size doesn't really fix this bias
+# Although it does seem like increasing the sample size for the GP estimates helps.
 
 ggsave(paste0("Ch3_samplesize/", dir_scenario,"/Figure9.png"), width = 8, height = 8)
 
@@ -750,7 +778,9 @@ p3 <- get_legend(p2 + theme(legend.position = "bottom") +
 
 plot_grid(p1, p2 + theme(legend.position = "none"), p3, nrow = 3, rel_heights = c(1,1,0.2))
 
+
 ggsave(paste0("Ch3_samplesize/", dir_scenario,"/Figure10.png"), width = 8, height = 8)
+# Focusing only on the average does make us loose a lot of info. I'm not a fan of this last plot
 
 ### conclusion -----------------------------
 # So, we use the log scale for the glm lomax, again because of numerical issues
@@ -765,9 +795,7 @@ ggsave(paste0("Ch3_samplesize/", dir_scenario,"/Figure10.png"), width = 8, heigh
 # And, we can do a bootstrap to estimate the bias in these cases
 
 
-### Bootstrap ---------------
-
-#### Nonparametric ---------
+### Nonparametric Bootstrap ---------
 
 nonparam_boot <- function(B=5, star_data_vec=ith_samps$x_star, samp_size=ith_n, threshold_test=ith_thresh){
 
@@ -834,7 +862,7 @@ for(i in 1:nrow(combo_tests)){
 
 
   ith_bias <- bth_df %>%
-    summarise(across(c(2:7), ~ mean(.x, na.rm = TRUE))) %>%
+    summarise(across(c(-1), ~ mean(.x, na.rm = TRUE))) %>%
     mutate(log_St_hat = log_St_hat ,
            GP_theta_hat = GP_theta_hat,
            theta_bar_lomax = 2*log_St_hat - log_St_star,
@@ -853,7 +881,7 @@ bias_df %>%
 
 
 
-## Bias plots ------------
+#### Point plots ------------
 
 # GP
 bias_df %>%
@@ -903,22 +931,16 @@ ggsave(paste0("Ch3_samplesize/", dir_scenario,"/Figure11.png"), width = 8, heigh
 
 
 
-
-
-
-
-
-
-## Bias boxplots ----------------------------
+#### Boxplots ----------------------------
 
 samp_n_tests <- c(80, 200, 500, 800, 1000, 1600)
 thresh_tests
 
 combo_tests <- data.frame(expand.grid(thresh_tests = thresh_tests, samp_n_tests = samp_n_tests))
 bias_df <- data.frame()
-B <- 100
+B <- 2
 
-for(j in 1:30){
+for(j in 1:3){
   for(i in 1:nrow(combo_tests)){
     # Get the sample
     ith_n <- combo_tests$samp_n_tests[i]
@@ -977,11 +999,12 @@ bias_df %>%
   geom_boxplot(outlier.shape = NA) +
   geom_hline(aes(yintercept=  0), color = mypal[1]) +
   scale_color_gradient(low = mypal[2], high = mypal[3]) +
-  labs(x = "Threshold Value", y = "Log theta_bar - Log theta") +
+  labs(x = "Threshold Value", y = "Log theta_bar - Log theta", title = "Corrected") +
   scale_x_continuous(breaks = thresh_tests) +
+  scale_y_continuous(limits = c(-10, 10)) +
   theme_bw() +
-  theme(legend.position = "none") -> p1
-p1
+  theme(legend.position = "none") -> p2
+p2
 
 nreps_mles_df %>%
   mutate(glm_ratio = log_St_hat2 - log(theta)) %>%
@@ -990,12 +1013,105 @@ nreps_mles_df %>%
   geom_boxplot(outlier.shape = NA) +
   geom_hline(aes(yintercept=  0), color = mypal[1]) +
   scale_color_gradient(low = mypal[2], high = mypal[3]) +
-  labs(x = "Threshold Value", y = "Log St.glm - Log theta") +
+  labs(x = "Threshold Value", y = "Log St.glm - Log theta", title = "Orig") +
   scale_x_continuous(breaks = thresh_tests) +
+  scale_y_continuous(limits = c(-10, 10)) +
   theme_bw() +
-  theme(legend.position = "none") -> p2
-p2
+  theme(legend.position = "none") -> p1
+p1
 
 plot_grid(p1, p2, nrow = 2)
+ggsave(paste0("Ch3_samplesize/", dir_scenario,"/Figure12.png"), width = 8, height = 8)
 
+
+
+### Parametric Bootstrap --------------------------------------
+
+param_boot_lomax <- function(B=5, star_data = ith_samps, star_data_vec=ith_samps$x_star, samp_size=ith_n, threshold_test=ith_thresh){
+
+  bth_df <- data.frame(n_B = 1:B)
+  ith_n <- samp_size
+  ith_thresh <- threshold_test
+  ith_glm <- lomax.glm(formula=~1, my.dataf=ith_samps, response=ith_samps$x_star)
+  ith_alpha_hat <- ith_glm$alphas.hat[1]
+  ith_k_hat    <- ith_glm$k.hat
+
+  for(b in 1:B){
+    # Sample with replacement from the given sample
+    bth_samps <- data.frame(x_star = rlomax(n = ith_n, alpha = ith_alpha_hat, k = ith_k_hat))
+
+    # Estimate params using glm Lomax
+    bth_glm <- lomax.glm(formula=~1, my.dataf=bth_samps, response=bth_samps$x_star)
+    bth_alpha_hat <- bth_glm$alphas.hat[1]
+    bth_k_hat    <- bth_glm$k.hat
+
+    # Estimate the tail
+    # Lomax glm
+    bth_log_St_hat <- lomax.St(x=ith_thresh,alpha=bth_alpha_hat,k=bth_k_hat,log.scale=TRUE)
+    bth_df$log_St_star[b] <- bth_log_St_hat
+
+  }
+  return(bth_df)
+
+}
+
+samp_n_tests <- c(80, 200, 500, 800, 1000, 1600)
+thresh_tests
+
+combo_tests <- data.frame(expand.grid(thresh_tests = thresh_tests, samp_n_tests = samp_n_tests))
+bias_df <- data.frame()
+B <- 2
+
+for(j in 1:3){
+  for(i in 1:nrow(combo_tests)){
+    # Get the sample
+    ith_n <- combo_tests$samp_n_tests[i]
+    ith_thresh <- combo_tests$thresh_tests[i]
+    ith_samps <- data.frame(x_star = sample(truth_df$x_samps, ith_n))
+
+    # Check with Lomax GLM
+    glm_out <- lomax.glm(formula=~1, my.dataf=ith_samps, response=ith_samps$x_star)
+    alpha_hat <- glm_out$alphas.hat[1]
+    k_hat    <- glm_out$k.hat
+
+    # Estimate tail
+    log_St_hat <- lomax.St(x=ith_thresh,alpha=alpha_hat,k=k_hat,log.scale=TRUE)
+
+    # Parametric boostrap
+    bth_df <- data.frame(n_B = 1:B)
+    for(b in 1:B){
+      # Sample with replacement from the given sample
+      bth_samps <- data.frame(x_star = rlomax(n = ith_n, alpha = alpha_hat, k = k_hat))
+
+      # Estimate params using glm Lomax
+      bth_glm <- lomax.glm(formula=~1, my.dataf=bth_samps, response=bth_samps$x_star)
+      bth_alpha_hat <- bth_glm$alphas.hat[1]
+      bth_k_hat    <- bth_glm$k.hat
+
+      # Estimate the tail
+      # Lomax glm
+      bth_log_St_hat <- lomax.St(x=ith_thresh,alpha=bth_alpha_hat,k=bth_k_hat,log.scale=TRUE)
+      bth_df$log_St_star[b] <- bth_log_St_hat
+
+    }
+
+
+    ith_bias <- bth_df %>%
+      summarise(across(c(-1), ~ mean(.x, na.rm = TRUE))) %>%
+      mutate(log_St_hat = log_St_hat ,
+             theta_bar_lomax = 2*log_St_hat - log_St_star,
+             samp_n_tests = ith_n,
+             thresh_tests = ith_thresh,
+             run = paste0("run", j))
+
+
+    bias_df <- rbind.data.frame(bias_df, ith_bias)
+
+
+  }
+
+}
+
+bias_df %>%
+  right_join(., thetas[, c(1,3)]) -> bias_df
 
