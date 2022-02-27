@@ -272,4 +272,19 @@ gp_sd_thresh %>%
 
 
 
+plot_grid(f4_evd + theme(legend.position = "none"),
+          f5_evd, f5_75th, f5_sd_thresh,
+          pleg, nrow = 5, rel_heights = c(1,1,1,1, 0.3))
 
+
+gp_sd_thresh %>%
+  filter(., GP_t != 0) %>%
+  ggplot(., aes(y = kth_thresh/ith_quant, x = thresh_tests, color = samp_n_tests)) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_point() +
+  theme_bw()
+
+
+par(mfrow = c(2,1))
+hist(gp_sd_thresh$kth_thresh)
+hist(gp_sd_thresh$ith_quant)
