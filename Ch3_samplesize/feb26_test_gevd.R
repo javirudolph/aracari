@@ -235,6 +235,8 @@ for(j in 1:50){
     ith_tail <- length(which(ith_samps$x_star >= ith_thresh))
     mles_df$tail_p[i] <- ith_tail/ith_n
     ith_quant <- round(as.numeric(quantile(ith_samps$x_star, 0.5)))
+    mles_df$kth_thresh[i] <- kth_thresh
+    mles_df$ith_quant[i] <- ith_quant
 
 
     # Check with GP fit
@@ -245,7 +247,7 @@ for(j in 1:50){
     # GP tail
     # mles_df$log_GP[i] <- log(pextRemes(ith_evd, ith_thresh, lower.tail = FALSE))
     mles_df$GP_t[i] <- pextRemes(ith_evd, ith_thresh, lower.tail = FALSE)
-    mles_df$kth_thresh[i] <- kth_thresh
+
   }
 
   mles_df %>%
@@ -257,7 +259,6 @@ gp_sd_thresh <- out
 
 
 gp_sd_thresh %>%
-  %>%
   filter(., GP_t != 0) %>%
   ggplot(., aes(y = log(GP_t/theta), group = thresh_tests, color = samp_n_tests)) +
   facet_wrap(~samp_n_tests, nrow = 1) +
