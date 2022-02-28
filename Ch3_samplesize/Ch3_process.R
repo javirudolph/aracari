@@ -61,7 +61,7 @@ save(truth_df, file = paste0("Ch3_samplesize/", dir_scenario, "/mixturesamples.R
 # This is the data that we consider our "truth"
 
 # Extract the tail (the highest values) to visualize later in the histogram since they are too few to show in the bins
-tru_tail <- data.frame(values = truth_df$x_samps, y = 100) %>% arrange(desc(values)) %>% filter(values >=100)
+tru_tail <- data.frame(values = truth_df$x_samps, y = 100) %>% arrange(desc(values)) %>% filter(values >=50)
 
 # Histogram plus the points in the tail.
 truth_df %>%
@@ -125,7 +125,7 @@ for(i in 1:nrow(mles_df)){
   ith_samps <- data.frame(x_star = sample(truth_df$x_samps, ith_n))
   ith_tail <- length(which(ith_samps$x_star >= ith_thresh))
   mles_df$tail_p[i] <- ith_tail/ith_n
-
+  
   # Fit Lomax
   optim_out <- optim(par=log(c(1.5, 1.5)), fn=nllike.simp, method="BFGS", Y=ith_samps$x_star)
   mles_star <- exp(optim_out$par)
@@ -133,14 +133,14 @@ for(i in 1:nrow(mles_df)){
   k_star <- mles_star[2]
   mles_df$alpha_star[i] <-alpha_star
   mles_df$k_star[i] <- k_star
-
+  
   # Check with Lomax GLM
   glm_out <- lomax.glm(formula=~1, my.dataf=ith_samps, response=ith_samps$x_star)
   alpha.2 <- glm_out$alphas.hat[1]
   k.2     <- glm_out$k.hat
   mles_df$alpha_glm[i] <-alpha.2
   mles_df$k_glm[i] <- k.2
-
+  
   # Check with GP fit
   ith_evd <- fevd(ith_samps$x_star, threshold = 0, type = "GP")
   gp_scale <- summary(ith_evd)$par[1]
@@ -149,22 +149,22 @@ for(i in 1:nrow(mles_df)){
   mles_df$k_GP[i] <- 1/gp_shape
   mles_df$scale[i] <- gp_scale
   mles_df$shape[i] <- gp_shape
-
-
-
+  
+  
+  
   # Estimate the tail
   #Lomax simple
   log_St_star <- lomax.St(x = ith_thresh,alpha = alpha_star,k = k_star,log.scale=TRUE)
   mles_df$log_St_hat[i] <- log_St_star
-
+  
   # Lomax glm
   log.st.star2 <- lomax.St(x=ith_thresh,alpha=alpha.2,k=k.2,log.scale=TRUE)
   mles_df$log_St_hat2[i] <- log.st.star2
-
+  
   # GP tail
   mles_df$GP_theta_hat[i] <- pextRemes(ith_evd, ith_thresh, lower.tail = FALSE)
-
-
+  
+  
 }
 
 mles_df %>%
@@ -293,7 +293,7 @@ nreps_mles_df %>%
 #   guides(color = guide_colorbar(barheight = 0.5, barwidth = 15, title = "Sample \n Size"))  -> f4_evd
 
 nreps_mles_df %>%
-  filter(., GP_theta_hat != 0) %>%
+  filter(., GP_theta_hat != 0) %>% 
   ggplot(., aes(y = log(GP_theta_hat/theta), group = thresh_tests, color = samp_n_tests)) +
   facet_wrap(~samp_n_tests, nrow = 1) +
   geom_boxplot(outlier.shape = NA) +
@@ -347,7 +347,7 @@ nreps_mles_df %>%
 #   guides(color = guide_colorbar(barheight = 0.5, barwidth = 15, title = "Sample \n Size")) -> f5_evd
 
 nreps_mles_df %>%
-  filter(., GP_theta_hat != 0) %>%
+  filter(., GP_theta_hat != 0) %>% 
   ggplot(., aes(y = log(GP_theta_hat/theta), color = samp_n_tests)) +
   facet_wrap(~samp_n_tests, nrow = 1) +
   geom_jitter(aes(x = thresh_tests), alpha = 0.5) +
@@ -403,7 +403,7 @@ nreps_mles_df %>%
 #   guides(color = guide_colorbar(barheight = 0.5, barwidth = 15, title = "Sample \n Size"))  -> f6_evd
 
 nreps_mles_df %>%
-  filter(., GP_theta_hat != 0) %>%
+  filter(., GP_theta_hat != 0) %>% 
   ggplot(., aes(y = log(GP_theta_hat), color = samp_n_tests)) +
   facet_wrap(~samp_n_tests, nrow = 1) +
   geom_jitter(aes(x = thresh_tests), alpha = 0.5) +
@@ -469,14 +469,14 @@ ggsave(paste0("Ch3_samplesize/", dir_scenario,"/Figure8.png"), width = 8, height
 
 ## Fig9 Bias for glm model --------------------------------------
 
-# Estimating bias as the sum of the difference between
+# Estimating bias as the sum of the difference between 
 
-nreps_mles_df %>%
-  dplyr::select(., thresh_tests, samp_n_tests, log_St_hat2, theta) %>%
+nreps_mles_df %>% 
+  dplyr::select(., thresh_tests, samp_n_tests, log_St_hat2, theta) %>% 
   mutate(logtheta = log(theta),
-         theta_error = log_St_hat2 - logtheta) %>%
-  group_by(thresh_tests, samp_n_tests) %>%
-  summarize(theta_bias = mean(theta_error)) %>%
+         theta_error = log_St_hat2 - logtheta) %>% 
+  group_by(thresh_tests, samp_n_tests) %>% 
+  summarize(theta_bias = mean(theta_error)) %>% 
   ggplot(., aes(y = theta_bias, group = thresh_tests, color = samp_n_tests)) +
   geom_jitter(aes(x = thresh_tests), alpha = 0.9, size = 3) +
   geom_hline(aes(yintercept=  0), color = palette4_sampsize[2]) +
@@ -501,7 +501,7 @@ for(i in 1:nrow(combo_tests)){
   ith_n <- combo_tests$samp_n_tests[i]
   ith_thresh <- combo_tests$thresh_tests[i]
   ith_samps <- data.frame(x_star = sample(truth_df$x_samps, ith_n))
-
+  
   # Lomax GLM
   ith_glm <- lomax.glm(formula=~1, my.dataf=ith_samps, response=ith_samps$x_star)
   ith_alpha_hat <- ith_glm$alphas.hat[1]
@@ -510,14 +510,14 @@ for(i in 1:nrow(combo_tests)){
   # Estimate tail
   ith_theta_hat <- lomax.St(x = ith_thresh, alpha = ith_alpha_hat, k = ith_k_hat, log.scale=TRUE)
   nonpar_glm$theta_hat[i] <- ith_theta_hat
-
+  
   # Nonparametric bootstrapping
   bth_df <- data.frame(n_B = 1:B)
-
+  
   for(b in 1:B){
     # Sample with replacement from the given sample
     bth_samps <- data.frame(x_star = sample(ith_samps$x_star, ith_n, replace = TRUE))
-
+    
     # Estimate params using glm Lomax
     bth_glm <- lomax.glm(formula=~1, my.dataf=bth_samps, response=bth_samps$x_star)
     bth_alpha_star <- bth_glm$alphas.hat[1]
@@ -526,23 +526,23 @@ for(i in 1:nrow(combo_tests)){
     # Estimate the tail
     bth_df$log_theta_star[b] <- lomax.St(x = ith_thresh, alpha = bth_alpha_star, k = bth_k_star, log.scale=TRUE)
     bth_df$theta_star[b] <- lomax.St(x = ith_thresh, alpha = bth_alpha_star, k = bth_k_star, log.scale=FALSE)
-
+    
   }
-
+  
   nonpar_glm$log_theta_stars[i] <- mean(bth_df$log_theta_star)
   nonpar_glm$theta_stars[i] <- mean(bth_df$theta_star)
-
+  
 }
 
 nonpar_glm %>%
-  mutate(theta_bar = 2*theta_hat - log_theta_stars) %>%
-  right_join(., thetas[, c(1,3)]) %>%
+  mutate(theta_bar = 2*theta_hat - log_theta_stars) %>% 
+  right_join(., thetas[, c(1,3)]) %>% 
   mutate(theta = log(theta)) -> nonpar_glm
 
 
 ## Fig10 -------------------------------
 
-nonpar_glm %>%
+nonpar_glm %>% 
   ggplot(., aes(y = theta_hat, color = samp_n_tests)) +
   geom_jitter(aes(x = thresh_tests), alpha = 0.7, size = 4, shape = 18) +
   geom_jitter(aes(x = thresh_tests, y = theta_bar), alpha = 0) +
@@ -585,42 +585,42 @@ for(i in 1:nrow(combo_tests)){
   ith_n <- combo_tests$samp_n_tests[i]
   ith_thresh <- combo_tests$thresh_tests[i]
   ith_samps <- data.frame(x_star = sample(truth_df$x_samps, ith_n))
-
+  
   # Lomax GLM
   ith_glm <- lomax.glm(formula=~1, my.dataf=ith_samps, response=ith_samps$x_star)
   ith_alpha_hat <- ith_glm$alphas.hat[1]
   ith_k_hat <- ith_glm$k.hat
-
+  
   # Estimate tail
   ith_theta_hat <- lomax.St(x = ith_thresh, alpha = ith_alpha_hat, k = ith_k_hat, log.scale=TRUE)
   nonpar_glm$theta_hat[i] <- ith_theta_hat
-
+  
   # Nonparametric bootstrapping
   bth_df <- data.frame(n_B = 1:B)
-
+  
   for(b in 1:B){
     # Sample with replacement from the given sample
     bth_samps <- data.frame(x_star = sample(ith_samps$x_star, ith_n, replace = TRUE))
-
+    
     # Estimate params using glm Lomax
     bth_glm <- lomax.glm(formula=~1, my.dataf=bth_samps, response=bth_samps$x_star)
     bth_alpha_star <- bth_glm$alphas.hat[1]
     bth_k_star <- bth_glm$k.hat
-
+    
     # Estimate the tail
     bth_df$log_theta_star[b] <- lomax.St(x = ith_thresh, alpha = bth_alpha_star, k = bth_k_star, log.scale=TRUE)
     bth_df$theta_star[b] <- lomax.St(x = ith_thresh, alpha = bth_alpha_star, k = bth_k_star, log.scale=FALSE)
-
+    
   }
-
+  
   nonpar_glm$log_theta_stars[i] <- mean(bth_df$log_theta_star)
   nonpar_glm$theta_stars[i] <- mean(bth_df$theta_star)
-
+  
 }
 
 nonpar_glm %>%
-  mutate(theta_bar = 2*theta_hat - log_theta_stars) %>%
-  right_join(., thetas[, c(1,3)]) %>%
+  mutate(theta_bar = 2*theta_hat - log_theta_stars) %>% 
+  right_join(., thetas[, c(1,3)]) %>% 
   mutate(theta = log(theta)) -> nonpar_glm
 
 save(nonpar_glm, file = paste0("Ch3_samplesize/", dir_scenario, "/nonpar_glm.RData"))
@@ -628,30 +628,34 @@ save(nonpar_glm, file = paste0("Ch3_samplesize/", dir_scenario, "/nonpar_glm.RDa
 
 ### Fig11 ------
 
-nonpar_glm %>%
+nonpar_glm %>% 
   mutate(hat = theta_hat - theta,
-         bar = theta_bar - theta) %>%
-  dplyr::select(thresh_tests, samp_n_tests, hat, bar) %>%
+         bar = theta_bar - theta) %>% 
+  dplyr::select(thresh_tests, samp_n_tests, hat, bar) %>% 
   pivot_longer(cols = c(hat, bar), names_to = "type") -> long_corr_df
 
 
-long_corr_df %>%
-  group_by(thresh_tests, samp_n_tests, type) %>%
-  summarise(meanval = mean(value)) %>%
-  ungroup() %>%
-  right_join(., thetas[, c(1,3)]) %>%
+long_corr_df %>% 
+  group_by(thresh_tests, samp_n_tests, type) %>% 
+  summarise(meanval = mean(value)) %>% 
+  ungroup() %>% 
+  right_join(., thetas[, c(1,3)]) %>% 
   mutate(thresh_tests = factor(thresh_tests)) -> means_df
+  
 
 
-long_corr_df %>%
-  mutate(thresh_tests = factor(thresh_tests)) %>%
+long_corr_df %>% 
+  filter(., !is.infinite(value)) -> no_inf_correction
+
+no_inf_correction %>% 
+  mutate(thresh_tests = factor(thresh_tests)) %>% 
   ggplot(., aes(x = thresh_tests, y = value, fill = type)) +
   facet_wrap(~samp_n_tests, ncol = 2) +
   geom_boxplot(outlier.shape = NA, alpha = 0.6) +
   scale_fill_manual(values = c("white", "grey")) +
   geom_hline(aes(yintercept=  0), color = palette4_sampsize[1]) +
   labs(x = "Threshold Value", y = "estimation - truth", title = "Nonparametric correction") +
-  scale_y_continuous(limits = quantile(long_corr_df$value, c(0.1, 0.9))) +
+  scale_y_continuous(limits = quantile(no_inf_correction$value, c(0.1, 0.9))) +
   theme_bw() +
   theme(legend.position = "bottom",
         legend.title = element_blank(),
@@ -672,48 +676,48 @@ for(i in 1:nrow(combo_tests)){
   ith_n <- combo_tests$samp_n_tests[i]
   ith_thresh <- combo_tests$thresh_tests[i]
   ith_samps <- data.frame(x_star = sample(truth_df$x_samps, ith_n))
-
+  
   # Lomax GLM
   ith_glm <- lomax.glm(formula=~1, my.dataf=ith_samps, response=ith_samps$x_star)
   ith_alpha_hat <- ith_glm$alphas.hat[1]
   ith_k_hat <- ith_glm$k.hat
-
+  
   # Estimate tail
   ith_theta_hat <- lomax.St(x = ith_thresh, alpha = ith_alpha_hat, k = ith_k_hat, log.scale=TRUE)
   par_glm$theta_hat[i] <- ith_theta_hat
-
+  
   # Nonparametric bootstrapping
   bth_df <- data.frame(n_B = 1:B)
-
+  
   for(b in 1:B){
     # Randrom draw from a Lomax with the estimated parameters
     bth_samps <- data.frame(x_star = rlomax(n = ith_n, alpha = ith_alpha_hat, k = ith_k_hat))
-
+    
     # Estimate params using glm Lomax
     bth_glm <- lomax.glm(formula=~1, my.dataf=bth_samps, response=bth_samps$x_star)
     bth_alpha_star <- bth_glm$alphas.hat[1]
     bth_k_star <- bth_glm$k.hat
-
+    
     # Estimate the tail
     bth_df$log_theta_star[b] <- lomax.St(x = ith_thresh, alpha = bth_alpha_star, k = bth_k_star, log.scale=TRUE)
     bth_df$theta_star[b] <- lomax.St(x = ith_thresh, alpha = bth_alpha_star, k = bth_k_star, log.scale=FALSE)
-
+    
   }
-
+  
   par_glm$log_theta_stars[i] <- mean(bth_df$log_theta_star)
   par_glm$theta_stars[i] <- mean(bth_df$theta_star)
-
+  
 }
 
 par_glm %>%
-  mutate(theta_bar = 2*theta_hat - log_theta_stars) %>%
-  right_join(., thetas[, c(1,3)]) %>%
+  mutate(theta_bar = 2*theta_hat - log_theta_stars) %>% 
+  right_join(., thetas[, c(1,3)]) %>% 
   mutate(theta = log(theta)) -> par_glm
 
 
 ## Fig12 -------------------------------
 
-par_glm %>%
+par_glm %>% 
   ggplot(., aes(y = theta_hat, color = samp_n_tests)) +
   geom_jitter(aes(x = thresh_tests), alpha = 0.7, size = 4, shape = 18) +
   geom_jitter(aes(x = thresh_tests, y = theta_bar), alpha = 0) +
@@ -725,7 +729,7 @@ par_glm %>%
   theme(legend.position = "none",
         axis.title.x = element_blank()) -> f12_top
 
-par_glm %>%
+par_glm %>% 
   ggplot(., aes(y = theta_hat, color = samp_n_tests)) +
   # geom_jitter(aes(x = thresh_tests), alpha = 0.9, size = 6, shape = 5) +
   geom_jitter(aes(x = thresh_tests, y = theta_bar), size = 2, alpha = 0.8) +
@@ -756,42 +760,42 @@ for(i in 1:nrow(combo_tests)){
   ith_n <- combo_tests$samp_n_tests[i]
   ith_thresh <- combo_tests$thresh_tests[i]
   ith_samps <- data.frame(x_star = sample(truth_df$x_samps, ith_n))
-
+  
   # Lomax GLM
   ith_glm <- lomax.glm(formula=~1, my.dataf=ith_samps, response=ith_samps$x_star)
   ith_alpha_hat <- ith_glm$alphas.hat[1]
   ith_k_hat <- ith_glm$k.hat
-
+  
   # Estimate tail
   ith_theta_hat <- lomax.St(x = ith_thresh, alpha = ith_alpha_hat, k = ith_k_hat, log.scale=TRUE)
   par_glm$theta_hat[i] <- ith_theta_hat
-
+  
   # Nonparametric bootstrapping
   bth_df <- data.frame(n_B = 1:B)
-
+  
   for(b in 1:B){
     # Sample with replacement from the given sample
     bth_samps <- data.frame(x_star = sample(ith_samps$x_star, ith_n, replace = TRUE))
-
+    
     # Estimate params using glm Lomax
     bth_glm <- lomax.glm(formula=~1, my.dataf=bth_samps, response=bth_samps$x_star)
     bth_alpha_star <- bth_glm$alphas.hat[1]
     bth_k_star <- bth_glm$k.hat
-
+    
     # Estimate the tail
     bth_df$log_theta_star[b] <- lomax.St(x = ith_thresh, alpha = bth_alpha_star, k = bth_k_star, log.scale=TRUE)
     bth_df$theta_star[b] <- lomax.St(x = ith_thresh, alpha = bth_alpha_star, k = bth_k_star, log.scale=FALSE)
-
+    
   }
-
+  
   par_glm$log_theta_stars[i] <- mean(bth_df$log_theta_star)
   par_glm$theta_stars[i] <- mean(bth_df$theta_star)
-
+  
 }
 
 par_glm %>%
-  mutate(theta_bar = 2*theta_hat - log_theta_stars) %>%
-  right_join(., thetas[, c(1,3)]) %>%
+  mutate(theta_bar = 2*theta_hat - log_theta_stars) %>% 
+  right_join(., thetas[, c(1,3)]) %>% 
   mutate(theta = log(theta)) -> par_glm
 
 save(par_glm, file = paste0("Ch3_samplesize/", dir_scenario, "/par_glm.RData"))
@@ -799,30 +803,32 @@ save(par_glm, file = paste0("Ch3_samplesize/", dir_scenario, "/par_glm.RData"))
 
 ### Fig13 ------
 
-par_glm %>%
+par_glm %>% 
   mutate(hat = theta_hat - theta,
-         bar = theta_bar - theta) %>%
-  dplyr::select(thresh_tests, samp_n_tests, hat, bar) %>%
+         bar = theta_bar - theta) %>% 
+  dplyr::select(thresh_tests, samp_n_tests, hat, bar) %>% 
   pivot_longer(cols = c(hat, bar), names_to = "type") -> long_corr_df
 
 
-long_corr_df %>%
-  group_by(thresh_tests, samp_n_tests, type) %>%
-  summarise(meanval = mean(value)) %>%
-  ungroup() %>%
-  right_join(., thetas[, c(1,3)]) %>%
+long_corr_df %>% 
+  group_by(thresh_tests, samp_n_tests, type) %>% 
+  summarise(meanval = mean(value)) %>% 
+  ungroup() %>% 
+  right_join(., thetas[, c(1,3)]) %>% 
   mutate(thresh_tests = factor(thresh_tests)) -> means_df
 
+long_corr_df %>% 
+  filter(., !is.infinite(value)) -> no_inf_correction
 
-long_corr_df %>%
-  mutate(thresh_tests = factor(thresh_tests)) %>%
+no_inf_correction %>%
+  mutate(thresh_tests = factor(thresh_tests)) %>% 
   ggplot(., aes(x = thresh_tests, y = value, fill = type)) +
   facet_wrap(~samp_n_tests, ncol = 2) +
   geom_boxplot(outlier.shape = NA, alpha = 0.6) +
   scale_fill_manual(values = c("white", "grey")) +
   geom_hline(aes(yintercept=  0), color = palette4_sampsize[1]) +
   labs(x = "Threshold Value", y = "estimation - truth", title = "Parametric correction") +
-  scale_y_continuous(limits = quantile(long_corr_df$value, c(0.1, 0.9))) +
+  scale_y_continuous(limits = quantile(no_inf_correction$value, c(0.1, 0.9))) +
   theme_bw() +
   theme(legend.position = "bottom",
         legend.title = element_blank(),
@@ -830,9 +836,6 @@ long_corr_df %>%
 
 ggsave(paste0("Ch3_samplesize/", dir_scenario,"/Figure13.png"), width = 8, height = 8)
 
-
-
-# ADDED AT HOME --------------------------------------------------------------
 ## GP threshold runs ---------------------------
 
 # Compare to a fit using a Generalized Pareto with two different approaches
@@ -845,57 +848,83 @@ for(j in 1:points_for_boxplots){
   samp_n_tests <- c(80, 200, 500, 800, 1000, 1600)
   mles_df <- data.frame(expand.grid(thresh_tests = thresh_tests, samp_n_tests = samp_n_tests))
   mles_df$nrep <- j
-
+  
   for(i in 1:nrow(mles_df)){
     ith_n <- mles_df$samp_n_tests[i]
     ith_thresh <- mles_df$thresh_tests[i]
     ith_samps <- data.frame(x_star = sample(truth_df$x_samps, ith_n))
-
-
+    
+    
     # nonparam bootstrap to define the threshold
     k_out <- NULL
     for(k in 1:1000){
       kth_samps <- data.frame(x_star = sample(ith_samps$x_star, ith_n, replace = TRUE))
       # k_quantiles <- round(as.numeric(quantile(kth_samps$x_star, 0.3)))
-      k_sd <- sd(kth_samps$x_star)
-
+      k_sd <- quantile(kth_samps$x_star, 0.5)
+      
       k_out <- rbind(k_out, k_sd)
     }
-    kth_thresh <- mean(k_out)
-
+    kth_thresh <- max(k_out)
+    
     ith_tail <- length(which(ith_samps$x_star >= ith_thresh))
     mles_df$tail_p[i] <- ith_tail/ith_n
-
+    
     ith_quant <- round(as.numeric(quantile(ith_samps$x_star, 0.5)))
     mles_df$kth_thresh[i] <- kth_thresh
     mles_df$ith_quant[i] <- ith_quant
-
-
+    
+    
     # GP fit and tail based on the quantile
     ith_evd <- fevd(ith_samps$x_star, threshold = kth_thresh, type = "GP")
     mles_df$quant_theta[i] <- pextRemes(ith_evd, ith_thresh, lower.tail = FALSE)
-
+    
     # GP fit and tail based on the standard deviation
     kth_evd <- fevd(ith_samps$x_star, threshold = kth_thresh, type = "GP")
     mles_df$sd_theta[i] <- pextRemes(kth_evd, kth_thresh, lower.tail = FALSE)
-
+    
   }
-
+  
   mles_df %>%
     right_join(., thetas[, c(1,3)]) -> mles_df
   out <- rbind.data.frame(out, mles_df)
 }
 
 GP_mles <- out
+save(GP_mles, file = paste0("Ch3_samplesize/", dir_scenario, "/GP_runs.RData"))
+
+
+### Fig 14 -------------------------------------------------
+
+GP_mles %>%
+  filter(., quant_theta != 0 ) %>%
+  ggplot(., aes(y = log(quant_theta/theta), group = thresh_tests, color = samp_n_tests)) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_hline(aes(yintercept=  0), color = palette4_sampsize[1]) +
+  scale_color_gradient(low = palette4_sampsize[2], high = palette4_sampsize[3]) +
+  labs(x = "Threshold Value", y = "log(quantGP/theta)") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "none") -> f4_quant_GP
 
 
 
+GP_mles %>%
+  filter(., sd_theta != 0) %>% 
+  ggplot(., aes(y = log(sd_theta/theta), group = thresh_tests, color = samp_n_tests)) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_hline(aes(yintercept=  0), color = palette4_sampsize[1]) +
+  scale_color_gradient(low = palette4_sampsize[2], high = palette4_sampsize[3]) +
+  labs(x = "Threshold Value", y = "Log(sd_GP/theta)") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  guides(color = guide_colorbar(barheight = 0.5, barwidth = 15, title = "Sample \n Size"))  -> f4_sd_GP
 
+pleg <- get_legend(f4_sd_GP)
 
+plot_grid(f4_glm, f4_quant_GP, f4_sd_GP + theme(legend.position = "none"), pleg, nrow = 4, rel_heights = c(1,1,1, 0.3))
 
-
-
-
-## Figure 14 -----------------------------------------------------------------
-
+ggsave(paste0("Ch3_samplesize/", dir_scenario,"/Figure14.png"), width = 8, height = 8)
 

@@ -1,56 +1,97 @@
-# For the simulations, I want to consider four different scenarios
 
 # Libraries -----------------------------------------------
-set.seed(20220201)
+set.seed(271367)
 
-library(aracari)
 library(dplyr)
 library(ggplot2)
 library(cowplot)
 library(tidyr)
 library(purrr)
 library(fitdistrplus)
+library(extRemes)
+
 
 source("Ch3_samplesize/Ch3_functions.R")
 
-# ORIGINAL
-scenario <- "_original"
+# points_for_boxplots <- 50
+# B <- 1000
+
+points_for_boxplots <- 30
+B <- 100
+
+# ORIGINAL SCENARIO --------------------------------------
+dir_scenario <- "original"
+
+if(dir.exists(paste0("Ch3_samplesize/", dir_scenario)) == FALSE){
+  dir.create(paste0("Ch3_samplesize/", dir_scenario))}
+
 desired_means <- c(28, 32, 40, 50)
 desired_sds <- c(49.7, 39.9, 33.3, 31.1)
 pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
-source("Ch3_samplesize/Ch3_simulation.R")
+source("Ch3_samplesize/Ch3_process.R")
 
-# 1) All groups have the same mean but different variance
-scenario <- "_case1"
+
+
+################################################################
+### These are only sort of test scenarios
+# Doing less simulations so they don't take as long
+
+points_for_boxplots <- 30
+B <- 100
+
+# SAME MEAN INCREASING SD ------------------------------
+dir_scenario <- "samemean_upsd"
+
+if(dir.exists(paste0("Ch3_samplesize/", dir_scenario)) == FALSE){
+  dir.create(paste0("Ch3_samplesize/", dir_scenario))}
+
 desired_means <- c(30, 30, 30, 30)
 desired_sds <- c(20, 30, 40, 50)
 pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
-source("Ch3_samplesize/Ch3_simulation.R")
+source("Ch3_samplesize/Ch3_process.R")
 
-# 2) All groups have different means but the same variance
-scenario <- "_case2"
+#INCREASING MEANS DECRESING SD --------------------------------------
+dir_scenario <- "upmean_downsd"
+
+if(dir.exists(paste0("Ch3_samplesize/", dir_scenario)) == FALSE){
+  dir.create(paste0("Ch3_samplesize/", dir_scenario))}
+
+desired_means <- c(30, 35, 40, 50)
+desired_sds <- c(50, 40, 35, 30)
+pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
+source("Ch3_samplesize/Ch3_process.R")
+
+# SAME SD INCREASING MEAN ------------------------------
+dir_scenario <- "samesd_upmean"
+
+if(dir.exists(paste0("Ch3_samplesize/", dir_scenario)) == FALSE){
+  dir.create(paste0("Ch3_samplesize/", dir_scenario))}
+
 desired_means <- c(30, 40, 50, 60)
 desired_sds <- c(25, 25, 25, 25)
 pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
-source("Ch3_samplesize/Ch3_simulation.R")
+source("Ch3_samplesize/Ch3_process.R")
 
-# 3) Increasing mean and variance for groups
-scenario <- "_case3"
+# INCREASING SD INCREASING MEAN ------------------------------
+dir_scenario <- "upsd_upmean"
+
+if(dir.exists(paste0("Ch3_samplesize/", dir_scenario)) == FALSE){
+  dir.create(paste0("Ch3_samplesize/", dir_scenario))}
+
 desired_means <- c(30, 40, 50, 60)
 desired_sds <- c(20, 30, 40, 50)
 pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
-source("Ch3_samplesize/Ch3_simulation.R")
+source("Ch3_samplesize/Ch3_process.R")
 
-# 4) Increasing mean and decreasing variance for groups
-scenario <- "_case4"
-desired_means <- c(30, 40, 50, 60)
-desired_sds <- c(30, 25, 15, 10)
+# DECREASING BOTH ------------------------------
+dir_scenario <- "downsd_downmean"
+
+if(dir.exists(paste0("Ch3_samplesize/", dir_scenario)) == FALSE){
+  dir.create(paste0("Ch3_samplesize/", dir_scenario))}
+
+desired_means <- c(60, 50, 40, 30)
+desired_sds <- c(50, 40, 30, 20)
 pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
-source("Ch3_samplesize/Ch3_simulation.R")
-
-
-
-
-
+source("Ch3_samplesize/Ch3_process.R")
 
 
