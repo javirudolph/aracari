@@ -388,7 +388,32 @@ nreps_mles_df %>%
   scale_color_manual(values = pal_sampsize, name = "Sample Size") +
   labs(x = "Long-distance level", y = "Bias", title = "GLM Lomax") +
   theme_bw()
+
+
+
+nreps_mles_df %>% 
+  mutate(samp_n_tests = factor(samp_n_tests),
+         thresh_tests = factor(thresh_tests),
+         theta_diff= log_St_hat2 - theta) %>% 
+  group_by(thresh_tests, samp_n_tests) %>% 
+  summarize(Eval_theta_hat = mean(log_St_hat2),
+            MSE = mean(theta_diff)^2,
+            theta = mean(theta),
+            bias = Eval_theta_hat - theta) %>% 
+  ggplot(., aes(y = MSE, x = thresh_tests)) +
+  geom_jitter(aes(color = samp_n_tests), size = 3, alpha = 0.9, width = 0.1) +
+  geom_hline(yintercept = 0, color = "red") +
+  scale_color_manual(values = pal_sampsize, name = "Sample Size") +
+  labs(x = "Long-distance level", y = "MSE", title = "GLM Lomax") +
+  theme_bw()
   
+```
+
+# Figure 5
+Bias correction
+
+```{r}
+
 ```
 
 
