@@ -154,7 +154,7 @@ thetas %>%
 # Figure 2
 First let's see the true thetas, which because of small numbers we are visualizing in log scale for the second panel: 
 
-```{r fig.width=10, fig.height=3}
+```{r fig.width=6, fig.height=2}
 thetas %>% 
   ggplot(., aes(x = thresh_tests, y = theta)) +
   geom_point(size = 4, shape = 18, color = theta_color) +
@@ -176,24 +176,119 @@ plot_grid(a, b, ncol = 2)
 Now, we explore how the estimates compare. These are already in log scale because they are small:
 
 
-```{r fig.width=12}
+```{r fig.width=6, fig.height=4}
 nreps_mles_df %>% 
   ggplot(., aes(x = thresh_tests, y = log_St_hat)) +
   # facet_wrap(~samp_n_tests, nrow = 1) +
-  geom_point() +
-  labs(x = "Long-distance level", y = "Estimated thetas") +
-  theme_bw()
+  geom_point(alpha = 0.8, size = 3, color = "grey27") +
+  labs(x = "Long-distance level", y = "Estimated thetas", title = "Simple Lomax") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() -> a
 
+nreps_mles_df %>% 
+  ggplot(., aes(x = thresh_tests, y = log_St_hat2)) +
+  # facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_point(alpha = 0.8, size = 3, color = "grey27") +
+  labs(x = "Long-distance level", y = "Estimated thetas", title = "GLM Lomax") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() -> b
+
+plot_grid(a, b, nrow = 2)
+
+```
+
+
+Since there are so many points, we can see them a little more scattered with jitter:
+
+```{r fig.width=6, fig.height=4}
+nreps_mles_df %>% 
+  ggplot(., aes(x = thresh_tests, y = log_St_hat)) +
+  # facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_jitter(alpha = 0.8, size = 3, color = "grey27") +
+  labs(x = "Long-distance level", y = "Estimated thetas", title = "Simple Lomax") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() -> a
+
+nreps_mles_df %>% 
+  ggplot(., aes(x = thresh_tests, y = log_St_hat2)) +
+  # facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_jitter(alpha = 0.8, size = 3, color = "grey27") +
+  labs(x = "Long-distance level", y = "Estimated thetas", title = "GLM Lomax") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() -> b
+
+plot_grid(a, b, nrow = 2)
+```
+
+But we are seeing aggregated data, and we tested at different sample sizes:
+
+
+```{r fig.width=8, fig.height=4}
+nreps_mles_df %>% 
+  ggplot(., aes(x = thresh_tests, y = log_St_hat)) +
+  # facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_jitter(alpha = 0.8, size = 3, aes(color = factor(samp_n_tests))) +
+  scale_color_manual(values = pal_sampsize) +
+  labs(x = "Long-distance level", y = "Estimated thetas", title = "Simple Lomax") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "none") -> a
+
+nreps_mles_df %>% 
+  ggplot(., aes(x = thresh_tests, y = log_St_hat2)) +
+  # facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_jitter(alpha = 0.8, size = 3, aes(color = factor(samp_n_tests))) +
+  scale_color_manual(values = pal_sampsize) +
+  labs(x = "Long-distance level", y = "Estimated thetas", title = "GLM Lomax") +
+  scale_x_continuous(breaks = thresh_tests) +
+  theme_bw() +
+  theme(legend.position = "right") + 
+  guides(color = guide_legend(title = "Sample Size")) -> b
+
+ableg <- get_legend(b)
+
+abplot <- plot_grid(a, b + theme(legend.position = "none"), nrow = 2)
+
+plot_grid(abplot, ableg, ncol = 2, rel_widths = c(1, 0.3))
 
 ```
 
 
 
+Can I see this as boxplots or something else? To see the differences in sample size more clearly.
 
+```{r fig.width=8, fig.height=4}
+nreps_mles_df %>% 
+  mutate(samp_n_tests = factor(samp_n_tests),
+         thresh_tests = factor(thresh_tests)) %>% 
+  ggplot(., aes(x = thresh_tests, y = log_St_hat, fill = samp_n_tests, color = samp_n_tests)) +
+  # facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_boxplot(alpha = 0.9) +
+  scale_fill_manual(values = pal_sampsize) +
+  scale_color_manual(values = pal_sampsize) +
+  labs(x = "Long-distance level", y = "Theta hat", title = "Simple Lomax") +
+  theme_bw() +
+  theme(legend.position = "none") -> a
 
+nreps_mles_df %>% 
+  mutate(samp_n_tests = factor(samp_n_tests),
+         thresh_tests = factor(thresh_tests)) %>% 
+  ggplot(., aes(x = thresh_tests, y = log_St_hat2, fill = samp_n_tests, color = samp_n_tests)) +
+  # facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_boxplot(alpha = 0.9) +
+  scale_fill_manual(values = pal_sampsize, name = "Sample Size") +
+  scale_color_manual(values = pal_sampsize, name = "Sample Size") +
+  labs(x = "Long-distance level", y = "Theta hat", title = "GLM Lomax") +
+  theme_bw() +
+  theme(legend.position = "right") -> b
 
+ableg <- get_legend(b)
 
+abplot <- plot_grid(a, b + theme(legend.position = "none"), nrow = 2)
 
+plot_grid(abplot, ableg, ncol = 2, rel_widths = c(1, 0.3))
+
+```
 
 
 
