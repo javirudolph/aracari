@@ -19,6 +19,7 @@ library(cowplot)
 library(tidyr)
 library(purrr)
 library(MetBrewer)
+library(stringr)
 ```
 
 ```{r loadData}
@@ -290,7 +291,23 @@ plot_grid(abplot, ableg, ncol = 2, rel_widths = c(1, 0.3))
 
 ```
 
+# Figure 3
+Introduce the numerical estimation thing with the simple lomax: 
 
+```{r}
+nreps_mles_df %>% 
+  ggplot()+
+  geom_point(aes(x = alpha_star, y = k_star, color = "Simple Lomax"), size = 4, alpha = 0.5) +
+  geom_point(aes(x = alpha_glm, y = k_glm, color = "Lomax GLM"), size = 4, alpha = 0.5) +
+  scale_y_log10() +
+  scale_x_log10() +
+  scale_color_manual(values = c("grey20", "dodgerblue4"), name = "") +
+  labs(x = "Log(alpha)", y = "Log(k)", title = "Lomax Parameter Space") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+
+```
 
 
 
