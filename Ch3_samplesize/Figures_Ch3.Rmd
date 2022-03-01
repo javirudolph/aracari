@@ -379,8 +379,7 @@ plot_grid(abplot, ableg, ncol = 2, rel_widths = c(1, 0.3))
 
 
 
-```{r fig.width=8, fig.height=4}
-
+```{r fig.width=6, fig.height=5}
 
 # See it compared to the original theta
 nreps_mles_df %>% 
@@ -392,8 +391,8 @@ nreps_mles_df %>%
   geom_hline(yintercept = 0, color = "red") +
   scale_fill_manual(values = pal_sampsize) +
   scale_color_manual(values = pal_sampsize) +
-  labs(x = "Distance level", y = TeX(r'($log(\hat{\theta} / \theta)$)'), subtitle = "Simple Lomax") +
-  theme_bw() +
+  labs(x = " ", y = TeX(r'($log(\hat{\theta} / \theta)$)'), subtitle = "Simple Lomax") +
+  theme_bw(base_size = 7) +
   theme(legend.position = "none") -> a
 
 nreps_mles_df %>% 
@@ -405,20 +404,34 @@ nreps_mles_df %>%
   geom_hline(yintercept = 0, color = "red") +
   scale_fill_manual(values = pal_sampsize, name = "Sample Size") +
   scale_color_manual(values = pal_sampsize, name = "Sample Size") +
-  labs(x = "Distance level", y = TeX(r'($log(\hat{\theta} / \theta)$)'), subtitle = "GLM Lomax") +
-  theme_bw() +
+  labs(x = "", y = TeX(r'($log(\hat{\theta} / \theta)$)'), subtitle = "GLM Lomax") +
+  theme_bw(base_size = 7) +
   theme(legend.position = "right") -> b
 
 ableg <- get_legend(b)
 
-abplot <- plot_grid(a, b + theme(legend.position = "none"), nrow = 2)
+GP_mles %>% 
+    mutate(samp_n_tests = factor(samp_n_tests),
+         thresh_tests = factor(thresh_tests)) %>% 
+  ggplot(., aes(x = thresh_tests, y = log(quant_theta/theta), fill = samp_n_tests, color = samp_n_tests)) +
+  # facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_boxplot(alpha = 0.9) +
+  geom_hline(yintercept = 0, color = "red") +
+  scale_fill_manual(values = pal_sampsize) +
+  scale_color_manual(values = pal_sampsize) +
+  labs(x = "Distance level", y = TeX(r'($log(\hat{\theta} / \theta)$)'), subtitle = "Generalized Pareto") +
+  theme_bw(base_size = 7) +
+  theme(legend.position = "none") -> c
+
+abplot <- plot_grid(a, b + theme(legend.position = "none"), c, nrow = 3)
 
 plot_grid(abplot, ableg, ncol = 2, rel_widths = c(1, 0.3))
+ggsave("Ch3_samplesize/Figures/Figure2.png")
 
 ```
 
 
-```{r fig.width=10, fig.height=5}
+```{r eval=FALSE, fig.width=10, fig.height=5}
 
 
 # See it compared to the original theta
