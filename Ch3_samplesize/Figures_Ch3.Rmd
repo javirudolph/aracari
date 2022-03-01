@@ -500,7 +500,7 @@ plot_grid(abplot, ableg, ncol = 2, rel_widths = c(1, 0.2))
 # Figure 3
 Introduce the numerical estimation thing with the simple lomax: 
 
-```{r fig.width=4, fig.height=2.5}
+```{r fig.width=6, fig.height=3}
 nreps_mles_df %>% 
   ggplot()+
   geom_point(aes(x = alpha_star, y = k_star, color = "Simple Lomax"), size = 4, alpha = 0.5) +
@@ -529,18 +529,19 @@ nreps_mles_df %>%
 
 ableg <- get_legend(a)
 
-top <- plot_grid(a + theme(legend.position = "none"), b, ncol = 2)
+top <- plot_grid(a + theme(legend.position = "none"), b, ncol = 2, labels = "AUTO", label_size = 8)
 
 plot_grid(top, ableg, nrow = 2, rel_heights = c(1, 0.1))
+ggsave("Ch3_samplesize/Figures/Figure3.png")
 
 
 ```
 
 # Figure 4
 
-Do MSE? or bias to show that the are biased estimators:
+Bias correction in GLM Lomax
 
-```{r fig.height=2.5, fig.width=5}
+```{r eval = FALSE, fig.height=2.5, fig.width=5}
 nreps_mles_df %>% 
   mutate(samp_n_tests = factor(samp_n_tests),
          thresh_tests = factor(thresh_tests)) %>% 
@@ -575,8 +576,6 @@ nreps_mles_df %>%
   
 ```
 
-# Figure 5
-Bias correction
 
 ```{r}
 
