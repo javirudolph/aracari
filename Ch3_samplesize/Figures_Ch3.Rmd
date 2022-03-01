@@ -70,7 +70,7 @@ samp_n_tests <- c(80, 200, 500, 800, 1000, 1600)
 all_test_combos <- data.frame(expand.grid(thresh_tests = thresh_tests, samp_n_tests = samp_n_tests))
 ```
 
-# Figure 1 - the mixture scenarios considered
+# Figure 1 
 
 The mixture distribution used to generate the data: 
 
@@ -176,7 +176,7 @@ weighted_densities <- purrr::map(1:4, function(y) stat_function(fun = dlnorm, ar
 # Plot density components of the mixture
 ggplot() +
   weighted_densities +
-  theme_bw(base_size = 5) +
+  theme_bw(base_size = 7) +
   labs(y = "Component Densities") +
   lims(x = c(0, 150)) -> densities_plot
 
@@ -189,7 +189,7 @@ data.frame(desired_means, desired_sds, gID = factor(1:4)) %>%
   geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.1, size = 1) +
   scale_color_manual(values = dens_cols) +
   labs(y = "Mean +/- SD") +
-  theme_bw(base_size = 5) +
+  theme_bw(base_size = 7) +
   theme(axis.title.x = element_blank(),
         axis.text.x = element_blank(),
         legend.position = "none") -> means_sd_plot
@@ -201,11 +201,11 @@ tru_tail <- data.frame(values = truth_df$x_samps, y = 100) %>% arrange(desc(valu
 truth_df %>%
   ggplot(., aes(x = x_samps)) +
   geom_histogram(bins = 100) +
-  geom_point(data = tru_tail[1:50,], aes(x = values, y = y), color = "grey47", alpha = 0.5, size = 1) +
+  geom_point(data = tru_tail[1:50,], aes(x = values, y = y), color = "grey47", alpha = 0.9, size = 1) +
   geom_vline(xintercept = thresh_tests, color = dens_cols[4], linetype = "dashed", size = 0.3) +
-  labs(y = "Frequency in Population", x = "Distance") +
+  labs(y = "Frequency", x = "Distance") +
   #lims(x = c(0, 150)) +
-  theme_bw(base_size = 5) -> truth_hist
+  theme_bw(base_size = 7) -> truth_hist
 # truth_hist
 
 # Density curve for the mixture based on the 50k samples.
@@ -214,7 +214,7 @@ truth_df %>%
   geom_density() +
   labs(y = "Mixture Density", x = "Distance") +
   lims(x = c(0, 150), y = c(0,0.05)) +
-  theme_bw(base_size = 5) +
+  theme_bw(base_size = 7) +
   theme(axis.title.x = element_blank()) -> truth_density
 # truth_density
 
@@ -224,21 +224,22 @@ truth_df %>%
 ## Figure 1 -----------------------------
 
 
-top_row <- plot_grid(means_sd_plot, densities_plot, truth_density, nrow = 1, rel_widths = c(1,2,2), labels = "AUTO", label_size = 6)
+top_row <- plot_grid(means_sd_plot, densities_plot, truth_density, nrow = 1, rel_widths = c(1,2,2), labels = "AUTO", label_size = 8)
 
-plot_grid(top_row, truth_hist, nrow = 2, labels = c("", "D"), label_size = 6)
+plot_grid(top_row, truth_hist, nrow = 2, labels = c("", "D"), label_size = 8)
 ggsave("Ch3_samplesize/Figures/Figure1.png")
 
 ```
 
 
-
+# Table 1
 
 The actual values of theta for the 50k sample we took from the mixture distribution:  
 
 ```{r}
 thetas %>% 
   knitr::kable()
+write.csv(thetas, file = "Ch3_samplesize/Figures/table1.csv")
 ```
 
 
@@ -264,9 +265,6 @@ b
 
 
 ```
-
-
-
 
 
 ```{r eval = FALSE, fig.width=6, fig.height=4}
