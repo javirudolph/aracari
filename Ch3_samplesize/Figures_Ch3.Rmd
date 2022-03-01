@@ -46,6 +46,29 @@ pal_bias <- met.brewer("Lakota", n=5)
 
 ```
 
+```{r}
+# Stuff needed for plots later
+
+# TEST VALUES --------------------------------------
+## Thresholds ----------------
+# Thresholds based on quantiles: because when we have a sample, we still don't know the truth
+# But we can know the quantiles of our sample.
+# summary(truth_df$x_samps)
+# thresh_tests <- round(quantile(truth_df$x_samps, c(0.5, 0.75, 0.9, 0.99, 0.999, 0.9999), names = FALSE))
+tru_n <- 50000
+w_samp_sizes <- pis*tru_n
+
+thresh_tests <- c(50, 100, 150, 250, 500, 750, 1000)
+tibble(thresh_tests) %>%
+  mutate(n_overthresh = map_dbl(1:length(thresh_tests),
+                                function(y) length(which(truth_df$x_samps >= thresh_tests[y]))),
+         theta = n_overthresh/tru_n) -> thetas
+
+## Sample sizes --------------------
+samp_n_tests <- c(80, 200, 500, 800, 1000, 1600)
+
+all_test_combos <- data.frame(expand.grid(thresh_tests = thresh_tests, samp_n_tests = samp_n_tests))
+```
 
 # Figure 1 - the mixture scenarios considered
 
@@ -91,7 +114,6 @@ mixtures_plot_fx <- function(pars = pars, dens_cols = dens_cols, pis = pis, desi
 
 ```
 
-
 ```{r fig.width=4, fig.height=5}
 # Scenarios:
 pis <- c( 0.1, 0.2, 0.3, 0.4)
@@ -134,10 +156,10 @@ A5 <- mixtures_plot_fx(pars = pars, dens_cols = dens_cols, pis = pis, desired_me
 
 
 plot_grid(A1, A2, A3, A4, ncol = 1, labels = "AUTO", label_size = 8)
-ggsave("Ch3_samplesize/Figures/Figure1.png")
+ggsave("Ch3_samplesize/Figures/Many_mixtures.png")
 ```
 
-```{r}
+```{r fig.width=6, fig.height=3}
 desired_means <- c(28, 32, 40, 50)
 desired_sds <- c(49.7, 39.9, 33.3, 31.1)
 pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
@@ -148,7 +170,29 @@ pis <- c( 0.1, 0.2, 0.3, 0.4)
 dens_cols <- c("#264653", "#2a9d8f", "#f4a261", "#e76f51")
 # dens_cols <- pal_mixture
 
-top_row <- fig1_fx(pars = pars, dens_cols = dens_cols, pis = pis, desired_means = desired_means, desired_sds = desired_sds)
+# Build the densities for plotting
+weighted_densities <- purrr::map(1:4, function(y) stat_function(fun = dlnorm, args = list(meanlog = pars$meanlog[y], sdlog = pars$sdlog[y]), color = dens_cols[y], size=1, alpha = 0.8))
+
+# Plot density components of the mixture
+ggplot() +
+  weighted_densities +
+  theme_bw(base_size = 5) +
+  labs(y = "Component Densities") +
+  lims(x = c(0, 150)) -> densities_plot
+
+# Plot the means and sd for each of the curves
+data.frame(desired_means, desired_sds, gID = factor(1:4)) %>%
+  mutate(lo = desired_means - desired_sds,
+         hi = desired_means + desired_sds) %>%
+  ggplot(., aes(x = gID, y = desired_means, color = gID)) +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.1, size = 1) +
+  scale_color_manual(values = dens_cols) +
+  labs(y = "Mean +/- SD") +
+  theme_bw(base_size = 5) +
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        legend.position = "none") -> means_sd_plot
 
 
 tru_tail <- data.frame(values = truth_df$x_samps, y = 100) %>% arrange(desc(values)) %>% filter(values >=50)
@@ -157,19 +201,21 @@ tru_tail <- data.frame(values = truth_df$x_samps, y = 100) %>% arrange(desc(valu
 truth_df %>%
   ggplot(., aes(x = x_samps)) +
   geom_histogram(bins = 100) +
-  geom_point(data = tru_tail[1:50,], aes(x = values, y = y), color = "black", alpha = 0.5) +
-  labs(y = "Frequency", x = "Distance") +
+  geom_point(data = tru_tail[1:50,], aes(x = values, y = y), color = "grey47", alpha = 0.5, size = 1) +
+  geom_vline(xintercept = thresh_tests, color = dens_cols[4], linetype = "dashed", size = 0.3) +
+  labs(y = "Frequency in Population", x = "Distance") +
   #lims(x = c(0, 150)) +
-  theme_minimal() -> truth_hist
+  theme_bw(base_size = 5) -> truth_hist
 # truth_hist
 
 # Density curve for the mixture based on the 50k samples.
 truth_df %>%
   ggplot(., aes(x = x_samps)) +
   geom_density() +
-  labs(y = "Density", x = "Distance") +
+  labs(y = "Mixture Density", x = "Distance") +
   lims(x = c(0, 150), y = c(0,0.05)) +
-  theme_minimal() -> truth_density
+  theme_bw(base_size = 5) +
+  theme(axis.title.x = element_blank()) -> truth_density
 # truth_density
 
 # Visualize both in one frame
@@ -177,37 +223,16 @@ truth_df %>%
 
 ## Figure 1 -----------------------------
 
-bottom_row <- plot_grid(truth_hist, truth_density)
 
-plot_grid(top_row, bottom_row,nrow = 2)
+top_row <- plot_grid(means_sd_plot, densities_plot, truth_density, nrow = 1, rel_widths = c(1,2,2), labels = "AUTO", label_size = 6)
 
+plot_grid(top_row, truth_hist, nrow = 2, labels = c("", "D"), label_size = 6)
+ggsave("Ch3_samplesize/Figures/Figure1.png")
 
 ```
 
 
-```{r}
-# Stuff needed for plots later
 
-# TEST VALUES --------------------------------------
-## Thresholds ----------------
-# Thresholds based on quantiles: because when we have a sample, we still don't know the truth
-# But we can know the quantiles of our sample.
-# summary(truth_df$x_samps)
-# thresh_tests <- round(quantile(truth_df$x_samps, c(0.5, 0.75, 0.9, 0.99, 0.999, 0.9999), names = FALSE))
-tru_n <- 50000
-w_samp_sizes <- pis*tru_n
-
-thresh_tests <- c(50, 100, 150, 250, 500, 750, 1000)
-tibble(thresh_tests) %>%
-  mutate(n_overthresh = map_dbl(1:length(thresh_tests),
-                                function(y) length(which(truth_df$x_samps >= thresh_tests[y]))),
-         theta = n_overthresh/tru_n) -> thetas
-
-## Sample sizes --------------------
-samp_n_tests <- c(80, 200, 500, 800, 1000, 1600)
-
-all_test_combos <- data.frame(expand.grid(thresh_tests = thresh_tests, samp_n_tests = samp_n_tests))
-```
 
 The actual values of theta for the 50k sample we took from the mixture distribution:  
 
