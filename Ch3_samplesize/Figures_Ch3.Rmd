@@ -339,7 +339,7 @@ plot_grid(abplot, ableg, ncol = 2, rel_widths = c(1, 0.3))
 
 # See it compared to the original theta
 nreps_mles_df %>% 
-  filter(., thresh_tests < 250) %>% 
+  filter(., thresh_tests < 500) %>% 
   mutate(samp_n_tests = factor(samp_n_tests),
          thresh_tests = factor(thresh_tests)) %>% 
   ggplot(., aes(x = thresh_tests, y = log_St_hat - log(theta), fill = samp_n_tests, color = samp_n_tests)) +
@@ -353,7 +353,7 @@ nreps_mles_df %>%
   theme(legend.position = "none") -> a1
 
 nreps_mles_df %>% 
-  filter(., thresh_tests >= 250) %>% 
+  filter(., thresh_tests >= 500) %>% 
   mutate(samp_n_tests = factor(samp_n_tests),
          thresh_tests = factor(thresh_tests)) %>% 
   ggplot(., aes(x = thresh_tests, y = log_St_hat - log(theta), fill = samp_n_tests, color = samp_n_tests)) +
@@ -369,7 +369,7 @@ nreps_mles_df %>%
 a <- plot_grid(a1, a2, ncol = 2)
 
 nreps_mles_df %>% 
-  filter(., thresh_tests < 250) %>% 
+  filter(., thresh_tests < 500) %>% 
   mutate(samp_n_tests = factor(samp_n_tests),
          thresh_tests = factor(thresh_tests)) %>% 
   ggplot(., aes(x = thresh_tests, y = log_St_hat2 - log(theta), fill = samp_n_tests, color = samp_n_tests)) +
@@ -383,7 +383,7 @@ nreps_mles_df %>%
   theme(legend.position = "none") -> b1
 
 nreps_mles_df %>% 
-  filter(., thresh_tests >= 250) %>% 
+  filter(., thresh_tests >= 500) %>% 
   mutate(samp_n_tests = factor(samp_n_tests),
          thresh_tests = factor(thresh_tests)) %>% 
   ggplot(., aes(x = thresh_tests, y = log_St_hat2 - log(theta), fill = samp_n_tests, color = samp_n_tests)) +
@@ -396,11 +396,10 @@ nreps_mles_df %>%
   theme_bw() +
   theme(legend.position = "none") -> b2
 
-b2
 
 b <- plot_grid(b1, b2, ncol = 2)
 
-ableg <- get_legend(b + theme(legend.position = "right"))
+ableg <- get_legend(b1 + theme(legend.position = "right"))
 
 abplot <- plot_grid(a, b, nrow = 2, labels = c("A", "B"))
 
@@ -463,28 +462,28 @@ nreps_mles_df %>%
             bias = Eval_theta_hat - theta) %>% 
   ggplot(., aes(y = bias, x = thresh_tests)) +
   geom_jitter(aes(color = samp_n_tests), size = 3, alpha = 0.9, width = 0.1) +
-  geom_hline(yintercept = 0, color = "red") +
+  geom_hline(yintercept = 0, color = "grey") +
   scale_color_manual(values = pal_sampsize, name = "Sample Size") +
-  labs(x = "Long-distance level", y = "Bias", title = "GLM Lomax") +
+  labs(x = "Distance level", y = "Bias", title = "GLM Lomax") +
   theme_bw()
 
 
-
-nreps_mles_df %>% 
-  mutate(samp_n_tests = factor(samp_n_tests),
-         thresh_tests = factor(thresh_tests),
-         theta_diff= log_St_hat2 - theta) %>% 
-  group_by(thresh_tests, samp_n_tests) %>% 
-  summarize(Eval_theta_hat = mean(log_St_hat2),
-            MSE = mean(theta_diff)^2,
-            theta = mean(theta),
-            bias = Eval_theta_hat - theta) %>% 
-  ggplot(., aes(y = MSE, x = thresh_tests)) +
-  geom_jitter(aes(color = samp_n_tests), size = 3, alpha = 0.9, width = 0.1) +
-  geom_hline(yintercept = 0, color = "red") +
-  scale_color_manual(values = pal_sampsize, name = "Sample Size") +
-  labs(x = "Long-distance level", y = "MSE", title = "GLM Lomax") +
-  theme_bw()
+# 
+# nreps_mles_df %>% 
+#   mutate(samp_n_tests = factor(samp_n_tests),
+#          thresh_tests = factor(thresh_tests),
+#          theta_diff= log_St_hat2 - theta) %>% 
+#   group_by(thresh_tests, samp_n_tests) %>% 
+#   summarize(Eval_theta_hat = mean(log_St_hat2),
+#             MSE = mean(theta_diff)^2,
+#             theta = mean(theta),
+#             bias = Eval_theta_hat - theta) %>% 
+#   ggplot(., aes(y = MSE, x = thresh_tests)) +
+#   geom_jitter(aes(color = samp_n_tests), size = 3, alpha = 0.9, width = 0.1) +
+#   geom_hline(yintercept = 0, color = "red") +
+#   scale_color_manual(values = pal_sampsize, name = "Sample Size") +
+#   labs(x = "Long-distance level", y = "MSE", title = "GLM Lomax") +
+#   theme_bw()
   
 ```
 
