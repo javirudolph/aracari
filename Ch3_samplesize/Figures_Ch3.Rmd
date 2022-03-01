@@ -4,6 +4,7 @@ author: "Javiera Rudolph"
 output:
   html_document:
     toc: yes
+    self_contained: false
 ---
 
 ```{r setup, include=FALSE}
@@ -20,6 +21,7 @@ library(tidyr)
 library(purrr)
 library(MetBrewer)
 library(stringr)
+library(latex2exp)
 ```
 
 ```{r loadData}
@@ -40,6 +42,7 @@ pal_sampsize <- met.brewer("Hokusai3", n = 6)
 pal_threshold <- met.brewer("Derain", n = 7)
 pal_mixture <- met.brewer("Hokusai1", n = 4)
 theta_color <- "steelblue"
+pal_bias <- met.brewer("Lakota", n=5)
 
 ```
 
@@ -57,6 +60,7 @@ pis <- c( 0.1, 0.2, 0.3, 0.4)
 
 # The color associated to each mixture component
 dens_cols <- c("#264653", "#2a9d8f", "#f4a261", "#e76f51")
+# dens_cols <- pal_mixture
 
 # Build the densities for plotting
 weighted_densities <- purrr::map(1:4, function(y) stat_function(fun = dlnorm, args = list(meanlog = pars$meanlog[y], sdlog = pars$sdlog[y]), color = dens_cols[y], size=pis[y]*5, alpha = 0.8))
@@ -155,30 +159,31 @@ thetas %>%
 # Figure 2
 First let's see the true thetas, which because of small numbers we are visualizing in log scale for the second panel: 
 
-```{r fig.width=6, fig.height=2}
-thetas %>% 
-  ggplot(., aes(x = thresh_tests, y = theta)) +
-  geom_point(size = 4, shape = 18, color = theta_color) +
-  labs(x = "Long-distance level", y = "Theta") +
-  theme_bw() -> a
+```{r fig.width=5, fig.height=2.5}
+# thetas %>% 
+#   ggplot(., aes(x = thresh_tests, y = theta)) +
+#   geom_point(size = 4, shape = 18, color = theta_color) +
+#   labs(x = "Long-distance level", y = "Theta") +
+#   theme_bw() -> a
 
 thetas %>% 
-  ggplot(., aes(x = thresh_tests, y = theta)) +
-  geom_point(size = 4, shape = 18, color = theta_color) +
-  labs(x = "Long-distance level", y = "Theta", Title = "Log Scale") +
+  ggplot(., aes(x = thresh_tests, y = log(theta))) +
+  geom_point(size = 3, shape = 18, color = theta_color) +
+  labs(x = "Distance level", y = "log(theta)") +
+  scale_x_continuous(breaks = thresh_tests) +
   theme_bw() +
-  scale_y_log10() -> b
-
-plot_grid(a, b, ncol = 2)
+  theme(axis.text.x = element_text(angle = 30)) -> b
+b
+# plot_grid(a, b, ncol = 2)
 
 
 ```
 
 
-Now, we explore how the estimates compare. These are already in log scale because they are small:
 
 
-```{r fig.width=6, fig.height=4}
+
+```{r eval = FALSE, fig.width=6, fig.height=4}
 nreps_mles_df %>% 
   ggplot(., aes(x = thresh_tests, y = log_St_hat)) +
   # facet_wrap(~samp_n_tests, nrow = 1) +
@@ -200,9 +205,8 @@ plot_grid(a, b, nrow = 2)
 ```
 
 
-Since there are so many points, we can see them a little more scattered with jitter:
 
-```{r fig.width=6, fig.height=4}
+```{r eval = FALSE, fig.width=6, fig.height=4}
 nreps_mles_df %>% 
   ggplot(., aes(x = thresh_tests, y = log_St_hat)) +
   # facet_wrap(~samp_n_tests, nrow = 1) +
@@ -222,10 +226,9 @@ nreps_mles_df %>%
 plot_grid(a, b, nrow = 2)
 ```
 
-But we are seeing aggregated data, and we tested at different sample sizes:
 
 
-```{r fig.width=8, fig.height=4}
+```{r eval = FALSE, fig.width=8, fig.height=4}
 nreps_mles_df %>% 
   ggplot(., aes(x = thresh_tests, y = log_St_hat)) +
   # facet_wrap(~samp_n_tests, nrow = 1) +
@@ -257,9 +260,7 @@ plot_grid(abplot, ableg, ncol = 2, rel_widths = c(1, 0.3))
 
 
 
-Can I see this as boxplots or something else? To see the differences in sample size more clearly.
-
-```{r fig.width=8, fig.height=4}
+```{r eval = FALSE, fig.width=8, fig.height=4}
 nreps_mles_df %>% 
   mutate(samp_n_tests = factor(samp_n_tests),
          thresh_tests = factor(thresh_tests)) %>% 
@@ -294,8 +295,8 @@ plot_grid(abplot, ableg, ncol = 2, rel_widths = c(1, 0.3))
 
 
 
+```{r fig.width=8, fig.height=4}
 
-```{r eval = FALSE, fig.width=8, fig.height=4}
 
 # See it compared to the original theta
 nreps_mles_df %>% 
@@ -307,7 +308,7 @@ nreps_mles_df %>%
   geom_hline(yintercept = 0, color = "red") +
   scale_fill_manual(values = pal_sampsize) +
   scale_color_manual(values = pal_sampsize) +
-  labs(x = "Long-distance level", y = "log(theta_hat) - log(theta)", title = "Simple Lomax") +
+  labs(x = "Distance level", y = TeX(r'($log(\hat{\theta} / \theta)$)'), subtitle = "Simple Lomax") +
   theme_bw() +
   theme(legend.position = "none") -> a
 
@@ -320,7 +321,7 @@ nreps_mles_df %>%
   geom_hline(yintercept = 0, color = "red") +
   scale_fill_manual(values = pal_sampsize, name = "Sample Size") +
   scale_color_manual(values = pal_sampsize, name = "Sample Size") +
-  labs(x = "Long-distance level", y = "log(theta_hat) - log(theta)", title = "GLM Lomax") +
+  labs(x = "Distance level", y = TeX(r'($log(\hat{\theta} / \theta)$)'), subtitle = "GLM Lomax") +
   theme_bw() +
   theme(legend.position = "right") -> b
 
@@ -331,6 +332,83 @@ abplot <- plot_grid(a, b + theme(legend.position = "none"), nrow = 2)
 plot_grid(abplot, ableg, ncol = 2, rel_widths = c(1, 0.3))
 
 ```
+
+
+```{r fig.width=10, fig.height=5}
+
+
+# See it compared to the original theta
+nreps_mles_df %>% 
+  filter(., thresh_tests < 250) %>% 
+  mutate(samp_n_tests = factor(samp_n_tests),
+         thresh_tests = factor(thresh_tests)) %>% 
+  ggplot(., aes(x = thresh_tests, y = log_St_hat - log(theta), fill = samp_n_tests, color = samp_n_tests)) +
+  # facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_boxplot(alpha = 0.9) +
+  geom_hline(yintercept = 0, color = "red") +
+  scale_fill_manual(values = pal_sampsize) +
+  scale_color_manual(values = pal_sampsize) +
+  labs(x = "Distance level", y = TeX(r'($log(\hat{\theta} / \theta)$)'), subtitle = "Simple Lomax") +
+  theme_bw() +
+  theme(legend.position = "none") -> a1
+
+nreps_mles_df %>% 
+  filter(., thresh_tests >= 250) %>% 
+  mutate(samp_n_tests = factor(samp_n_tests),
+         thresh_tests = factor(thresh_tests)) %>% 
+  ggplot(., aes(x = thresh_tests, y = log_St_hat - log(theta), fill = samp_n_tests, color = samp_n_tests)) +
+  # facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_boxplot(alpha = 0.9) +
+  geom_hline(yintercept = 0, color = "red") +
+  scale_fill_manual(values = pal_sampsize) +
+  scale_color_manual(values = pal_sampsize) +
+  labs(x = "Distance level", y = " ", subtitle = " ") +
+  theme_bw() +
+  theme(legend.position = "none") -> a2
+
+a <- plot_grid(a1, a2, ncol = 2)
+
+nreps_mles_df %>% 
+  filter(., thresh_tests < 250) %>% 
+  mutate(samp_n_tests = factor(samp_n_tests),
+         thresh_tests = factor(thresh_tests)) %>% 
+  ggplot(., aes(x = thresh_tests, y = log_St_hat2 - log(theta), fill = samp_n_tests, color = samp_n_tests)) +
+  # facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_boxplot(alpha = 0.9) +
+  geom_hline(yintercept = 0, color = "red") +
+  scale_fill_manual(values = pal_sampsize, name = "Sample Size") +
+  scale_color_manual(values = pal_sampsize, name = "Sample Size") +
+  labs(x = "Distance level", y = TeX(r'($log(\hat{\theta} / \theta)$)'), subtitle = "GLM Lomax") +
+  theme_bw() +
+  theme(legend.position = "none") -> b1
+
+nreps_mles_df %>% 
+  filter(., thresh_tests >= 250) %>% 
+  mutate(samp_n_tests = factor(samp_n_tests),
+         thresh_tests = factor(thresh_tests)) %>% 
+  ggplot(., aes(x = thresh_tests, y = log_St_hat2 - log(theta), fill = samp_n_tests, color = samp_n_tests)) +
+  # facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_boxplot(alpha = 0.9) +
+  geom_hline(yintercept = 0, color = "red") +
+  scale_fill_manual(values = pal_sampsize, name = "Sample Size") +
+  scale_color_manual(values = pal_sampsize, name = "Sample Size") +
+  labs(x = "Distance level", y = " ", subtitle = " ") +
+  theme_bw() +
+  theme(legend.position = "none") -> b2
+
+b2
+
+b <- plot_grid(b1, b2, ncol = 2)
+
+ableg <- get_legend(b + theme(legend.position = "right"))
+
+abplot <- plot_grid(a, b, nrow = 2, labels = c("A", "B"))
+
+plot_grid(abplot, ableg, ncol = 2, rel_widths = c(1, 0.2))
+
+```
+
+
 
 # Figure 3
 Introduce the numerical estimation thing with the simple lomax: 
@@ -483,9 +561,104 @@ plot_grid(a, b, nrow = 2)
 ```
 
 
+```{r eval = FALSE, fig.width=10}
+corr_b %>% 
+  bind_rows(., corr_a) %>% 
+  right_join(., thetas) %>%
+  group_by(thresh_tests, samp_n_tests, type, correctiontype) %>% 
+  summarize(Eval_theta_hat = mean(value),
+            theta = mean(theta),
+            bias = Eval_theta_hat - theta) %>% 
+  mutate(samp_n_tests = factor(samp_n_tests),
+         thresh_tests = factor(thresh_tests)) %>% 
+  mutate(labelsamp = paste("n =", samp_n_tests),
+         labelsamp = factor(labelsamp, levels = c("n = 80", "n = 200", "n = 500", "n = 800", "n = 1000", "n = 1600"))) %>% 
+  mutate(bootcat = case_when(type == "Corrected" & correctiontype == "Nonparametric" ~ "NP - C",
+                             type == "Corrected" & correctiontype == "Parametric" ~ "P - C",
+                             type == "Original" & correctiontype == "Nonparametric" ~ "NP - UC",
+                             type == "Original" & correctiontype == "Parametric" ~ "P - UC")) %>% 
+  ggplot(., aes(y = bias, x = thresh_tests)) +
+  facet_wrap(~labelsamp) +
+  geom_jitter(aes(color = bootcat), size = 4, alpha = 0.8, width = 0.1) +
+  geom_hline(yintercept = 0, color = "red") +
+  scale_color_manual(values = pal_bias, name = "") +
+  labs(x = "Long-distance level", y = "Bias") +
+  theme_bw()
+```
 
+# Figure 6
+Compare to the GP
 
+```{r fig.width=8, fig.height=4}
 
+nreps_mles_df %>% 
+  mutate(samp_n_tests = factor(samp_n_tests),
+         thresh_tests = factor(thresh_tests)) %>% 
+  ggplot(., aes(x = thresh_tests, y = log_St_hat2 - log(theta), fill = samp_n_tests, color = samp_n_tests)) +
+  # facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_boxplot(alpha = 0.9) +
+  geom_hline(yintercept = 0, color = "red") +
+  scale_fill_manual(values = pal_sampsize, name = "Sample Size") +
+  scale_color_manual(values = pal_sampsize, name = "Sample Size") +
+  labs(x = "Long-distance level", y = "log(theta_hat) - log(theta)", title = "GLM Lomax") +
+  theme_bw() +
+  theme(legend.position = "right") -> b
 
+ableg <- get_legend(b)
 
+GP_mles %>% 
+  mutate(samp_n_tests = factor(samp_n_tests),
+         thresh_tests = factor(thresh_tests)) %>% 
+  ggplot(., aes(x = thresh_tests, y = log(quant_theta/theta), fill = samp_n_tests, color = samp_n_tests)) +
+  # facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_boxplot(alpha = 0.9) +
+  geom_hline(yintercept = 0, color = "red") +
+  scale_fill_manual(values = pal_sampsize, name = "Sample Size") +
+  scale_color_manual(values = pal_sampsize, name = "Sample Size") +
+  labs(x = "Long-distance level", y = "log(GP_theta/theta)", title = "Generalized Pareto") +
+  theme_bw() +
+  theme(legend.position = "none") -> a
 
+abplot <- plot_grid(a, b + theme(legend.position = "none"), nrow = 2)
+
+plot_grid(abplot, ableg, ncol = 2, rel_widths = c(1, 0.3))
+
+```
+
+```{r fig.width=8, fig.height=4}
+
+nreps_mles_df %>% 
+  mutate(samp_n_tests = factor(samp_n_tests),
+         thresh_tests = factor(thresh_tests)) %>% 
+  ggplot(., aes(x = thresh_tests, y = log_St_hat2 - log(theta), fill = samp_n_tests, color = samp_n_tests)) +
+  # facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_boxplot(alpha = 0.9) +
+  geom_hline(yintercept = 0, color = "red") +
+  scale_fill_manual(values = pal_sampsize, name = "Sample Size") +
+  scale_color_manual(values = pal_sampsize, name = "Sample Size") +
+  labs(x = "Long-distance level", y = "log(theta_hat) - log(theta)", title = "GLM Lomax") +
+  theme_bw() +
+  theme(legend.position = "right") +
+  lims(y = c(-5, 5)) -> b
+
+ableg <- get_legend(b)
+
+GP_mles %>% 
+  mutate(samp_n_tests = factor(samp_n_tests),
+         thresh_tests = factor(thresh_tests)) %>% 
+  ggplot(., aes(x = thresh_tests, y = log(quant_theta/theta), fill = samp_n_tests, color = samp_n_tests)) +
+  # facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_boxplot(alpha = 0.9) +
+  geom_hline(yintercept = 0, color = "red") +
+  scale_fill_manual(values = pal_sampsize, name = "Sample Size") +
+  scale_color_manual(values = pal_sampsize, name = "Sample Size") +
+  labs(x = "Long-distance level", y = "log(GP_theta/theta)", title = "Generalized Pareto") +
+  theme_bw() +
+  theme(legend.position = "none")+
+  lims(y = c(-5, 5)) -> a
+
+abplot <- plot_grid(a, b + theme(legend.position = "none"), nrow = 2)
+
+plot_grid(abplot, ableg, ncol = 2, rel_widths = c(1, 0.3))
+
+```
