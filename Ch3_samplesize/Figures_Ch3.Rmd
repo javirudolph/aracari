@@ -608,30 +608,54 @@ correction_df <- rbind.data.frame(corr_a, corr_b)
 ```
 
 ```{r fig.width=12, fig.height=6}
+
+lowlabs <- paste0("n = ", samp_n_tests[1:6], "-lower")
+extlabs <- paste0("n = ", samp_n_tests[1:6], "-extremes")
+
 nonpar_glm %>% 
   mutate(Original = theta_hat - theta,
-         # Corrected = log_theta_stars - theta,
-         Corrected = theta_bar - theta,) %>% 
+         Corrected = theta_bar - theta) %>% 
   dplyr::select(thresh_tests, samp_n_tests, Original, Corrected) %>% 
   pivot_longer(cols = c(Original, Corrected), names_to = "type") %>% 
   filter(., !is.infinite(value)) %>% 
-  # filter(., thresh_tests < 500) %>% 
-  mutate(thresholdsep = factor(ifelse(thresh_tests<500, "lower dist", "extremes"), levels = c("lower dist", "extremes"))) %>% 
-  mutate(samp_n_tests = factor(samp_n_tests),
-         thresh_tests = factor(thresh_tests)) %>% 
-  mutate(labelsamp = paste("n =", samp_n_tests),
-         labelsamp = factor(labelsamp, levels = c("n = 80", "n = 200", "n = 500", "n = 800", "n = 1000", "n = 1600"))) %>%
-  mutate(onelinelabel = paste0(labelsamp,"-",thresholdsep)) %>% 
+  mutate(thresholdsep = factor(ifelse(thresh_tests<500, "lower", "extremes"), levels = c("lower", "extremes")),
+         onelinelabel = paste0("n = ", samp_n_tests, "-", thresholdsep),
+         onelinelabel = factor(onelinelabel, levels = c(lowlabs, extlabs)),
+         samp_n_tests = factor(samp_n_tests)) %>% 
   ggplot(., aes(x = thresh_tests, y = value, fill = samp_n_tests, color = type)) +
   facet_wrap(~onelinelabel, nrow = 2, scales = "free") +
   geom_boxplot(alpha = 0.9) +
   geom_hline(yintercept = 0, color = "red") +
   scale_color_manual(values = c("black", "grey"), name = " ") +
   scale_fill_manual(values = pal_sampsize, name = "Sample Size") +
-  labs(x = "Distance level", y = "Estimates of theta", subtitle = " ") +
+  labs(x = "Distance level", y = "Estimates of theta", subtitle = "Nonparametric") +
   theme_bw() 
+  
+```
 
+```{r fig.width=12, fig.height=6}
 
+lowlabs <- paste0("n = ", samp_n_tests[1:6], "-lower")
+extlabs <- paste0("n = ", samp_n_tests[1:6], "-extremes")
+
+par_glm %>% 
+  mutate(Original = theta_hat - theta,
+         Corrected = theta_bar - theta) %>% 
+  dplyr::select(thresh_tests, samp_n_tests, Original, Corrected) %>% 
+  pivot_longer(cols = c(Original, Corrected), names_to = "type") %>% 
+  filter(., !is.infinite(value)) %>% 
+  mutate(thresholdsep = factor(ifelse(thresh_tests<500, "lower", "extremes"), levels = c("lower", "extremes")),
+         onelinelabel = paste0("n = ", samp_n_tests, "-", thresholdsep),
+         onelinelabel = factor(onelinelabel, levels = c(lowlabs, extlabs)),
+         samp_n_tests = factor(samp_n_tests)) %>% 
+  ggplot(., aes(x = thresh_tests, y = value, fill = samp_n_tests, color = type)) +
+  facet_wrap(~onelinelabel, nrow = 2, scales = "free") +
+  geom_boxplot(alpha = 0.9) +
+  geom_hline(yintercept = 0, color = "red") +
+  scale_color_manual(values = c("black", "grey"), name = " ") +
+  scale_fill_manual(values = pal_sampsize, name = "Sample Size") +
+  labs(x = "Distance level", y = "Estimates of theta", subtitle = "Parametric") +
+  theme_bw() 
   
 ```
 
