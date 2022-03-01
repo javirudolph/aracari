@@ -244,9 +244,8 @@ write.csv(thetas, file = "Ch3_samplesize/Figures/table1.csv")
 
 
 # Figure 2
-First let's see the true thetas, which because of small numbers we are visualizing in log scale for the second panel: 
 
-```{r fig.width=5, fig.height=2.5}
+```{r eval=FALSE, fig.width=5, fig.height=2.5}
 # thetas %>% 
 #   ggplot(., aes(x = thresh_tests, y = theta)) +
 #   geom_point(size = 4, shape = 18, color = theta_color) +
@@ -266,7 +265,6 @@ b
 
 ```
 
-
 ```{r eval = FALSE, fig.width=6, fig.height=4}
 nreps_mles_df %>% 
   ggplot(., aes(x = thresh_tests, y = log_St_hat)) +
@@ -288,8 +286,6 @@ plot_grid(a, b, nrow = 2)
 
 ```
 
-
-
 ```{r eval = FALSE, fig.width=6, fig.height=4}
 nreps_mles_df %>% 
   ggplot(., aes(x = thresh_tests, y = log_St_hat)) +
@@ -309,8 +305,6 @@ nreps_mles_df %>%
 
 plot_grid(a, b, nrow = 2)
 ```
-
-
 
 ```{r eval = FALSE, fig.width=8, fig.height=4}
 nreps_mles_df %>% 
@@ -341,8 +335,6 @@ abplot <- plot_grid(a, b + theme(legend.position = "none"), nrow = 2)
 plot_grid(abplot, ableg, ncol = 2, rel_widths = c(1, 0.3))
 
 ```
-
-
 
 ```{r eval = FALSE, fig.width=8, fig.height=4}
 nreps_mles_df %>% 
@@ -378,8 +370,7 @@ plot_grid(abplot, ableg, ncol = 2, rel_widths = c(1, 0.3))
 ```
 
 
-
-```{r fig.width=6, fig.height=5}
+```{r fig.width=6, fig.height=4}
 
 # See it compared to the original theta
 nreps_mles_df %>% 
@@ -392,7 +383,7 @@ nreps_mles_df %>%
   scale_fill_manual(values = pal_sampsize) +
   scale_color_manual(values = pal_sampsize) +
   labs(x = " ", y = TeX(r'($log(\hat{\theta} / \theta)$)'), subtitle = "Simple Lomax") +
-  theme_bw(base_size = 7) +
+  theme_bw(base_size = 8) +
   theme(legend.position = "none") -> a
 
 nreps_mles_df %>% 
@@ -405,7 +396,7 @@ nreps_mles_df %>%
   scale_fill_manual(values = pal_sampsize, name = "Sample Size") +
   scale_color_manual(values = pal_sampsize, name = "Sample Size") +
   labs(x = "", y = TeX(r'($log(\hat{\theta} / \theta)$)'), subtitle = "GLM Lomax") +
-  theme_bw(base_size = 7) +
+  theme_bw(base_size = 8) +
   theme(legend.position = "right") -> b
 
 ableg <- get_legend(b)
@@ -420,12 +411,12 @@ GP_mles %>%
   scale_fill_manual(values = pal_sampsize) +
   scale_color_manual(values = pal_sampsize) +
   labs(x = "Distance level", y = TeX(r'($log(\hat{\theta} / \theta)$)'), subtitle = "Generalized Pareto") +
-  theme_bw(base_size = 7) +
+  theme_bw(base_size = 8) +
   theme(legend.position = "none") -> c
 
-abplot <- plot_grid(a, b + theme(legend.position = "none"), c, nrow = 3)
+abplot <- plot_grid(a, b + theme(legend.position = "none"), c, nrow = 3, labels = "AUTO", label_size = 8)
 
-plot_grid(abplot, ableg, ncol = 2, rel_widths = c(1, 0.3))
+plot_grid(abplot, ableg, ncol = 2, rel_widths = c(1, 0.2))
 ggsave("Ch3_samplesize/Figures/Figure2.png")
 
 ```
@@ -509,7 +500,7 @@ plot_grid(abplot, ableg, ncol = 2, rel_widths = c(1, 0.2))
 # Figure 3
 Introduce the numerical estimation thing with the simple lomax: 
 
-```{r fig.width=7, fig.height=4}
+```{r fig.width=4, fig.height=2.5}
 nreps_mles_df %>% 
   ggplot()+
   geom_point(aes(x = alpha_star, y = k_star, color = "Simple Lomax"), size = 4, alpha = 0.5) +
