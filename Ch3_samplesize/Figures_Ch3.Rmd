@@ -130,7 +130,8 @@ bias_bxplot_fx <- function(data){
   scale_fill_manual(values = dens_cols[c(2,3)], name = "Bias") +
   geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
   labs(y = TeX(r'($log(\hat{\theta} / \theta)$)'), x = "Distance Level Estimated") +
-  theme_bw()
+  theme_bw() +
+    theme(legend.position = "none")
 }
 
 ```
@@ -159,6 +160,12 @@ pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
 
 A2 <- mixtures_plot_fx(pars = pars, dens_cols = dens_cols, pis = pis, desired_means = desired_means, desired_sds = desired_sds)
 
+dir_scenario <- "ain1_samemean_upsd"
+load(paste0("Ch3_samplesize/", dir_scenario, "/allin1df.RData"))
+
+B2 <- bias_bxplot_fx(allin1df)
+
+
 # INCREASING SD INCREASING MEAN ------------------------------
 desired_means <- c(30, 40, 50, 60)
 desired_sds <- c(20, 30, 40, 50)
@@ -166,12 +173,24 @@ pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
 
 A3 <- mixtures_plot_fx(pars = pars, dens_cols = dens_cols, pis = pis, desired_means = desired_means, desired_sds = desired_sds)
 
+
+dir_scenario <- "ain1_upsd_upmean"
+load(paste0("Ch3_samplesize/", dir_scenario, "/allin1df.RData"))
+
+B3 <- bias_bxplot_fx(allin1df)
+
+
 # DECREASING BOTH ------------------------------
 desired_means <- c(60, 50, 40, 30)
 desired_sds <- c(50, 40, 30, 20)
 pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
 
 A4 <- mixtures_plot_fx(pars = pars, dens_cols = dens_cols, pis = pis, desired_means = desired_means, desired_sds = desired_sds)
+
+dir_scenario <- "ain1_downsd_downmean"
+load(paste0("Ch3_samplesize/", dir_scenario, "/allin1df.RData"))
+
+B4 <- bias_bxplot_fx(allin1df)
 
 #INCREASING MEANS DECRESING SD --------------------------------------
 desired_means <- c(30, 35, 40, 50)
@@ -181,8 +200,18 @@ pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
 A5 <- mixtures_plot_fx(pars = pars, dens_cols = dens_cols, pis = pis, desired_means = desired_means, desired_sds = desired_sds)
 
 
-plot_grid(A1, A2, A3, A4, ncol = 1, labels = "AUTO", label_size = 8)
+dir_scenario <- "ain1_upmean_downsd"
+load(paste0("Ch3_samplesize/", dir_scenario, "/allin1df.RData"))
+
+B5 <- bias_bxplot_fx(allin1df)
+
+Bs <- plot_grid(B1, B2, B3, B4, ncol = 1)
+As <- plot_grid(A1, A2, A3, A4, ncol = 1, labels = "AUTO", label_size = 8)
+
 ggsave("Ch3_samplesize/Figures/Many_mixtures.png")
+```
+```{r}
+Bs
 ```
 
 ```{r fig.width=6, fig.height=3}
