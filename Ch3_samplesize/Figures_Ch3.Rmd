@@ -539,7 +539,7 @@ ggsave("Ch3_samplesize/Figures/Figure3.png")
 
 # Figure 4
 
-Bias correction in GLM Lomax
+Bias correction
 
 ```{r eval = FALSE, fig.height=2.5, fig.width=5}
 nreps_mles_df %>% 
@@ -662,7 +662,7 @@ plot_grid(bxplts, bxplts_legend, ncol = 2, rel_widths = c(1, 0.1))
 ```
 
 
-```{r fig.height=4, fig.width=12}
+```{r eval=FALSE, fig.height=6, fig.width=12}
 
 corr_a %>% 
   mutate(samp_n_tests = factor(samp_n_tests),
@@ -724,4 +724,153 @@ corr_b %>%
   labs(x = "Long-distance level", y = "Bias") +
   theme_bw()
 ```
+
+
+
+Nonparametric bootstrap correction for both the GLM Lomax and GP
+
+```{r fig.width=10, fig.height=4}
+dir_scenario <- "allinone_original"
+load(paste0("Ch3_samplesize/", dir_scenario, "/allin1df.RData"))
+
+# allin1df %>%
+#   ggplot(., aes(x = factor(thresh_tests), y = log(gp_theta_hat/theta))) +
+#   geom_hline(yintercept = 0, color = "red") +
+#   geom_boxplot() -> a
+# 
+# allin1df %>%
+#   ggplot(., aes(x = factor(thresh_tests), y = log(gp_theta_bar/theta))) +
+#   geom_hline(yintercept = 0, color = "red") +
+#   geom_boxplot() -> b
+# 
+# plot_grid(a,b, ncol = 2)
+```
+
+```{r Fig4, fig.width=12, fig.height=5}
+
+allin1df %>%
+  dplyr::select(., thresh_tests, samp_n_tests, gp_theta_hat, gp_theta_bar, theta) %>%
+  mutate(original = log(gp_theta_hat/theta),
+         corrected = log(gp_theta_bar/theta)) %>%
+  pivot_longer(., cols = c(original, corrected), names_to = "type", values_to = "theta_val") %>%
+  drop_na() %>%
+  mutate(thresh_tests = factor(thresh_tests),
+         samp_n_tests = factor(samp_n_tests)) %>% 
+  mutate(labelsamp = paste("n =", samp_n_tests),
+         labelsamp = factor(labelsamp, levels = c("n = 80", "n = 200", "n = 500", "n = 800", "n = 1000", "n = 1600"))) %>%
+  ggplot(., aes(x = thresh_tests, y = theta_val, color = type, fill = type)) +
+  facet_wrap(~labelsamp, nrow = 2) +
+  geom_boxplot() +
+  scale_color_manual(values = pal_mixture[c(1,4)], name = "Bias") +
+  scale_fill_manual(values = pal_mixture[c(2,3)], name = "Bias") +
+  geom_hline(yintercept = 0, color = "red") +
+  labs(y = TeX(r'($log(\hat{\theta} / \theta)$)'), x = "Distance Level Estimated") +
+  theme_bw()
+ggsave("Ch3_samplesize/Figures/Figure4.png")
+```
+
+```{r Figure5, fig.width=12, fig.height=4}
+
+i_threshold <- 50
+
+allin1df %>%
+  dplyr::select(., thresh_tests, samp_n_tests, gp_theta_hat, gp_theta_bar, theta) %>%
+  mutate(original = log(gp_theta_hat/theta),
+         corrected = log(gp_theta_bar/theta)) %>%
+  pivot_longer(., cols = c(original, corrected), names_to = "type", values_to = "theta_val") %>%
+  drop_na() %>%
+  mutate(thresh_tests = factor(thresh_tests),
+         samp_n_tests = factor(samp_n_tests)) -> readyplot_df
+
+baseplot_fx <- function(i_threshold){readyplot_df %>% 
+  filter(., thresh_tests == i_threshold) %>% 
+  ggplot(., aes(x = samp_n_tests, y = theta_val, color = type, fill = samp_n_tests)) +
+  # facet_wrap(~thresh_tests, scales = "free", ncol=4) +
+  geom_boxplot() +
+  scale_color_manual(values = c("black", "grey"), name = "Estimator") +
+  scale_fill_manual(values = pal_sampsize, name = "Sample Size") +
+  geom_hline(yintercept = 0, color = "red") +
+  labs(y = "Theta ratio", subtitle = paste("Dist. level =", i_threshold)) +
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.title.x = element_blank())}
+
+
+baseplot <- baseplot_fx(50) +
+  theme(legend.position = "right",
+        legend.box = "horizontal") +
+  guides(fill = guide_legend(ncol = 2))
+
+baselegend <- get_legend(baseplot)
+
+# Distance level plots
+
+t50 <- baseplot_fx(50)
+t100 <- baseplot_fx(100)
+t150 <- baseplot_fx(150)
+t250 <- baseplot_fx(250)
+t500 <- baseplot_fx(500)
+t750 <- baseplot_fx(750)
+t1000 <- baseplot_fx(1000)
+
+
+toprow <- plot_grid(t50, t100, t150, t250, nrow = 1) 
+bottomrow <- plot_grid(t500, t750, t1000, baselegend, nrow = 1)
+
+plot_grid(toprow, bottomrow, nrow=2)
+ggsave("Ch3_samplesize/Figures/Figure5.png")
+
+```
+
+
+```{r eval = FALSE, fig.width=12, fig.height=3}
+
+allin1df %>%
+  dplyr::select(., thresh_tests, samp_n_tests, lomax_theta_hat, lomax_theta_bar, theta) %>%
+  mutate(original = lomax_theta_hat - log(theta),
+         corrected = lomax_theta_bar - log(theta)) %>%
+  pivot_longer(., cols = c(original, corrected), names_to = "type", values_to = "theta_val") %>%
+  drop_na() %>%
+  ggplot(., aes(x = factor(thresh_tests), y = theta_val, color = type)) +
+  facet_wrap(~samp_n_tests, nrow = 1) +
+  geom_boxplot() +
+  geom_hline(yintercept = 0, color = "red") +
+  theme_bw()
+```
+
+```{r eval=FALSE}
+
+allin1df %>%
+  dplyr::select(., thresh_tests, samp_n_tests, lomax_theta_hat, lomax_theta_bar, theta) %>%
+  mutate(original = lomax_theta_hat,
+         corrected = lomax_theta_bar) %>%
+  pivot_longer(., cols = c(original, corrected), names_to = "type", values_to = "theta_val") %>%
+  drop_na() %>%
+  group_by(thresh_tests, samp_n_tests, type) %>%
+  summarise(ExpVal_theta_hat = mean(theta_val),
+            theta = log(mean(theta)),
+            bias = ExpVal_theta_hat - theta) %>%
+  ggplot(., aes(x = thresh_tests, y = bias, color = type)) +
+  facet_wrap(~samp_n_tests) +
+  geom_point() +
+  theme_bw()
+
+
+allin1df %>%
+  dplyr::select(., thresh_tests, samp_n_tests, gp_theta_hat, gp_theta_bar, theta) %>%
+  mutate(original = gp_theta_hat,
+         corrected = gp_theta_bar) %>%
+  pivot_longer(., cols = c(original, corrected), names_to = "type", values_to = "theta_val") %>%
+  drop_na() %>%
+  group_by(thresh_tests, samp_n_tests, type) %>%
+  summarise(ExpVal_theta_hat = mean(theta_val),
+            theta = mean(theta),
+            bias = ExpVal_theta_hat - theta) %>%
+  ggplot(., aes(x = thresh_tests, y = bias, color = type)) +
+  facet_wrap(~samp_n_tests) +
+  geom_point() +
+  theme_bw()
+
+```
+
 
