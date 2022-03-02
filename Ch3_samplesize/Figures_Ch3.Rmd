@@ -662,7 +662,7 @@ plot_grid(bxplts, bxplts_legend, ncol = 2, rel_widths = c(1, 0.1))
 ```
 
 
-```{r fig.height=6, fig.width=12}
+```{r fig.height=4, fig.width=12}
 
 corr_a %>% 
   mutate(samp_n_tests = factor(samp_n_tests),
@@ -672,7 +672,7 @@ corr_a %>%
   ggplot(., aes(x = thresh_tests, y = value, fill = type)) +
   facet_wrap(~labelsamp, nrow=1) +
   geom_hline(yintercept = 0, color = "red") +
-  geom_boxplot(alpha = 0.9, outlier.shape = NA) +
+  geom_boxplot(alpha = 0.9) +
   scale_fill_manual(values = c("grey47", "white"), name = "") +
   labs(x = "Distance level", y = "Estimated theta", title = corr_a$correctiontype[1]) +
   theme_bw() +
@@ -688,7 +688,7 @@ corr_b %>%
   ggplot(., aes(x = thresh_tests, y = value, fill = type)) +
   facet_wrap(~labelsamp, nrow=1) +
   geom_hline(yintercept = 0, color = "red") +
-  geom_boxplot(alpha = 0.9, outlier.shape = NA) +
+  geom_boxplot(alpha = 0.9) +
   scale_fill_manual(values = c("grey47", "white"), name = "") +
   labs(x = "Distance level", y = "Estimated theta", title = corr_b$correctiontype[1]) +
   theme_bw() +
