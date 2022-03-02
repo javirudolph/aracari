@@ -4,7 +4,6 @@ author: "Javiera Rudolph"
 output:
   html_document:
     toc: yes
-    self_contained: false
 ---
 
 ```{r setup, include=FALSE}
@@ -608,7 +607,7 @@ correction_df <- rbind.data.frame(corr_a, corr_b)
 
 ```
 
-```{r fig.width=12, fig.height=6}
+```{r eval = FALSE, fig.width=12, fig.height=6}
 
 lowlabs <- paste0("n = ", samp_n_tests[1:6], "-lower")
 extlabs <- paste0("n = ", samp_n_tests[1:6], "-extremes")
@@ -622,22 +621,16 @@ nonpar_glm %>%
   mutate(thresholdsep = factor(ifelse(thresh_tests<500, "lower", "extremes"), levels = c("lower", "extremes")),
          onelinelabel = paste0("n = ", samp_n_tests, "-", thresholdsep),
          onelinelabel = factor(onelinelabel, levels = c(lowlabs, extlabs)),
-         samp_n_tests = factor(samp_n_tests)) %>% 
+         samp_n_tests = factor(samp_n_tests),
+         thresh_tests = factor(thresh_tests)) %>% 
   ggplot(., aes(x = thresh_tests, y = value, fill = samp_n_tests, color = type)) +
   facet_wrap(~onelinelabel, nrow = 2, scales = "free") +
   geom_boxplot(alpha = 0.9) +
   geom_hline(yintercept = 0, color = "red") +
-  scale_color_manual(values = c("black", "grey"), name = " ") +
+  scale_color_manual(values = c("black", "grey47"), name = " ") +
   scale_fill_manual(values = pal_sampsize, name = "Sample Size") +
   labs(x = "Distance level", y = "Estimates of theta", subtitle = "Nonparametric") +
-  theme_bw() 
-  
-```
-
-```{r fig.width=12, fig.height=6}
-
-lowlabs <- paste0("n = ", samp_n_tests[1:6], "-lower")
-extlabs <- paste0("n = ", samp_n_tests[1:6], "-extremes")
+  theme_bw(base_size = 10) -> nonpar_bxplts
 
 par_glm %>% 
   mutate(Original = theta_hat - theta,
@@ -648,7 +641,8 @@ par_glm %>%
   mutate(thresholdsep = factor(ifelse(thresh_tests<500, "lower", "extremes"), levels = c("lower", "extremes")),
          onelinelabel = paste0("n = ", samp_n_tests, "-", thresholdsep),
          onelinelabel = factor(onelinelabel, levels = c(lowlabs, extlabs)),
-         samp_n_tests = factor(samp_n_tests)) %>% 
+         samp_n_tests = factor(samp_n_tests),
+         thresh_tests = factor(thresh_tests)) %>% 
   ggplot(., aes(x = thresh_tests, y = value, fill = samp_n_tests, color = type)) +
   facet_wrap(~onelinelabel, nrow = 2, scales = "free") +
   geom_boxplot(alpha = 0.9) +
@@ -656,11 +650,16 @@ par_glm %>%
   scale_color_manual(values = c("black", "grey"), name = " ") +
   scale_fill_manual(values = pal_sampsize, name = "Sample Size") +
   labs(x = "Distance level", y = "Estimates of theta", subtitle = "Parametric") +
-  theme_bw() 
+  theme_bw(base_size = 10) -> par_bxplts
+
+bxplts_legend <- get_legend(par_bxplts)
+
+bxplts <- plot_grid(nonpar_bxplts+ theme(legend.position = "none"),
+          par_bxplts + theme(legend.position = "none"), nrow = 2)
+
+plot_grid(bxplts, bxplts_legend, ncol = 2, rel_widths = c(1, 0.1))
   
 ```
-
-
 
 
 ```{r fig.height=6, fig.width=12}
@@ -677,7 +676,7 @@ corr_a %>%
   scale_fill_manual(values = c("grey47", "white"), name = "") +
   labs(x = "Distance level", y = "Estimated theta", title = corr_a$correctiontype[1]) +
   theme_bw() +
-  scale_y_continuous(limits = quantile(corr_a$value, c(0.1, 0.9))) +
+  # scale_y_continuous(limits = quantile(corr_a$value, c(0.1, 0.9))) +
   theme(legend.position = "right") -> a
 
         
@@ -693,7 +692,7 @@ corr_b %>%
   scale_fill_manual(values = c("grey47", "white"), name = "") +
   labs(x = "Distance level", y = "Estimated theta", title = corr_b$correctiontype[1]) +
   theme_bw() +
-  scale_y_continuous(limits = quantile(corr_b$value, c(0.1, 0.9))) +
+  # scale_y_continuous(limits = quantile(corr_b$value, c(0.1, 0.9))) +
   theme(legend.position = "right") -> b
 
 plot_grid(a, b, nrow = 2)
@@ -726,79 +725,3 @@ corr_b %>%
   theme_bw()
 ```
 
-# Figure 6
-Compare to the GP
-
-```{r fig.width=8, fig.height=4}
-
-nreps_mles_df %>% 
-  mutate(samp_n_tests = factor(samp_n_tests),
-         thresh_tests = factor(thresh_tests)) %>% 
-  ggplot(., aes(x = thresh_tests, y = log_St_hat2 - log(theta), fill = samp_n_tests, color = samp_n_tests)) +
-  # facet_wrap(~samp_n_tests, nrow = 1) +
-  geom_boxplot(alpha = 0.9) +
-  geom_hline(yintercept = 0, color = "red") +
-  scale_fill_manual(values = pal_sampsize, name = "Sample Size") +
-  scale_color_manual(values = pal_sampsize, name = "Sample Size") +
-  labs(x = "Long-distance level", y = "log(theta_hat) - log(theta)", title = "GLM Lomax") +
-  theme_bw() +
-  theme(legend.position = "right") -> b
-
-ableg <- get_legend(b)
-
-GP_mles %>% 
-  mutate(samp_n_tests = factor(samp_n_tests),
-         thresh_tests = factor(thresh_tests)) %>% 
-  ggplot(., aes(x = thresh_tests, y = log(quant_theta/theta), fill = samp_n_tests, color = samp_n_tests)) +
-  # facet_wrap(~samp_n_tests, nrow = 1) +
-  geom_boxplot(alpha = 0.9) +
-  geom_hline(yintercept = 0, color = "red") +
-  scale_fill_manual(values = pal_sampsize, name = "Sample Size") +
-  scale_color_manual(values = pal_sampsize, name = "Sample Size") +
-  labs(x = "Long-distance level", y = "log(GP_theta/theta)", title = "Generalized Pareto") +
-  theme_bw() +
-  theme(legend.position = "none") -> a
-
-abplot <- plot_grid(a, b + theme(legend.position = "none"), nrow = 2)
-
-plot_grid(abplot, ableg, ncol = 2, rel_widths = c(1, 0.3))
-
-```
-
-```{r fig.width=8, fig.height=4}
-
-nreps_mles_df %>% 
-  mutate(samp_n_tests = factor(samp_n_tests),
-         thresh_tests = factor(thresh_tests)) %>% 
-  ggplot(., aes(x = thresh_tests, y = log_St_hat2 - log(theta), fill = samp_n_tests, color = samp_n_tests)) +
-  # facet_wrap(~samp_n_tests, nrow = 1) +
-  geom_boxplot(alpha = 0.9) +
-  geom_hline(yintercept = 0, color = "red") +
-  scale_fill_manual(values = pal_sampsize, name = "Sample Size") +
-  scale_color_manual(values = pal_sampsize, name = "Sample Size") +
-  labs(x = "Long-distance level", y = "log(theta_hat) - log(theta)", title = "GLM Lomax") +
-  theme_bw() +
-  theme(legend.position = "right") +
-  lims(y = c(-5, 5)) -> b
-
-ableg <- get_legend(b)
-
-GP_mles %>% 
-  mutate(samp_n_tests = factor(samp_n_tests),
-         thresh_tests = factor(thresh_tests)) %>% 
-  ggplot(., aes(x = thresh_tests, y = log(quant_theta/theta), fill = samp_n_tests, color = samp_n_tests)) +
-  # facet_wrap(~samp_n_tests, nrow = 1) +
-  geom_boxplot(alpha = 0.9) +
-  geom_hline(yintercept = 0, color = "red") +
-  scale_fill_manual(values = pal_sampsize, name = "Sample Size") +
-  scale_color_manual(values = pal_sampsize, name = "Sample Size") +
-  labs(x = "Long-distance level", y = "log(GP_theta/theta)", title = "Generalized Pareto") +
-  theme_bw() +
-  theme(legend.position = "none")+
-  lims(y = c(-5, 5)) -> a
-
-abplot <- plot_grid(a, b + theme(legend.position = "none"), nrow = 2)
-
-plot_grid(abplot, ableg, ncol = 2, rel_widths = c(1, 0.3))
-
-```
