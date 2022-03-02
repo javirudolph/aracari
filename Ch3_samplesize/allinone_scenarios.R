@@ -33,6 +33,8 @@ if(dir.exists(paste0("Ch3_samplesize/", dir_scenario)) == FALSE){
 desired_means <- c(30, 30, 30, 30)
 desired_sds <- c(20, 30, 40, 50)
 pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
+source("Ch3_samplesize/allinone.R")
+
 
 #INCREASING MEANS DECRESING SD --------------------------------------
 dir_scenario <- "ain1_upmean_downsd"
@@ -43,6 +45,7 @@ if(dir.exists(paste0("Ch3_samplesize/", dir_scenario)) == FALSE){
 desired_means <- c(30, 35, 40, 50)
 desired_sds <- c(50, 40, 35, 30)
 pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
+source("Ch3_samplesize/allinone.R")
 
 # SAME SD INCREASING MEAN ------------------------------
 dir_scenario <- "ain1_samesd_upmean"
@@ -53,6 +56,7 @@ if(dir.exists(paste0("Ch3_samplesize/", dir_scenario)) == FALSE){
 desired_means <- c(30, 40, 50, 60)
 desired_sds <- c(25, 25, 25, 25)
 pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
+source("Ch3_samplesize/allinone.R")
 
 # INCREASING SD INCREASING MEAN ------------------------------
 dir_scenario <- "ain1_upsd_upmean"
@@ -63,6 +67,7 @@ if(dir.exists(paste0("Ch3_samplesize/", dir_scenario)) == FALSE){
 desired_means <- c(30, 40, 50, 60)
 desired_sds <- c(20, 30, 40, 50)
 pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
+source("Ch3_samplesize/allinone.R")
 
 # DECREASING BOTH ------------------------------
 dir_scenario <- "ain1_downsd_downmean"
@@ -73,5 +78,6 @@ if(dir.exists(paste0("Ch3_samplesize/", dir_scenario)) == FALSE){
 desired_means <- c(60, 50, 40, 30)
 desired_sds <- c(50, 40, 30, 20)
 pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
+source("Ch3_samplesize/allinone.R")
 
 

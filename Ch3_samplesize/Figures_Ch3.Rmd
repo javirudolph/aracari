@@ -379,7 +379,7 @@ nreps_mles_df %>%
   ggplot(., aes(x = thresh_tests, y = log_St_hat - log(theta), fill = samp_n_tests, color = samp_n_tests)) +
   # facet_wrap(~samp_n_tests, nrow = 1) +
   geom_boxplot(alpha = 0.9) +
-  geom_hline(yintercept = 0, color = "red") +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
   scale_fill_manual(values = pal_sampsize) +
   scale_color_manual(values = pal_sampsize) +
   labs(x = " ", y = TeX(r'($log(\hat{\theta} / \theta)$)'), subtitle = "Simple Lomax") +
@@ -392,7 +392,7 @@ nreps_mles_df %>%
   ggplot(., aes(x = thresh_tests, y = log_St_hat2 - log(theta), fill = samp_n_tests, color = samp_n_tests)) +
   # facet_wrap(~samp_n_tests, nrow = 1) +
   geom_boxplot(alpha = 0.9) +
-  geom_hline(yintercept = 0, color = "red") +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
   scale_fill_manual(values = pal_sampsize, name = "Sample Size") +
   scale_color_manual(values = pal_sampsize, name = "Sample Size") +
   labs(x = "", y = TeX(r'($log(\hat{\theta} / \theta)$)'), subtitle = "GLM Lomax") +
@@ -407,7 +407,7 @@ GP_mles %>%
   ggplot(., aes(x = thresh_tests, y = log(quant_theta/theta), fill = samp_n_tests, color = samp_n_tests)) +
   # facet_wrap(~samp_n_tests, nrow = 1) +
   geom_boxplot(alpha = 0.9) +
-  geom_hline(yintercept = 0, color = "red") +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
   scale_fill_manual(values = pal_sampsize) +
   scale_color_manual(values = pal_sampsize) +
   labs(x = "Distance level", y = TeX(r'($log(\hat{\theta} / \theta)$)'), subtitle = "Generalized Pareto") +
@@ -746,7 +746,7 @@ load(paste0("Ch3_samplesize/", dir_scenario, "/allin1df.RData"))
 # plot_grid(a,b, ncol = 2)
 ```
 
-```{r Fig4, fig.width=12, fig.height=5}
+```{r Fig4, fig.width=6, fig.height=6}
 
 allin1df %>%
   dplyr::select(., thresh_tests, samp_n_tests, gp_theta_hat, gp_theta_bar, theta) %>%
@@ -759,11 +759,11 @@ allin1df %>%
   mutate(labelsamp = paste("n =", samp_n_tests),
          labelsamp = factor(labelsamp, levels = c("n = 80", "n = 200", "n = 500", "n = 800", "n = 1000", "n = 1600"))) %>%
   ggplot(., aes(x = thresh_tests, y = theta_val, color = type, fill = type)) +
-  facet_wrap(~labelsamp, nrow = 2) +
+  facet_wrap(~labelsamp, nrow = 3) +
   geom_boxplot() +
-  scale_color_manual(values = pal_mixture[c(1,4)], name = "Bias") +
-  scale_fill_manual(values = pal_mixture[c(2,3)], name = "Bias") +
-  geom_hline(yintercept = 0, color = "red") +
+  scale_color_manual(values = dens_cols[c(1,4)], name = "Bias") +
+  scale_fill_manual(values = dens_cols[c(2,3)], name = "Bias") +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
   labs(y = TeX(r'($log(\hat{\theta} / \theta)$)'), x = "Distance Level Estimated") +
   theme_bw()
 ggsave("Ch3_samplesize/Figures/Figure4.png")
