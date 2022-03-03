@@ -124,89 +124,109 @@ bias_bxplot_fx <- function(data){
   mutate(labelsamp = paste("n =", samp_n_tests),
          labelsamp = factor(labelsamp, levels = c("n = 80", "n = 200", "n = 500", "n = 800", "n = 1000", "n = 1600"))) %>%
   ggplot(., aes(x = thresh_tests, y = theta_val, color = type, fill = type)) +
-  facet_wrap(~labelsamp, nrow = 1) +
+  # facet_wrap(~labelsamp, nrow = 1) +
   geom_boxplot() +
   scale_color_manual(values = dens_cols[c(1,4)], name = "Bias") +
   scale_fill_manual(values = dens_cols[c(2,3)], name = "Bias") +
   geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
-  labs(y = TeX(r'($log(\hat{\theta} / \theta)$)'), x = "Distance Level Estimated") +
-  theme_bw() +
-    theme(legend.position = "none")
+  labs(y = TeX(r'($log(\hat{\theta} / \theta)$)'), x = " ") +
+  theme_bw(base_size = 8) +
+  theme(legend.position = "none")
 }
 
 ```
 
-```{r fig.width=4, fig.height=5}
+```{r fig.width=10, fig.height=5}
 # Scenarios:
 pis <- c( 0.1, 0.2, 0.3, 0.4)
 dens_cols <- pal_mixture
 
 # SAME SD INCREASING MEAN ------------------------------
+dir_scenario <- "ain1_samesd_upmean"
+
 desired_means <- c(30, 40, 50, 60)
 desired_sds <- c(25, 25, 25, 25)
 pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
-
 A1 <- mixtures_plot_fx(pars = pars, dens_cols = dens_cols, pis = pis, desired_means = desired_means, desired_sds = desired_sds)
 
-dir_scenario <- "ain1_samesd_upmean"
 load(paste0("Ch3_samplesize/", dir_scenario, "/allin1df.RData"))
-
 B1 <- bias_bxplot_fx(allin1df)
 
 # SAME MEAN INCREASING SD ------------------------------
+
+dir_scenario <- "ain1_samemean_upsd"
+
 desired_means <- c(30, 30, 30, 30)
 desired_sds <- c(20, 30, 40, 50)
 pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
 
 A2 <- mixtures_plot_fx(pars = pars, dens_cols = dens_cols, pis = pis, desired_means = desired_means, desired_sds = desired_sds)
 
-dir_scenario <- "ain1_samemean_upsd"
 load(paste0("Ch3_samplesize/", dir_scenario, "/allin1df.RData"))
-
 B2 <- bias_bxplot_fx(allin1df)
 
 
 # INCREASING SD INCREASING MEAN ------------------------------
+dir_scenario <- "ain1_upsd_upmean"
+
 desired_means <- c(30, 40, 50, 60)
 desired_sds <- c(20, 30, 40, 50)
 pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
-
 A3 <- mixtures_plot_fx(pars = pars, dens_cols = dens_cols, pis = pis, desired_means = desired_means, desired_sds = desired_sds)
 
-
-dir_scenario <- "ain1_upsd_upmean"
 load(paste0("Ch3_samplesize/", dir_scenario, "/allin1df.RData"))
-
 B3 <- bias_bxplot_fx(allin1df)
 
 
 # DECREASING BOTH ------------------------------
+dir_scenario <- "ain1_downsd_downmean"
+
 desired_means <- c(60, 50, 40, 30)
 desired_sds <- c(50, 40, 30, 20)
 pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
-
 A4 <- mixtures_plot_fx(pars = pars, dens_cols = dens_cols, pis = pis, desired_means = desired_means, desired_sds = desired_sds)
 
-dir_scenario <- "ain1_downsd_downmean"
 load(paste0("Ch3_samplesize/", dir_scenario, "/allin1df.RData"))
-
-B4 <- bias_bxplot_fx(allin1df)
+B4 <- allin1df %>%
+  dplyr::select(., thresh_tests, samp_n_tests, gp_theta_hat, gp_theta_bar, theta) %>%
+  mutate(original = log(gp_theta_hat/theta),
+         corrected = log(gp_theta_bar/theta)) %>%
+  pivot_longer(., cols = c(original, corrected), names_to = "type", values_to = "theta_val") %>%
+  drop_na() %>%
+  mutate(thresh_tests = factor(thresh_tests),
+         samp_n_tests = factor(samp_n_tests)) %>% 
+  mutate(labelsamp = paste("n =", samp_n_tests),
+         labelsamp = factor(labelsamp, levels = c("n = 80", "n = 200", "n = 500", "n = 800", "n = 1000", "n = 1600"))) %>%
+  ggplot(., aes(x = thresh_tests, y = theta_val, color = type, fill = type)) +
+  # facet_wrap(~labelsamp, nrow = 1) +
+  geom_boxplot() +
+  scale_color_manual(values = dens_cols[c(1,4)], name = "Bias") +
+  scale_fill_manual(values = dens_cols[c(2,3)], name = "Bias") +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  labs(y = TeX(r'($log(\hat{\theta} / \theta)$)'), x = "Distance level estimated") +
+  theme_bw(base_size = 8) +
+  theme(legend.position = "none")
 
 #INCREASING MEANS DECRESING SD --------------------------------------
+dir_scenario <- "ain1_upmean_downsd"
+
 desired_means <- c(30, 35, 40, 50)
 desired_sds <- c(50, 40, 35, 30)
 pars <- desired_mean_sd(mu_x = desired_means, sd_x = desired_sds)
-
 A5 <- mixtures_plot_fx(pars = pars, dens_cols = dens_cols, pis = pis, desired_means = desired_means, desired_sds = desired_sds)
 
-
-dir_scenario <- "ain1_upmean_downsd"
 load(paste0("Ch3_samplesize/", dir_scenario, "/allin1df.RData"))
-
 B5 <- bias_bxplot_fx(allin1df)
 
-Bs <- plot_grid(B1, B2, B3, B4, ncol = 1)
+# PLOT ----------------------------------
+
+nolegBs <- plot_grid(B1, B2, B3, B4, ncol = 1)
+legend_Bs <- get_legend(B4+ theme(legend.position = "right")) 
+Bs <- plot_grid(nolegBs, legend_Bs, ncol = 2, rel_widths = c(1, 0.2))
+
 As <- plot_grid(A1, A2, A3, A4, ncol = 1, labels = "AUTO", label_size = 8)
+
+plot_grid(As, Bs, ncol = 2, rel_widths = c(1, 1.5))
 
 ggsave("Ch3_samplesize/Figures/Many_mixtures.png")
 ```
