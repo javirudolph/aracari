@@ -14,7 +14,7 @@ My dissertation work is focused on the ecological consequences of individual var
 - CH2 - Velocity-Based Analysis of Radio Telemetry Data to Explore Individual Variation in Animal Movement [Full Text](https://javirudolph.github.io/aracari/Ch2_distributions/FJRudolph_CH2_0311.pdf) [Figures](https://javirudolph.github.io/aracari/Ch2_distributions/Ch2_Figures.html)
 
 
-- CH3 - Estimating Extreme Displacements Under a Lomax Generalized Linear Model Framework: The Role of Sample Size and Threshold Choice [Full Text](https://javirudolph.github.io/aracari/Ch3_samplesize/FJRudolph_CH3_0303.pdf).
+- CH3 - Estimating Extreme Displacements Under a Lomax Generalized Linear Model Framework: The Role of Sample Size and Threshold Choice [Full Text](https://javirudolph.github.io/aracari/Ch3_samplesize/FJ_Rudolph_CH3_0303.pdf).
 -----
 
 ## Installation
