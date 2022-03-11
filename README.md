@@ -1,7 +1,7 @@
 [![DOI](https://zenodo.org/badge/292314570.svg)](https://zenodo.org/badge/latestdoi/292314570)
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# aracari <img src="images/aracari22.png" align="right" height="139" />
+# aracari <img src="images/aracari.png" align="right" height="139" />
 
 <!-- badges: start -->
 
