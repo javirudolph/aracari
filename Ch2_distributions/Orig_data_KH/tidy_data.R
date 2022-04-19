@@ -9,27 +9,27 @@ library(stringr)
 
 
 # Bring the datasets for the old birds
-# From the Supplement table in Holbrook 2011, I'm using n.observations to identify these birdst to the tag.
+# From the Supplement table in Holbrook 2011, I'm using n.observations to identify these birds to the tag.
 
-readxl::excel_sheets(path = "Ch2_distributions/Orig_data_KH/bird1loc.xls")
+readxl::excel_sheets(path = "data/bird1loc.xls")
 
 # Bird 1 has 101 observations which goes along with Tag 84
-bird1 <- readxl::read_excel("Ch2_distributions/Orig_data_KH/bird1loc.xls", sheet = 1)
+bird1 <- readxl::read_excel("data/bird1loc.xls", sheet = 1)
 # There's no observations after 100
 bird1 <- bird1[1:100,]
 
 # This one has 108 so it's Tag 49
-bird2 <- readxl::read_excel("Ch2_distributions/Orig_data_KH/bird2loc.xls", sheet = 1)
+bird2 <- readxl::read_excel("data/bird2loc.xls", sheet = 1)
 
 # Bird 3 has 55 observations, so it is actually Tag28
-bird3 <- readxl::read_excel("Ch2_distributions/Orig_data_KH/bird3loc.xls", sheet = 1)
+bird3 <- readxl::read_excel("data/bird3loc.xls", sheet = 1)
 
 ### The rest of the birds now
-readxl::excel_sheets(path = "Ch2_distributions/Orig_data_KH/Seed shadows PTPL 2005.xls")
+readxl::excel_sheets(path = "data/Seed shadows PTPL 2005.xls")
 
 # The rest of the birds
 
-birds <- readxl::read_excel(path = "Ch2_distributions/Orig_data_KH/Seed shadows PTPL 2005.xls", sheet = 6)
+birds <- readxl::read_excel(path = "data/Seed shadows PTPL 2005.xls", sheet = 6)
 # Make the TIMEID numeric
 birds %>%
   mutate(TIMEID = as.numeric(TIMEID)) -> birds
@@ -165,9 +165,8 @@ ptpl %>%
     id %in% c(29, 30) ~ "G7"
   )) -> ptpl
 
-save(ptpl, file = "Ch2_distributions/Orig_data_KH/tidy_data.RData")
-
-
+# Last Step -----------------------------
+usethis::use_data(ptpl, overwrite = TRUE)
 
 
 
