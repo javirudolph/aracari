@@ -25,4 +25,6 @@
 #'
 #'
 #'
-#' @source \url{https://onlinelibrary.wiley.com/doi/full/10.1111/j.1744-7429.2010.00710.x}
+#' @source Data personally provided by KM Holbrook. Associated publication found at \url{https://onlinelibrary.wiley.com/doi/full/10.1111/j.1744-7429.2010.00710.x}
+#'
+"ptpl"
