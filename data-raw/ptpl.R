@@ -1,81 +1,175 @@
-## code to prepare `ptpl` dataset goes here
+# Revisiting the original data, because it's been too long.
 
-# Libraries needed
-library(adehabitatLT)
-library(lubridate)
+library(readxl)
 library(dplyr)
 library(tidyr)
+library(adehabitatLT)
+library(lubridate)
+library(stringr)
 
 
-# First, read in the raw tracking data
-anim_data <- read.csv("data/raw_location_data.csv")
-# Time is presented as a time ID
-# Each time interval is equivalent to 15 minutes
-# Interval 1 == 6AM, so if we start at midnight, 6am is 24 intervals of 15 minutes each. I'm setting 6am as the start just because I don't have actual data on it, but we know they started early morning and that's what the time IDs are for in Kimberly's work.
+# Bring the datasets for the old birds
+# From the Supplement table in Holbrook 2011, I'm using n.observations to identify these birds to the tag.
+
+readxl::excel_sheets(path = "data/bird1loc.xls")
+
+# Bird 1 has 101 observations which goes along with Tag 84
+bird1 <- readxl::read_excel("data/bird1loc.xls", sheet = 1)
+# There's no observations after 100
+bird1 <- bird1[1:100,]
+
+# This one has 108 so it's Tag 49
+bird2 <- readxl::read_excel("data/bird2loc.xls", sheet = 1)
+
+# Bird 3 has 55 observations, so it is actually Tag28
+bird3 <- readxl::read_excel("data/bird3loc.xls", sheet = 1)
+
+### The rest of the birds now
+readxl::excel_sheets(path = "data/Seed shadows PTPL 2005.xls")
+
+# The rest of the birds
+
+birds <- readxl::read_excel(path = "data/Seed shadows PTPL 2005.xls", sheet = 6)
+# Make the TIMEID numeric
+birds %>%
+  mutate(TIMEID = as.numeric(TIMEID)) -> birds
 
 
-# create a column for number of minutes equivalent to the intervals
+#############################################
+# Make sure the date and time in the correct format
+# I had done this before for the birds
 
-seconds <- (24*15 + anim_data$Time_ID * 15) * 60
+seconds <- (24*15 + birds$TIMEID * 15) * 60
 td <- seconds_to_period(seconds)
-anim_data$time <- sprintf("%02d:%02d:%02d", td@hour, minute(td), second(td))
+birds$TIME <- sprintf("%02d:%02d:%02d", td@hour, minute(td), second(td))
 
-date <- paste(anim_data$DATE, anim_data$time)
-anim_data$date <- parse_date_time(date, "dmyHMS")
-anim_data$burst <- paste(anim_data$Bird_ID, anim_data$DATE, sep="_")
+birds %>%
+  rename(X_UTM = X_Estimate,
+         Y_UTM = Y_Estimate) %>%
+  mutate(DATE = as.POSIXct(paste(DATE, TIME)),
+         TAG = `TRANS#`,
+         burst = paste(TAG, DATE, sep = "_"),
+         burst = sub(" .*", "", burst)) %>%
+  dplyr:: select(X_UTM, Y_UTM, DATE, TAG, burst)-> xydf
 
-# Only keep the columns we need for adehabitat
 
-anim_data <- dplyr::select(anim_data, Bird_ID, burst,
-                           date, X_Estimate, Y_Estimate)
-names(anim_data) <- c("animal_id","burst_id", "date_time", "x", "y")
+# Set spatial coordinates for the dataset
 
-# we set the spatial coordinates for our data frame
-coordinates(anim_data) <- c("x", "y")
+coordinates(xydf) <- c("X_UTM", "Y_UTM")
+
 
 #Assign a projection, I know it is UTM zone 18 because it is Ecuadorian Amazon
-proj4string(anim_data) <- CRS("+proj=utm +zone=18 +datum=WGS84")
+proj4string(xydf) <- CRS("+proj=utm +zone=18 +datum=WGS84")
+
 
 # Create ltraj object for work with adehabitat
 # We set typeII = TRUE because we have variable time frames, although locations were attempted every 15 minutes, this didn't always happen.
-ptpl_locs <- as.ltraj(coordinates(anim_data), burst = anim_data$burst_id,
-                      date=anim_data$date_time, id=anim_data$animal_id,
-                      typeII = TRUE)
+ptpl.ltraj <- as.ltraj(coordinates(xydf), burst = xydf$burst,
+                       date = xydf$DATE, id = xydf$TAG, typeII = TRUE)
+
 
 # We can see the locations for all the individuals tracked
-plot(ptpl_locs)
+plot(ptpl.ltraj)
 
 # The data frame now has the original xy locations, the time stamp, the individual
 # But it has also added information about the displacement and net squared displacement.
 # There is a high number of NA because we can only calculate distances moved from continous locations, happening during the same tracking session (which are a few hours per day)
 
-ptpl <- ld(ptpl_locs)
+ptpl <- ld(ptpl.ltraj)
 
-# I want to include family groups in that data set, just in case we want to use that later
+
+
+
+
+#######################################################
+
+# Now, edit the other birds
+
+bird1 %>%
+  dplyr::select(X_UTM, Y_UTM, date, time) %>%
+  mutate(date = as.Date(date),
+         time = format(time, "%H:%M:%S"),
+         DATE = paste(date, time)) %>%
+  transmute(X_UTM,
+            Y_UTM,
+            DATE = as.POSIXct(DATE),
+            TAG = as.character(84),
+            burst = paste(TAG, DATE, sep = "_"),
+            burst = sub(" .*", "", burst)) -> T84
+
+coordinates(T84) <- c("X_UTM", "Y_UTM")
+proj4string(T84) <- CRS("+proj=utm +zone=18 +datum=WGS84")
+T84.traj <- as.ltraj(coordinates(T84), burst = T84$burst, date = T84$DATE, id = T84$TAG, typeII = TRUE)
+T84.df <- ld(T84.traj)
+
+
+bird2 %>%
+  dplyr::select(X_UTM, Y_UTM, date, time) %>%
+  mutate(date = as.Date(date),
+         time = format(time, "%H:%M:%S"),
+         DATE = paste(date, time)) %>%
+  transmute(X_UTM,
+            Y_UTM,
+            DATE = as.POSIXct(DATE),
+            TAG = as.character(49),
+            burst = paste(TAG, DATE, sep = "_"),
+            burst = sub(" .*", "", burst)) -> T49
+
+coordinates(T49) <- c("X_UTM", "Y_UTM")
+proj4string(T49) <- CRS("+proj=utm +zone=18 +datum=WGS84")
+T49.traj <- as.ltraj(coordinates(T49), burst = T49$burst, date = T49$DATE, id = T49$TAG, typeII = TRUE)
+T49.df <- ld(T49.traj)
+
+bird3 %>%
+  rename(X_UTM = X_Estimate,
+         Y_UTM = Y_Estimate,
+         date = date...6,
+         time = time) %>%
+  dplyr::select(X_UTM, Y_UTM, date, time) %>%
+  mutate(date = as.Date(date),
+         time = format(time, "%H:%M:%S"),
+         DATE = paste(date, time)) %>%
+  transmute(X_UTM,
+            Y_UTM,
+            DATE = as.POSIXct(DATE),
+            TAG = as.character(28),
+            burst = paste(TAG, DATE, sep = "_"),
+            burst = sub(" .*", "", burst)) -> T28
+
+coordinates(T28) <- c("X_UTM", "Y_UTM")
+proj4string(T28) <- CRS("+proj=utm +zone=18 +datum=WGS84")
+T28.traj <- as.ltraj(coordinates(T28), burst = T28$burst, date = T28$DATE, id = T28$TAG, typeII = TRUE)
+T28.df <- ld(T28.traj)
+
+
+#########################################################
+
+ptpl <- ptpl %>%
+  bind_rows(T28.df, T49.df, T84.df)
+
+##################################
+# MORE info
+
 # The social groups are as follows: (1, 3, 5), (7), (13, 19), (22), (28), and (49, 84).
-ptpl$id <- factor(ptpl$id, levels = c(1, 3, 5, 7, 13, 19, 22, 28, 49, 84, 10, 17, 20, 21, 24, 29, 30, 9))
-ptpl %>%
-  mutate(fam_g = ifelse(id %in% c(1,3,5), "f1",
-                        ifelse(id == 7, "f2",
-                               ifelse(id %in% c(13, 19), "f3",
-                                      ifelse(id == 22, "f4",
-                                             ifelse(id == 28, "f5",
-                                                    ifelse(id %in% c(49,84),
-                                                           "f6", "f7")
-                                             )))))) -> ptpl
-# Add new variables used for the selection later
-# Some of the data was collected on a preliminary field season and it includes other time intervals. Here, we want to focus on the intervals that are multiples of 15, as that is how the majority of data is collected. From a biological stand point, a seed has a high probability of being regurgitated in 15-30 minutes.
-# Filter by minimum number of observations. Removing the individuals with an insufficient number of observations. Since we will be fitting probability distributions, we should have at least 30 intervals per individual, so we would remove birds with ID = 17, 20, 24.
-ptpl %>%
-  mutate(T_minutes = dt/60,
-         Bird_ID = id,
-         mpm = dist/T_minutes,
-         R2n = lead(R2n)) %>%
-  filter(T_minutes != 0 & T_minutes %in% c(15, 30, 45, 60, 75, 90)) %>%
-  group_by(Bird_ID) %>%
-  add_tally() %>%
-  filter(n >= 30) -> ptpl
+# Because birds 29 and 30 are from Yasuni Station, we consider those as one group as well.
+# From the map figure in Holbrook 2011
 
+ptpl %>%
+  mutate(sgroup = case_when(
+    id %in% c(1,3,5) ~ "G1",
+    id %in% c(7) ~ "G2",
+    id %in% c(13, 19) ~ "G3",
+    id %in% c(22) ~ "G4",
+    id %in% c(28) ~ "G5",
+    id %in% c(49, 84) ~ "G6",
+    id %in% c(29, 30) ~ "G7"
+  )) -> ptpl
 
 # Last Step -----------------------------
 usethis::use_data(ptpl, overwrite = TRUE)
+
+
+
+
+
+
