@@ -7,7 +7,7 @@ library(stringr)
 
 # Read the data csv
 
-grt_raw <- read.csv("data/gut_ret_time.csv")
+grt_raw <- read.csv("data-raw/gut_ret_time.csv")
 
 
 # This data is from field trials on gut retention times for four individual toucans
