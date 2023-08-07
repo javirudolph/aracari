@@ -42,6 +42,8 @@ within this repo, that you cite it. Thank you!
 - CH3 - Estimating Extreme Displacements Under a Lomax Generalized
   Linear Model Framework: The Role of Sample Size and Threshold Choice.
   [Full
-  Text](https://javirudolph.github.io/aracari/Ch3_samplesize/FJ_Rudolph_CH3_0303.pdf).
+  Text](https://javirudolph.github.io/aracari/Ch3_samplesize/FJ_Rudolph_CH3_0303.pdf)
+  and
+  [Figures](%5BFigures%5D(https://javirudolph.github.io/aracari/Ch3_samplesize/Figures_Ch3.html))
 
 ------------------------------------------------------------------------
