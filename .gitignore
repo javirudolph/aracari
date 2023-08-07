@@ -8,3 +8,4 @@ inst/doc
 !images/*.png
 
 paper/*.RData
+.DS_Store
