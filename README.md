@@ -44,6 +44,6 @@ within this repo, that you cite it. Thank you!
   [Full
   Text](https://javirudolph.github.io/aracari/Ch3_samplesize/FJ_Rudolph_CH3_0303.pdf)
   and
-  \[Figures\]((<https://javirudolph.github.io/aracari/Ch3_samplesize/Figures_Ch3.html>).
+  [Figures](https://javirudolph.github.io/aracari/Ch3_samplesize/Figures_Ch3.html).
 
 ------------------------------------------------------------------------
